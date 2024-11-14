@@ -34,7 +34,7 @@ resources:
     - repository: pipeline-templates
       type: github
       name: ogcio/building-blocks-pipelines
-      ref: fix/update-gitops-repo
+      ref: refs/tags/v0.5.1
       endpoint: ogcio
     - repository: unleash-k8s-apps
       type: github
