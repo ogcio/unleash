@@ -31,6 +31,8 @@ COPY --from=builder /unleash/docker /unleash
 
 RUN rm -rf /usr/local/lib/node_modules/npm/
 
+RUN apk add --no-cache jq
+
 EXPOSE 4242
 
 USER node
