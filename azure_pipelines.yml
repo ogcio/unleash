@@ -61,7 +61,7 @@ stages:
     displayName: Approvals for deployments - ${{ upper(variables.environment) }}
     dependsOn:
       - Build_Unleash
-    condition: ${{ variables.pushArtefacts }}
+    condition: and(${{ variables.pushArtefacts }}, succeeded())
     jobs:
     - deployment: VerifyDeployment
       displayName: Verify conditions for deployment
