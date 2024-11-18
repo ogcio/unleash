@@ -47,7 +47,7 @@ function enableOidcOauth(app, config, services) {
     ),
   );
 
-  app.use(session({
+  app.use(require('express-session')({
     secret: AUTH_APP_SECRET,
     resave: false,
     saveUninitialized: false
