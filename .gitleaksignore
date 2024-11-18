@@ -16,3 +16,5 @@
 /src/website/docs/quickstart.mdx:generic-api-key:118
 /src/website/docs/quickstart.mdx:generic-api-key:124
 /src/website/.yarn/releases/yarn-4.4.1.cjs:generic-api-key:567
+/src/docker/.yarn/releases/yarn-4.5.1.cjs:aws-access-token:149
+/src/docker/.yarn/releases/yarn-4.5.1.cjs:generic-api-key:576
