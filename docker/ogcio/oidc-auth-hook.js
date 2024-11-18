@@ -53,9 +53,11 @@ function enableOidcOauth(app, config, services) {
   passport.serializeUser((user, done) => done(null, user));
   passport.deserializeUser((user, done) => done(null, user));
 
-  app.get("/api/admin/login", passport.authenticate("oidc"));
+  app.get("/api/admin/login", passport.authenticate("oidc", {
+    session: false
+  }));
 
-  app.get("/api/auth/callback", passport.authenticate("oidc"), (_req, res) => {
+  app.get("/api/auth/callback", passport.authenticate("oidc", { session: false }), (_req, res) => {
     res.redirect(`${contextPath}/`);
   });
 
