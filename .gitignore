@@ -23,6 +23,7 @@ coverage/lcov-report
 
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
+build
 
 # liquibase stuff
 /sql

@@ -73,6 +73,7 @@
     "node_modules",
     "website",
     "src/binver-dev.js",
+    "build",
     "dist",
     "snapshots",
     "coverage",

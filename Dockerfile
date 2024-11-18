@@ -1,4 +1,4 @@
-ARG NODE_VERSION=20.16.0-alpine
+ARG NODE_VERSION=20-alpine
 
 FROM node:$NODE_VERSION AS builder
 
@@ -17,7 +17,7 @@ RUN mkdir -p /unleash/build/frontend && mv /unleash/frontend/build /unleash/buil
 
 WORKDIR /unleash/docker
 
-RUN yarn workspaces focus -A --production
+RUN yarn set version stable && yarn workspaces focus -A --production
 
 FROM node:$NODE_VERSION
 

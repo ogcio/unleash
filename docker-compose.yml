@@ -44,6 +44,7 @@ services:
       AUTH_APP_ID: "43geanp0dwznxw412mxme"
       AUTH_APP_SECRET: "unleash_app_local_secret"
       AUTH_HOST: "http://localhost:3301"
+      NODE_ENV: "production"
     depends_on:
       db:
         condition: service_healthy
