@@ -47,17 +47,20 @@ function enableOidcOauth(app, config, services) {
     ),
   );
 
+  app.use(require('express-session')({
+    secret: AUTH_APP_SECRET,
+    resave: false,
+    saveUninitialized: false
+  }));
   app.use(passport.initialize());
   app.use(passport.session());
 
   passport.serializeUser((user, done) => done(null, user));
   passport.deserializeUser((user, done) => done(null, user));
 
-  app.get("/api/admin/login", passport.authenticate("oidc", {
-    session: false
-  }));
+  app.get("/api/admin/login", passport.authenticate("oidc"));
 
-  app.get("/api/auth/callback", passport.authenticate("oidc", { session: false }), (_req, res) => {
+  app.get("/api/auth/callback", passport.authenticate("oidc"), (_req, res) => {
     res.redirect(`${contextPath}/`);
   });
 
