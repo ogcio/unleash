@@ -3,10 +3,6 @@ const oidcAuthHook = require('./ogcio/oidc-auth-hook');
 
 const { POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB_NAME, LOG_LEVEL } = process.env;
 
-if (!POSTGRES_USER || !POSTGRES_PASSWORD || !POSTGRES_HOST || !POSTGRES_PORT || !POSTGRES_DB_NAME || !LOG_LEVEL) {
-  throw new Error("Missing required environment variables for Unleash server");
-}
-
 const options = {
   db: {
     user: POSTGRES_USER ?? "unleash",
