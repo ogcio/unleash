@@ -47,12 +47,7 @@ function enableOidcOauth(app, config, services) {
     ),
   );
 
-  app.use(require('express-session')({
-    secret: AUTH_APP_SECRET,
-    resave: false,
-    saveUninitialized: false
-  }));
-  app.use(passport.initialize());
+  // app.use(passport.initialize());
   app.use(passport.session());
 
   passport.serializeUser((user, done) => done(null, user));
