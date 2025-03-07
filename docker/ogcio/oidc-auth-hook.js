@@ -24,6 +24,18 @@ function enableOidcOauth(app, config, services) {
   const { baseUriPath } = config.server;
   const { userService } = services;
 
+  console.log('Initializing OIDC authentication');
+  console.dir({
+    issuer: `${AUTH_HOST}/oidc`,
+    authorizationURL: `${AUTH_HOST}/oidc/auth`,
+    tokenURL: `${AUTH_HOST}/oidc/token`,
+    userInfoURL: `${AUTH_HOST}/oidc/me`,
+    callbackURL: `${contextPath}/api/auth/callback`,
+    clientID: AUTH_APP_ID,
+    clientSecret: AUTH_APP_SECRET,
+    scope: ["profile", "offline_access", "email"],
+  });
+
   passport.use(
     "oidc",
     new OpenIDConnectStrategy(
@@ -47,7 +59,9 @@ function enableOidcOauth(app, config, services) {
     ),
   );
 
-  // app.use(passport.initialize());
+  console.log('Setting up passport middleware');
+  // Make sure to initialize passport AFTER express-session is set up
+  app.use(passport.initialize());
   app.use(passport.session());
 
   passport.serializeUser((user, done) => done(null, user));
