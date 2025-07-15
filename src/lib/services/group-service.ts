@@ -5,7 +5,7 @@ import type {
     IGroupProject,
     IGroupRole,
     IGroupUser,
-} from '../types/group';
+} from '../types/group.js';
 import {
     GroupDeletedEvent,
     GroupUpdatedEvent,
@@ -13,22 +13,23 @@ import {
     type IAuditUser,
     type IUnleashConfig,
     type IUnleashStores,
-} from '../types';
-import type { IGroupStore } from '../types/stores/group-store';
-import type { Logger } from '../logger';
-import BadDataError from '../error/bad-data-error';
+} from '../types/index.js';
+import type { IGroupStore } from '../types/stores/group-store.js';
+import type { Logger } from '../logger.js';
+import BadDataError from '../error/bad-data-error.js';
+import { GROUP_CREATED, type IBaseEvent } from '../events/index.js';
 import {
-    GROUP_CREATED,
     GroupUserAdded,
     GroupUserRemoved,
-    type IBaseEvent,
-} from '../types/events';
-import NameExistsError from '../error/name-exists-error';
-import type { IAccountStore } from '../types/stores/account-store';
-import type { IUser } from '../types/user';
-import type EventService from '../features/events/event-service';
-import { SSO_SYNC_USER } from '../db/group-store';
-import type { IGroupWithProjectRoles } from '../types/stores/access-store';
+    ScimGroupsDeleted,
+} from '../types/index.js';
+import NameExistsError from '../error/name-exists-error.js';
+import type { IAccountStore } from '../types/stores/account-store.js';
+import type { IUser } from '../types/user.js';
+import type EventService from '../features/events/event-service.js';
+import { SSO_SYNC_USER } from '../db/group-store.js';
+import type { IGroupWithProjectRoles } from '../types/stores/access-store.js';
+import { NotFoundError } from '../error/index.js';
 
 const setsAreEqual = (firstSet, secondSet) =>
     firstSet.size === secondSet.size &&
@@ -94,6 +95,9 @@ export class GroupService {
 
     async getGroup(id: number): Promise<IGroupModel> {
         const group = await this.groupStore.get(id);
+        if (group === undefined) {
+            throw new NotFoundError(`Could not find group with id ${id}`);
+        }
         const groupUsers = await this.groupStore.getAllUsersByGroups([id]);
         const users = await this.accountStore.getAllWithId(
             groupUsers.map((u) => u.userId),
@@ -103,7 +107,7 @@ export class GroupService {
 
     async isScimGroup(id: number): Promise<boolean> {
         const group = await this.groupStore.get(id);
-        return Boolean(group.scimId);
+        return Boolean(group?.scimId);
     }
 
     async createGroup(
@@ -207,6 +211,10 @@ export class GroupService {
     async deleteGroup(id: number, auditUser: IAuditUser): Promise<void> {
         const group = await this.groupStore.get(id);
 
+        if (group === undefined) {
+            /// Group was already deleted, or never existed, do nothing
+            return;
+        }
         const existingUsers = await this.groupStore.getAllUsersByGroups([
             group.id,
         ]);
@@ -308,6 +316,16 @@ export class GroupService {
 
             await this.eventService.storeEvents(events);
         }
+    }
+
+    async deleteScimGroups(auditUser: IAuditUser): Promise<void> {
+        await this.groupStore.deleteScimGroups();
+        await this.eventService.storeEvent(
+            new ScimGroupsDeleted({
+                data: null,
+                auditUser,
+            }),
+        );
     }
 
     private mapGroupWithUsers(

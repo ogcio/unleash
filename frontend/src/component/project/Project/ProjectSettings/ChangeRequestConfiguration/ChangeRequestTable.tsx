@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState, type VFC } from 'react';
+import { useContext, useMemo, useState, type VFC as FC } from 'react';
 import { type HeaderGroup, useGlobalFilter, useTable } from 'react-table';
 import { Alert, Box, styled, Typography } from '@mui/material';
 import {
@@ -24,13 +24,13 @@ import {
 import { UPDATE_PROJECT } from '@server/types/permissions';
 import useToast from 'hooks/useToast';
 import { formatUnknownError } from 'utils/formatUnknownError';
-import { ChangeRequestProcessHelp } from './ChangeRequestProcessHelp/ChangeRequestProcessHelp';
+import { ChangeRequestProcessHelp } from './ChangeRequestProcessHelp/ChangeRequestProcessHelp.tsx';
 import GeneralSelect from 'component/common/GeneralSelect/GeneralSelect';
 import KeyboardArrowDownOutlined from '@mui/icons-material/KeyboardArrowDownOutlined';
 import { useTheme } from '@mui/material/styles';
 import AccessContext from 'contexts/AccessContext';
 import { usePlausibleTracker } from 'hooks/usePlausibleTracker';
-import { PROJECT_CHANGE_REQUEST_WRITE } from '../../../../providers/AccessProvider/permissions';
+import { PROJECT_CHANGE_REQUEST_WRITE } from '../../../../providers/AccessProvider/permissions.ts';
 
 const StyledBox = styled(Box)(({ theme }) => ({
     padding: theme.spacing(1),
@@ -41,8 +41,9 @@ const StyledBox = styled(Box)(({ theme }) => ({
     },
 }));
 
-export const ChangeRequestTable: VFC = () => {
+export const ChangeRequestTable: FC = () => {
     const { trackEvent } = usePlausibleTracker();
+    const { hasAccess } = useContext(AccessContext);
     const [dialogState, setDialogState] = useState<{
         isOpen: boolean;
         enableEnvironment: string;
@@ -96,8 +97,7 @@ export const ChangeRequestTable: VFC = () => {
             );
             setToastData({
                 type: 'success',
-                title: 'Updated change request status',
-                text: 'Successfully updated change request status.',
+                text: 'Change request status updated',
             });
             await refetchChangeRequestConfig();
         } catch (error) {
@@ -140,43 +140,33 @@ export const ChangeRequestTable: VFC = () => {
             },
             {
                 Header: 'Required approvals',
-                Cell: ({ row: { original } }: any) => {
-                    const { hasAccess } = useContext(AccessContext);
-
-                    return (
-                        <ConditionallyRender
-                            condition={original.changeRequestEnabled}
-                            show={
-                                <StyledBox data-loading>
-                                    <GeneralSelect
-                                        sx={{ width: '140px', marginLeft: 1 }}
-                                        options={approvalOptions}
-                                        value={original.requiredApprovals || 1}
-                                        onChange={(approvals) => {
-                                            onRequiredApprovalsChange(
-                                                original,
-                                                approvals,
-                                            );
-                                        }}
-                                        disabled={
-                                            !hasAccess(
-                                                [
-                                                    UPDATE_PROJECT,
-                                                    PROJECT_CHANGE_REQUEST_WRITE,
-                                                ],
-                                                projectId,
-                                            )
-                                        }
-                                        IconComponent={
-                                            KeyboardArrowDownOutlined
-                                        }
-                                        fullWidth
-                                    />
-                                </StyledBox>
-                            }
-                        />
-                    );
-                },
+                Cell: ({ row: { original } }: any) =>
+                    original.changeRequestEnabled ? (
+                        <StyledBox data-loading>
+                            <GeneralSelect
+                                sx={{ width: '140px', marginLeft: 1 }}
+                                options={approvalOptions}
+                                value={original.requiredApprovals || 1}
+                                onChange={(approvals) => {
+                                    onRequiredApprovalsChange(
+                                        original,
+                                        approvals,
+                                    );
+                                }}
+                                disabled={
+                                    !hasAccess(
+                                        [
+                                            UPDATE_PROJECT,
+                                            PROJECT_CHANGE_REQUEST_WRITE,
+                                        ],
+                                        projectId,
+                                    )
+                                }
+                                IconComponent={KeyboardArrowDownOutlined}
+                                fullWidth
+                            />
+                        </StyledBox>
+                    ) : null,
                 width: 100,
                 disableGlobalFilter: true,
                 disableSortBy: true,
@@ -251,13 +241,18 @@ export const ChangeRequestTable: VFC = () => {
                 <TableBody {...getTableBodyProps()}>
                     {rows.map((row) => {
                         prepareRow(row);
+                        const { key, ...rowProps } = row.getRowProps();
                         return (
-                            <TableRow hover {...row.getRowProps()}>
-                                {row.cells.map((cell) => (
-                                    <TableCell {...cell.getCellProps()}>
-                                        {cell.render('Cell')}
-                                    </TableCell>
-                                ))}
+                            <TableRow hover key={key} {...rowProps}>
+                                {row.cells.map((cell) => {
+                                    const { key, ...cellProps } =
+                                        cell.getCellProps();
+                                    return (
+                                        <TableCell key={key} {...cellProps}>
+                                            {cell.render('Cell')}
+                                        </TableCell>
+                                    );
+                                })}
                             </TableRow>
                         );
                     })}

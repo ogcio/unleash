@@ -1,9 +1,9 @@
-import noLoggerProvider from '../../fixtures/no-logger';
-import dbInit, { type ITestDb } from '../helpers/database-init';
-import SessionService from '../../../lib/services/session-service';
-import NotFoundError from '../../../lib/error/notfound-error';
+import noLoggerProvider from '../../fixtures/no-logger.js';
+import dbInit, { type ITestDb } from '../helpers/database-init.js';
+import SessionService from '../../../lib/services/session-service.js';
+import NotFoundError from '../../../lib/error/notfound-error.js';
 import { addDays, minutesToMilliseconds } from 'date-fns';
-import type { IUnleashStores } from '../../../lib/types';
+import type { IUnleashStores } from '../../../lib/types/index.js';
 
 let stores: IUnleashStores;
 let db: ITestDb;
@@ -95,9 +95,8 @@ test('Can delete sessions by user', async () => {
     const sessions = await sessionService.getActiveSessions();
     expect(sessions.length).toBe(2);
     await sessionService.deleteSessionsForUser(2);
-    await expect(async () => {
-        await sessionService.getSessionsForUser(2);
-    }).rejects.toThrow(NotFoundError);
+    const noSessions = await sessionService.getSessionsForUser(2);
+    expect(noSessions.length).toBe(0);
 });
 
 test('Can delete session by sid', async () => {
@@ -111,4 +110,19 @@ test('Can delete session by sid', async () => {
     await expect(async () =>
         sessionService.getSession('abc123'),
     ).rejects.toThrow(NotFoundError);
+});
+
+test('Can delete stale sessions', async () => {
+    await sessionService.insertSession(newSession);
+    await sessionService.insertSession({ ...newSession, sid: 'new' });
+
+    const sessionsToKeep = 1;
+    await sessionService.deleteStaleSessionsForUser(
+        newSession.sess.user.id,
+        sessionsToKeep,
+    );
+
+    const sessions = await sessionService.getSessionsForUser(1);
+    expect(sessions.length).toBe(1);
+    expect(sessions[0].sid).toBe('new');
 });

@@ -3,10 +3,10 @@
  * Do not edit manually.
  * See `gen:api` script in package.json
  */
-import type { EventSchemaData } from './eventSchemaData';
-import type { EventSchemaPreData } from './eventSchemaPreData';
-import type { TagSchema } from './tagSchema';
-import type { EventSchemaType } from './eventSchemaType';
+import type { EventSchemaData } from './eventSchemaData.js';
+import type { EventSchemaPreData } from './eventSchemaPreData.js';
+import type { TagSchema } from './tagSchema.js';
+import type { EventSchemaType } from './eventSchemaType.js';
 
 /**
  * An event describing something happening in the system
@@ -42,7 +42,16 @@ export interface EventSchema {
      */
     id: number;
     /**
-     * **[Experimental]** The concise, human-readable name of the event.
+     * The IP address of the user that created the event. Only available in Enterprise.
+     * @nullable
+     */
+    ip?: string | null;
+    /**
+     * The event group ID.
+     */
+    groupId?: string;
+    /**
+     * The concise, human-readable name of the event.
      * @nullable
      */
     label?: string | null;
@@ -57,7 +66,7 @@ export interface EventSchema {
      */
     project?: string | null;
     /**
-     * **[Experimental]** A markdown-formatted summary of the event.
+     * A markdown-formatted summary of the event.
      * @nullable
      */
     summary?: string | null;

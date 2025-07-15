@@ -1,6 +1,13 @@
 import { hoursToMilliseconds } from 'date-fns';
-import type { IProjectHealthReport } from '../../types';
-import type { IFeatureType } from '../../types/stores/feature-type-store';
+import type {
+    IFeatureToggleStore,
+    IProject,
+    IProjectHealthReport,
+} from '../../types/index.js';
+import type {
+    IFeatureType,
+    IFeatureTypeStore,
+} from '../../types/stores/feature-type-store.js';
 
 type IPartialFeatures = Array<{
     stale?: boolean;
@@ -15,7 +22,9 @@ const getPotentiallyStaleCount = (
     const today = new Date().valueOf();
 
     return features.filter((feature) => {
-        const diff = today - feature.createdAt?.valueOf();
+        const diff = feature.createdAt
+            ? today - feature.createdAt.valueOf()
+            : 0;
         const featureTypeExpectedLifetime = featureTypes.find(
             (t) => t.id === feature.type,
         )?.lifetimeDays;
@@ -23,6 +32,7 @@ const getPotentiallyStaleCount = (
         return (
             !feature.stale &&
             featureTypeExpectedLifetime !== null &&
+            featureTypeExpectedLifetime !== undefined &&
             diff >= featureTypeExpectedLifetime * hoursToMilliseconds(24)
         );
     }).length;
@@ -58,3 +68,19 @@ export const calculateHealthRating = (
 
     return rating;
 };
+
+export const calculateProjectHealthRating =
+    (
+        featureTypeStore: IFeatureTypeStore,
+        featureToggleStore: IFeatureToggleStore,
+    ) =>
+    async ({ id }: Pick<IProject, 'id'>): Promise<number> => {
+        const featureTypes = await featureTypeStore.getAll();
+
+        const toggles = await featureToggleStore.getAll({
+            project: id,
+            archived: false,
+        });
+
+        return calculateHealthRating(toggles, featureTypes);
+    };

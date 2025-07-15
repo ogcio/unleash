@@ -1,11 +1,11 @@
-import type { IUnleashConfig } from '../types/option';
-import type { Logger } from '../logger';
+import type { IUnleashConfig } from '../types/option.js';
+import type { Logger } from '../logger.js';
 import type { Request } from 'express';
 import semver, { type SemVer } from 'semver';
-import BadDataError from '../error/bad-data-error';
-import { mustParseStrictSemVer, parseStrictSemVer } from '../util/semver';
+import BadDataError from '../error/bad-data-error.js';
+import { mustParseStrictSemVer, parseStrictSemVer } from '../util/semver.js';
 
-export type ClientSpecFeature = 'segments';
+export type ClientSpecFeature = 'segments' | 'deltaApi';
 
 export class ClientSpecService {
     private readonly logger: Logger;
@@ -14,6 +14,7 @@ export class ClientSpecService {
 
     private readonly clientSpecFeatures: Record<ClientSpecFeature, SemVer> = {
         segments: mustParseStrictSemVer('4.2.0'),
+        deltaApi: mustParseStrictSemVer('5.2.0'),
     };
 
     constructor(config: Pick<IUnleashConfig, 'getLogger'>) {

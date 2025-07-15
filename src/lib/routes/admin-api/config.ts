@@ -1,31 +1,35 @@
 import type { Response } from 'express';
-import type { AuthedRequest } from '../../types/core';
-import type { IUnleashServices } from '../../types/services';
-import { IAuthType, type IUnleashConfig } from '../../types/option';
-import version from '../../util/version';
-import Controller from '../controller';
-import type VersionService from '../../services/version-service';
-import type SettingService from '../../services/setting-service';
+import type { AuthedRequest } from '../../types/core.js';
+import type { IUnleashServices } from '../../services/index.js';
+import { IAuthType, type IUnleashConfig } from '../../types/option.js';
+import version from '../../util/version.js';
+import Controller from '../controller.js';
+import type VersionService from '../../services/version-service.js';
+import type SettingService from '../../services/setting-service.js';
 import {
     type SimpleAuthSettings,
     simpleAuthSettingsKey,
-} from '../../types/settings/simple-auth-settings';
-import { ADMIN, NONE } from '../../types/permissions';
-import { createResponseSchema } from '../../openapi/util/create-response-schema';
+} from '../../types/settings/simple-auth-settings.js';
+import { ADMIN, NONE, UPDATE_CORS } from '../../types/permissions.js';
+import { createResponseSchema } from '../../openapi/util/create-response-schema.js';
 import {
     uiConfigSchema,
     type UiConfigSchema,
-} from '../../openapi/spec/ui-config-schema';
-import type { OpenApiService } from '../../services/openapi-service';
-import type { EmailService } from '../../services/email-service';
-import { emptyResponse } from '../../openapi/util/standard-responses';
-import type { IAuthRequest } from '../unleash-types';
-import NotFoundError from '../../error/notfound-error';
-import type { SetUiConfigSchema } from '../../openapi/spec/set-ui-config-schema';
-import { createRequestSchema } from '../../openapi/util/create-request-schema';
-import type { FrontendApiService } from '../../services';
-import type MaintenanceService from '../../features/maintenance/maintenance-service';
-import type ClientInstanceService from '../../features/metrics/instance/instance-service';
+} from '../../openapi/spec/ui-config-schema.js';
+import type { OpenApiService } from '../../services/openapi-service.js';
+import type { EmailService } from '../../services/email-service.js';
+import { emptyResponse } from '../../openapi/util/standard-responses.js';
+import type { IAuthRequest } from '../unleash-types.js';
+import NotFoundError from '../../error/notfound-error.js';
+import type { SetCorsSchema } from '../../openapi/spec/set-cors-schema.js';
+import { createRequestSchema } from '../../openapi/util/create-request-schema.js';
+import type {
+    FrontendApiService,
+    SessionService,
+} from '../../services/index.js';
+import type MaintenanceService from '../../features/maintenance/maintenance-service.js';
+import type ClientInstanceService from '../../features/metrics/instance/instance-service.js';
+import type { IFlagResolver } from '../../types/index.js';
 
 class ConfigController extends Controller {
     private versionService: VersionService;
@@ -38,7 +42,11 @@ class ConfigController extends Controller {
 
     private clientInstanceService: ClientInstanceService;
 
+    private sessionService: SessionService;
+
     private maintenanceService: MaintenanceService;
+
+    private flagResolver: IFlagResolver;
 
     private readonly openApiService: OpenApiService;
 
@@ -52,6 +60,7 @@ class ConfigController extends Controller {
             frontendApiService,
             maintenanceService,
             clientInstanceService,
+            sessionService,
         }: Pick<
             IUnleashServices,
             | 'versionService'
@@ -61,6 +70,7 @@ class ConfigController extends Controller {
             | 'frontendApiService'
             | 'maintenanceService'
             | 'clientInstanceService'
+            | 'sessionService'
         >,
     ) {
         super(config);
@@ -71,6 +81,8 @@ class ConfigController extends Controller {
         this.frontendApiService = frontendApiService;
         this.maintenanceService = maintenanceService;
         this.clientInstanceService = clientInstanceService;
+        this.sessionService = sessionService;
+        this.flagResolver = config.flagResolver;
         this.route({
             method: 'get',
             path: '',
@@ -92,18 +104,18 @@ class ConfigController extends Controller {
 
         this.route({
             method: 'post',
-            path: '',
-            handler: this.setUiConfig,
-            permission: ADMIN,
+            path: '/cors',
+            handler: this.setCors,
+            permission: [ADMIN, UPDATE_CORS],
             middleware: [
                 openApiService.validPath({
                     tags: ['Admin UI'],
-                    summary: 'Set UI configuration',
+                    summary: 'Sets allowed CORS origins',
                     description:
-                        'Sets the UI configuration for this Unleash instance.',
-                    operationId: 'setUiConfig',
-                    requestBody: createRequestSchema('setUiConfigSchema'),
-                    responses: { 200: emptyResponse },
+                        'Sets Cross-Origin Resource Sharing headers for Frontend SDK API.',
+                    operationId: 'setCors',
+                    requestBody: createRequestSchema('setCorsSchema'),
+                    responses: { 204: emptyResponse },
                 }),
             ],
         });
@@ -113,14 +125,24 @@ class ConfigController extends Controller {
         req: AuthedRequest,
         res: Response<UiConfigSchema>,
     ): Promise<void> {
-        const [frontendSettings, simpleAuthSettings, maintenanceMode] =
-            await Promise.all([
-                this.frontendApiService.getFrontendSettings(false),
-                this.settingService.get<SimpleAuthSettings>(
-                    simpleAuthSettingsKey,
-                ),
-                this.maintenanceService.isMaintenanceMode(),
-            ]);
+        const getMaxSessionsCount = async () => {
+            if (this.flagResolver.isEnabled('showUserDeviceCount')) {
+                return this.sessionService.getMaxSessionsCount();
+            }
+            return 0;
+        };
+
+        const [
+            frontendSettings,
+            simpleAuthSettings,
+            maintenanceMode,
+            maxSessionsCount,
+        ] = await Promise.all([
+            this.frontendApiService.getFrontendSettings(false),
+            this.settingService.get<SimpleAuthSettings>(simpleAuthSettingsKey),
+            this.maintenanceService.isMaintenanceMode(),
+            getMaxSessionsCount(),
+        ]);
 
         const disablePasswordAuth =
             simpleAuthSettings?.disabled ||
@@ -135,6 +157,12 @@ class ConfigController extends Controller {
             ...expFlags,
         };
 
+        const unleashContext = {
+            ...this.flagResolver.getStaticContext(), //clientId etc.
+            email: req.user.email,
+            userId: req.user.id,
+        };
+
         const response: UiConfigSchema = {
             ...this.config.ui,
             flags,
@@ -143,16 +171,15 @@ class ConfigController extends Controller {
             unleashUrl: this.config.server.unleashUrl,
             baseUriPath: this.config.server.baseUriPath,
             authenticationType: this.config.authentication?.type,
-            segmentValuesLimit: this.config.resourceLimits.segmentValues,
-            strategySegmentsLimit: this.config.resourceLimits.strategySegments,
             frontendApiOrigins: frontendSettings.frontendApiOrigins,
             versionInfo: await this.versionService.getVersionInfo(),
-            networkViewEnabled: this.config.prometheusApi !== undefined,
+            prometheusAPIAvailable: this.config.prometheusApi !== undefined,
             resourceLimits: this.config.resourceLimits,
             disablePasswordAuth,
             maintenanceMode,
             feedbackUriPath: this.config.feedbackUriPath,
-            unleashAIAvailable: this.config.openAIAPIKey !== undefined,
+            maxSessionsCount,
+            unleashContext: unleashContext,
         };
 
         this.openApiService.respondWithValidation(
@@ -163,13 +190,13 @@ class ConfigController extends Controller {
         );
     }
 
-    async setUiConfig(
-        req: IAuthRequest<void, void, SetUiConfigSchema>,
+    async setCors(
+        req: IAuthRequest<void, void, SetCorsSchema>,
         res: Response<string>,
     ): Promise<void> {
-        if (req.body.frontendSettings) {
-            await this.frontendApiService.setFrontendSettings(
-                req.body.frontendSettings,
+        if (req.body.frontendApiOrigins) {
+            await this.frontendApiService.setFrontendCorsSettings(
+                req.body.frontendApiOrigins,
                 req.audit,
             );
             res.sendStatus(204);

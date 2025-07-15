@@ -1,6 +1,7 @@
 ---
 id: projects
 title: Projects
+pagination_next: reference/project-collaboration-mode
 ---
 
 ## Overview
@@ -17,7 +18,7 @@ By default, projects have an open [collaboration mode](./project-collaboration-m
 
 :::note Availability
 
-**Plan**: [Pro](https://www.getunleash.io/pricing) and [Enterprise](https://www.getunleash.io/pricing).
+**Plan**: [Pro](/availability#plans) and [Enterprise](https://www.getunleash.io/pricing).
 
 :::
 
@@ -31,13 +32,13 @@ To create a new project:
 
 :::note Availability
 
-**Plan**: [Pro](https://www.getunleash.io/pricing) and [Enterprise](https://www.getunleash.io/pricing).
+**Plan**: [Pro](/availability#plans) and [Enterprise](https://www.getunleash.io/pricing).
 
 :::
 
 You can update all aspects of a project except its ID.
 
-To update a project, go to **Projects** and select the project you'd like to edit. In the **Project settings** tab, you can update general settings such as project name, description, [stickiness](./stickiness), [collaboration mode](./project-collaboration-mode), and more. You can also configure user and API access, [change requests](./change-requests), and [actions](./actions), add [segments](./segments) and [environments](./environments), and update the [default strategy](#project-default-strategy).
+To update a project, go to **Projects** and select the project you'd like to edit. In **Settings > Project settings**, you can update general settings such as project name, description, [stickiness](./stickiness), [collaboration mode](./project-collaboration-mode), and more. You can also configure user and API access, [change requests](./change-requests), and [actions](./actions), add [segments](./segments) and [environments](./environments), and update the [default strategy](#project-default-strategy).
 
 The available project settings depend on a user's [root and project roles](./rbac).
 
@@ -45,7 +46,7 @@ The available project settings depend on a user's [root and project roles](./rba
 
 :::note Availability
 
-**Plan**: [Pro](https://www.getunleash.io/pricing) and [Enterprise](https://www.getunleash.io/pricing). | **Version**: `6.3+`
+**Plan**: [Pro](/availability#plans) and [Enterprise](https://www.getunleash.io/pricing). | **Version**: `6.3+`
 
 :::
 
@@ -55,9 +56,10 @@ Before archiving a project, you must archive all feature flags within it. Archiv
 
 To archive a project:
 
-1. Go to **Projects > Project settings > Settings**.
-2. Go to the **Archive project** section and click **Archive project**.
-3. Confirm by clicking **Yes, I'm sure**.
+1. Open the project and go to the **Settings** tab.
+2. In **Project settings**, go to the **Archive project** section.
+3. Click **Archive project**.
+4. Confirm by clicking **Yes, I'm sure**.
 
 ### Revive a project
 
@@ -67,7 +69,7 @@ To revive an archived project, go to **Projects > Archived projects** and click 
 
 :::note Availability
 
-**Plan**: [Pro](https://www.getunleash.io/pricing) and [Enterprise](https://www.getunleash.io/pricing).
+**Plan**: [Pro](/availability#plans) and [Enterprise](https://www.getunleash.io/pricing).
 
 :::
 
@@ -92,17 +94,15 @@ To move a feature flag between projects:
 
 ## Project default strategy
 
-import Figure from '@site/src/components/Figure/Figure.tsx'
-
 :::note Availability
 
 **Version**: `5.2+`.
 
 :::
 
-Each project has a default strategy of [gradual rollout](./activation-strategies#gradual-rollout) to 100% of the user base. The default strategy only applies when **no active strategies** are defined for a flag in a specific environment.
+Each project has a default strategy of [gradual rollout](./activation-strategies) to 100% of the user base. The default strategy only applies when **no active strategies** are defined for a flag in a specific environment.
 
-You can change the default strategies of a project per environment. You can customize the default strategies by changing the rollout percentage and [stickiness](./stickiness) and adding [segments](./segments), [constraints](./strategy-constraints), and [variants](./strategy-variants).
+You can change the default strategies of a project per environment. You can customize the default strategies by changing the rollout percentage and [stickiness](./stickiness) and adding [segments](./segments), [constraints](./activation-strategies#constraints), and [variants](./strategy-variants).
 
 To change the default strategy for an environment in a project:
 
@@ -111,12 +111,16 @@ To change the default strategy for an environment in a project:
 3. Configure the strategy values, such as the rollout percentage, stickiness, segments, constraints, and variants.
 4. Click **Save strategy**.
 
-<Figure caption="You can configure each environment's default strategy with the corresponding edit button." img="/img/edit-default-strategy-development.png" />
+![Configuring the default strategy](/img/edit-default-strategy-development.png)
 
-## View project insights
+## Project roles
 
-Project insights is a great way to see how your project performed in the last 30 days compared to the previous 30 days. You can explore key metrics such as the total number of changes, the average time to production, the number of features created and archived, and project health.
+Unleash supports [predefined](./rbac#predefined-roles) and [custom roles](./rbac#custom-project-roles) at the project level. The two predefined project roles are Owner and Member. By default, the person creating the project becomes the Owner. If a project does not have an Owner, it is shown as owned by _System_.
 
-To view your project insights, go to the **Insights** within a project.
+## View project status
+
+The [Project status](./technical-debt#project-status) dashboard provides an overview of your project's technical debt, information on project resources like API keys, recent activity within the project, and feature flag lifecycle information.
+
+For additional, in-depth analysis, go to **Analytics** and filter by your project.
 
 

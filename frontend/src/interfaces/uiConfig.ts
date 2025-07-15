@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import type { Variant } from 'utils/variants';
-import type { ResourceLimitsSchema } from '../openapi';
+import type { ResourceLimitsSchema } from 'openapi';
+import {} from '@unleash/proxy-client-react/dist/FlagContext';
+import type { IMutableContext } from 'unleash-proxy-client';
 
 export interface IUiConfig {
     authenticationType?: string;
@@ -17,22 +19,22 @@ export interface IUiConfig {
     name: string;
     slogan: string;
     environment?: string;
+    billing?: 'subscription' | 'pay-as-you-go' | 'enterprise-consumption';
     unleashUrl?: string;
     version: string;
     versionInfo?: IVersionInfo;
     links: ILinks[];
     disablePasswordAuth?: boolean;
     emailEnabled?: boolean;
-    networkViewEnabled: boolean;
+    prometheusAPIAvailable: boolean;
     maintenanceMode?: boolean;
     toast?: IProclamationToast;
-    segmentValuesLimit?: number;
-    strategySegmentsLimit?: number;
     frontendApiOrigins?: string[];
     resourceLimits: ResourceLimitsSchema;
     oidcConfiguredThroughEnv?: boolean;
     samlConfiguredThroughEnv?: boolean;
-    unleashAIAvailable?: boolean;
+    maxSessionsCount?: number;
+    unleashContext?: IMutableContext;
 }
 
 export interface IProclamationToast {
@@ -50,18 +52,13 @@ export type UiFlags = {
     T?: boolean;
     UNLEASH_CLOUD?: boolean;
     UG?: boolean;
-    embedProxyFrontend?: boolean;
     maintenanceMode?: boolean;
     messageBanner?: Variant;
     banner?: Variant;
-    featuresExportImport?: boolean;
-    caseInsensitiveInOperators?: boolean;
     notifications?: boolean;
     personalAccessTokensKillSwitch?: boolean;
     demo?: boolean;
     googleAuthEnabled?: boolean;
-    disableBulkToggle?: boolean;
-    disableNotifications?: boolean;
     advancedPlayground?: boolean;
     strategyVariant?: boolean;
     doraMetrics?: boolean;
@@ -70,13 +67,10 @@ export type UiFlags = {
     signals?: boolean;
     automatedActions?: boolean;
     celebrateUnleash?: boolean;
-    featureSearchFeedback?: Variant;
     enableLicense?: boolean;
-    adminTokenKillSwitch?: boolean;
     feedbackComments?: Variant;
     showInactiveUsers?: boolean;
-    featureSearchFeedbackPosting?: boolean;
-    userAccessUIEnabled?: boolean;
+    feedbackPosting?: boolean;
     outdatedSdksBanner?: boolean;
     estimateTrafficDataCost?: boolean;
     disableShowContextFieldSelectionValues?: boolean;
@@ -85,12 +79,20 @@ export type UiFlags = {
     manyStrategiesPagination?: boolean;
     enableLegacyVariants?: boolean;
     flagCreator?: boolean;
-    onboardingUI?: boolean;
-    eventTimeline?: boolean;
-    personalDashboardUI?: boolean;
-    purchaseAdditionalEnvironments?: boolean;
-    unleashAI?: boolean;
     releasePlans?: boolean;
+    productivityReportEmail?: boolean;
+    showUserDeviceCount?: boolean;
+    consumptionModel?: boolean;
+    edgeObservability?: boolean;
+    customMetrics?: boolean;
+    lifecycleMetrics?: boolean;
+    createFlagDialogCache?: boolean;
+    improvedJsonDiff?: boolean;
+    impactMetrics?: boolean;
+    crDiffView?: boolean;
+    changeRequestApproverEmails?: boolean;
+    eventGrouping?: boolean;
+    reportUnknownFlags?: boolean;
 };
 
 export interface IVersionInfo {
@@ -98,6 +100,7 @@ export interface IVersionInfo {
     isLatest: boolean;
     latest: Partial<IVersion>;
     current: IVersion;
+    buildDate?: string;
 }
 
 export interface IVersion {

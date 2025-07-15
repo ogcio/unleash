@@ -2,9 +2,18 @@ import { createTransport, type Transporter } from 'nodemailer';
 import Mustache from 'mustache';
 import path from 'path';
 import { existsSync, readFileSync } from 'fs';
-import type { Logger } from '../logger';
-import NotFoundError from '../error/notfound-error';
-import type { IUnleashConfig } from '../types/option';
+import type { Logger } from '../logger.js';
+import NotFoundError from '../error/notfound-error.js';
+import type { IUnleashConfig } from '../types/option.js';
+import {
+    type ProductivityReportMetrics,
+    productivityReportViewModel,
+} from '../features/productivity-report/productivity-report-view-model.js';
+import { fileURLToPath } from 'node:url';
+import type { IFlagResolver } from '../types/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export interface IAuthOptions {
     user: string;
@@ -33,18 +42,25 @@ export interface IEmailEnvelope {
         path: string;
         cid: string;
     }[];
+    headers?: Record<string, string>;
+}
+
+export interface ICrApprovalParameters {
+    changeRequestLink: string;
+    changeRequestTitle: string;
+    requesterName: string;
+    requesterEmail: string;
 }
 
 const RESET_MAIL_SUBJECT = 'Unleash - Reset your password';
 const GETTING_STARTED_SUBJECT = 'Welcome to Unleash';
-const ORDER_ENVIRONMENTS_SUBJECT =
-    'Unleash - ordered environments successfully';
 const PRODUCTIVITY_REPORT = 'Unleash - productivity report';
 const SCHEDULED_CHANGE_CONFLICT_SUBJECT =
     'Unleash - Scheduled changes can no longer be applied';
 const SCHEDULED_EXECUTION_FAILED_SUBJECT =
     'Unleash - Scheduled change request could not be applied';
-
+const REQUESTED_CR_APPROVAL_SUBJECT =
+    'Unleash - new change request waiting to be reviewed';
 export const MAIL_ACCEPTED = '250 Accepted';
 
 export type ChangeRequestScheduleConflictData =
@@ -69,11 +85,7 @@ export type ChangeRequestScheduleConflictData =
           environment: string;
       };
 
-export type OrderEnvironmentData = {
-    name: string;
-    type: string;
-};
-
+export type TransportProvider = () => Transporter;
 export class EmailService {
     private logger: Logger;
     private config: IUnleashConfig;
@@ -82,16 +94,22 @@ export class EmailService {
 
     private readonly sender: string;
 
-    constructor(config: IUnleashConfig) {
+    private flagResolver: IFlagResolver;
+
+    constructor(config: IUnleashConfig, transportProvider?: TransportProvider) {
         this.config = config;
         this.logger = config.getLogger('services/email-service.ts');
+        this.flagResolver = config.flagResolver;
         const { email } = config;
         if (email?.host) {
             this.sender = email.sender;
+            const provider = transportProvider
+                ? transportProvider
+                : createTransport;
             if (email.host === 'test') {
-                this.mailer = createTransport({ jsonTransport: true });
+                this.mailer = provider({ jsonTransport: true });
             } else {
-                this.mailer = createTransport({
+                this.mailer = provider({
                     host: email.host,
                     port: email.port,
                     secure: email.secure,
@@ -111,6 +129,63 @@ export class EmailService {
         }
     }
 
+    async sendRequestedCRApprovalEmail(
+        recipient: string,
+        crApprovalParams: ICrApprovalParameters,
+    ): Promise<IEmailEnvelope> {
+        if (this.configured()) {
+            const year = new Date().getFullYear();
+            const bodyHtml = await this.compileTemplate(
+                'requested-cr-approval',
+                TemplateFormat.HTML,
+                {
+                    ...crApprovalParams,
+                    year,
+                },
+            );
+            const bodyText = await this.compileTemplate(
+                'requested-cr-approval',
+                TemplateFormat.PLAIN,
+                {
+                    ...crApprovalParams,
+                    year,
+                },
+            );
+            const email = {
+                from: this.sender,
+                to: recipient,
+                subject: REQUESTED_CR_APPROVAL_SUBJECT,
+                html: bodyHtml,
+                text: bodyText,
+            };
+            process.nextTick(() => {
+                this.mailer!.sendMail(email).then(
+                    () =>
+                        this.logger.info(
+                            'Successfully sent requested-cr-approval email',
+                        ),
+                    (e) =>
+                        this.logger.warn(
+                            'Failed to send requested-cr-approval email',
+                            e,
+                        ),
+                );
+            });
+            return Promise.resolve(email);
+        }
+        return new Promise((res) => {
+            this.logger.warn(
+                'No mailer is configured. Please read the docs on how to configure an email service',
+            );
+            res({
+                from: this.sender,
+                to: recipient,
+                subject: REQUESTED_CR_APPROVAL_SUBJECT,
+                html: '',
+                text: '',
+            });
+        });
+    }
     async sendScheduledExecutionFailedEmail(
         recipient: string,
         changeRequestLink: string,
@@ -414,14 +489,25 @@ export class EmailService {
                 name: this.stripSpecialCharacters(name),
                 year,
                 unleashUrl,
+                recipient,
             };
+
+            const gettingStartedTemplate = 'getting-started';
+
+            // If the password link is the base Unleash URL, we remove it from the context
+            // This can happen if the instance is using SSO instead of password-based authentication
+            // In that case, our template should show the alternative path: You don't set a password, you log in with SSO
+            if (passwordLink === unleashUrl) {
+                delete context.passwordLink;
+            }
+
             const bodyHtml = await this.compileTemplate(
-                'getting-started',
+                gettingStartedTemplate,
                 TemplateFormat.HTML,
                 context,
             );
             const bodyText = await this.compileTemplate(
-                'getting-started',
+                gettingStartedTemplate,
                 TemplateFormat.PLAIN,
                 context,
             );
@@ -461,87 +547,18 @@ export class EmailService {
         });
     }
 
-    async sendOrderEnvironmentEmail(
-        userEmail: string,
-        customerId: string,
-        environments: OrderEnvironmentData[],
-    ): Promise<IEmailEnvelope> {
-        if (this.configured()) {
-            const context = {
-                userEmail,
-                customerId,
-                environments: environments.map((data) => ({
-                    name: this.stripSpecialCharacters(data.name),
-                    type: this.stripSpecialCharacters(data.type),
-                })),
-            };
-
-            const bodyHtml = await this.compileTemplate(
-                'order-environments',
-                TemplateFormat.HTML,
-                context,
-            );
-            const bodyText = await this.compileTemplate(
-                'order-environments',
-                TemplateFormat.PLAIN,
-                context,
-            );
-            const email = {
-                from: this.sender,
-                to: userEmail,
-                bcc:
-                    process.env.ORDER_ENVIRONMENTS_BCC ||
-                    'pro-sales@getunleash.io',
-                subject: ORDER_ENVIRONMENTS_SUBJECT,
-                html: bodyHtml,
-                text: bodyText,
-            };
-            process.nextTick(() => {
-                this.mailer!.sendMail(email).then(
-                    () =>
-                        this.logger.info(
-                            'Successfully sent order environments email',
-                        ),
-                    (e) =>
-                        this.logger.warn(
-                            'Failed to send order environments email',
-                            e,
-                        ),
-                );
-            });
-            return Promise.resolve(email);
-        }
-        return new Promise((res) => {
-            this.logger.warn(
-                'No mailer is configured. Please read the docs on how to configure an email service',
-            );
-            res({
-                from: this.sender,
-                to: userEmail,
-                bcc: '',
-                subject: ORDER_ENVIRONMENTS_SUBJECT,
-                html: '',
-                text: '',
-            });
-        });
-    }
-
     async sendProductivityReportEmail(
-        userName: string,
         userEmail: string,
-        metrics: {
-            health: number;
-            flagsCreated: number;
-            productionUpdates: number;
-        },
+        userName: string,
+        metrics: ProductivityReportMetrics,
     ): Promise<IEmailEnvelope> {
         if (this.configured()) {
-            const context = {
-                userName,
+            const context = productivityReportViewModel({
+                metrics,
                 userEmail,
-                ...metrics,
+                userName,
                 unleashUrl: this.config.server.unleashUrl,
-            };
+            });
 
             const template = 'productivity-report';
 
@@ -555,6 +572,16 @@ export class EmailService {
                 TemplateFormat.PLAIN,
                 context,
             );
+
+            const headers: Record<string, string> = {};
+            Object.entries(this.config.email.optionalHeaders || {}).forEach(
+                ([key, value]) => {
+                    if (typeof value === 'string') {
+                        headers[key] = value;
+                    }
+                },
+            );
+
             const email: IEmailEnvelope = {
                 from: this.sender,
                 to: userEmail,
@@ -569,7 +596,9 @@ export class EmailService {
                         'unleashLogo',
                     ),
                 ],
-            };
+                headers,
+            } satisfies IEmailEnvelope;
+
             process.nextTick(() => {
                 this.mailer!.sendMail(email).then(
                     () =>

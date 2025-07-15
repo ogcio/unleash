@@ -1,30 +1,45 @@
 import supertest from 'supertest';
 
-import getApp from '../../../lib/app';
-import { createTestConfig } from '../../config/test-config';
-import { IAuthType, type IUnleashConfig } from '../../../lib/types/option';
-import { createServices } from '../../../lib/services';
-import sessionDb from '../../../lib/middleware/session-db';
+import getApp from '../../../lib/app.js';
+import { createTestConfig } from '../../config/test-config.js';
+import { IAuthType, type IUnleashConfig } from '../../../lib/types/option.js';
+import { createServices } from '../../../lib/services/index.js';
+import sessionDb from '../../../lib/middleware/session-db.js';
 import {
     DEFAULT_PROJECT,
     type FeatureToggleDTO,
     type IUnleashStores,
-} from '../../../lib/types';
-import type { IUnleashServices } from '../../../lib/types/services';
-import type { Db } from '../../../lib/db/db';
-import type { IContextFieldDto } from '../../../lib/types/stores/context-field-store';
-import { DEFAULT_ENV } from '../../../lib/util';
+} from '../../../lib/types/index.js';
+import type { IUnleashServices } from '../../../lib/services/index.js';
+import type { Db } from '../../../lib/db/db.js';
+import type { IContextFieldDto } from '../../../lib/features/context/context-field-store-type.js';
+import { DEFAULT_ENV } from '../../../lib/util/index.js';
 import type {
     CreateDependentFeatureSchema,
     CreateFeatureSchema,
     CreateFeatureStrategySchema,
     ImportTogglesSchema,
-} from '../../../lib/openapi';
+} from '../../../lib/openapi/index.js';
 import type { Knex } from 'knex';
-import type TestAgent from 'supertest/lib/agent';
-import type Test from 'supertest/lib/test';
+import type TestAgent from 'supertest/lib/agent.d.ts';
+import type Test from 'supertest/lib/test.d.ts';
 import type { Server } from 'node:http';
+import {
+    initialServiceSetup,
+    type IUser,
+    type RoleName,
+} from '../../../lib/server-impl.js';
+import type { EventSearchQueryParameters } from '../../../lib/openapi/spec/event-search-query-parameters.js';
 process.env.NODE_ENV = 'test';
+
+type DemoLoginArgs = {
+    email: string;
+};
+
+type SimpleLoginArgs = {
+    username: string;
+    password: string;
+};
 
 export interface IUnleashTest extends IUnleashHttpAPI {
     request: TestAgent<Test>;
@@ -114,9 +129,23 @@ export interface IUnleashHttpAPI {
         expectedResponseCode?: number,
     ): supertest.Test;
 
-    getRecordedEvents(): supertest.Test;
+    getRecordedEvents(
+        queryParams?: EventSearchQueryParameters,
+        expectedResponseCode?: number,
+    ): supertest.Test;
 
     createSegment(postData: object, expectStatusCode?: number): supertest.Test;
+    deleteSegment(
+        segmentId: number,
+        expectedResponseCode?: number,
+    ): supertest.Test;
+    updateSegment(
+        segmentId: number,
+        postData: object,
+        expectStatusCode?: number,
+    ): supertest.Test;
+
+    login(args: DemoLoginArgs | SimpleLoginArgs): supertest.Test;
 }
 
 function httpApis(
@@ -288,16 +317,51 @@ function httpApis(
                 .set('Content-Type', 'application/json')
                 .expect(expectedResponseCode);
         },
-
-        getRecordedEvents(
-            project: string | null = null,
-            expectedResponseCode: number = 200,
+        deleteSegment(
+            segmentId: number,
+            expectedResponseCode = 204,
         ): supertest.Test {
             return request
-                .post('/api/admin/events/search')
-                .send({ project, query: '', limit: 50, offset: 0 })
+                .delete(`/api/admin/segments/${segmentId}`)
                 .set('Content-Type', 'application/json')
                 .expect(expectedResponseCode);
+        },
+        updateSegment(
+            segmentId: number,
+            postData: object,
+            expectStatusCode = 204,
+        ): supertest.Test {
+            return request
+                .put(`/api/admin/segments/${segmentId}`)
+                .send(postData)
+                .expect(expectStatusCode);
+        },
+        getRecordedEvents(
+            queryParams: EventSearchQueryParameters = {},
+            expectedResponseCode: number = 200,
+        ): supertest.Test {
+            const query = new URLSearchParams(queryParams as any).toString();
+            return request
+                .get(`/api/admin/search/events${query ? `?${query}` : ''}`)
+                .expect(expectedResponseCode);
+        },
+        login(args: DemoLoginArgs | SimpleLoginArgs): supertest.Test {
+            if ('email' in args) {
+                const { email } = args;
+                return request
+                    .post(`${base}/auth/demo/login`)
+                    .send({ email })
+                    .expect(200);
+            }
+
+            const { username, password } = args;
+            return request
+                .post(`${base}/auth/simple/login`)
+                .send({
+                    username,
+                    password,
+                } as SimpleLoginArgs)
+                .expect(200);
         },
     };
 }
@@ -330,6 +394,8 @@ async function createApp(
         },
     });
     const services = createServices(stores, config, db);
+    await initialServiceSetup(config, services);
+    // @ts-expect-error We don't have a database for sessions here.
     const unleashSession = sessionDb(config, undefined);
     const app = await getApp(config, stores, services, unleashSession, db);
     const request = supertest.agent(app);
@@ -384,6 +450,8 @@ export async function setupAppWithoutSupertest(
         },
     });
     const services = createServices(stores, config, db);
+    await initialServiceSetup(config, services);
+    // @ts-expect-error we don't have a db for the session here
     const unleashSession = sessionDb(config, undefined);
     const app = await getApp(config, stores, services, unleashSession, db);
     const server = app.listen(0);
@@ -426,7 +494,7 @@ export async function setupAppWithAuth(
 
 export async function setupAppWithCustomAuth(
     stores: IUnleashStores,
-    preHook: Function,
+    preHook?: Function,
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     customOptions?: any,
     db?: Db,
@@ -449,8 +517,8 @@ export async function setupAppWithBaseUrl(
 export const insertLastSeenAt = async (
     featureName: string,
     db: Knex,
-    environment: string = 'default',
-    date: string = '2023-10-01 12:34:56',
+    environment: string = DEFAULT_ENV,
+    date: string = '2023-10-01T12:34:56.000Z',
 ): Promise<string> => {
     try {
         await db.raw(`INSERT INTO last_seen_at_metrics (feature_name, environment, last_seen_at)
@@ -467,7 +535,7 @@ export const insertFeatureEnvironmentsLastSeen = async (
     featureName: string,
     db: Knex,
     environment: string = 'default',
-    date: string = '2022-05-01 12:34:56',
+    date: string = '2022-05-01T12:34:56.000Z',
 ): Promise<string> => {
     await db.raw(`
         INSERT INTO feature_environments (feature_name, environment, last_seen_at, enabled)
@@ -476,4 +544,40 @@ export const insertFeatureEnvironmentsLastSeen = async (
     `);
 
     return date;
+};
+
+export const createUserWithRootRole = async ({
+    app,
+    stores,
+    email,
+    name = email,
+    roleName,
+}: {
+    app: IUnleashTest;
+    stores: IUnleashStores;
+    name?: string;
+    email: string;
+    roleName?: RoleName;
+}): Promise<IUser> => {
+    const createdUser = await stores.userStore.insert({
+        name,
+        email,
+    });
+
+    if (roleName) {
+        const roles = await app.services.accessService.getRootRoles();
+        const role = roles.find((role) => role.name === roleName);
+
+        if (!role) {
+            throw new Error(`Role ${roleName} not found`);
+        }
+
+        await app.services.accessService.addUserToRole(
+            createdUser.id,
+            role.id,
+            'default',
+        );
+    }
+
+    return createdUser;
 };

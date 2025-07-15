@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import useToast from 'hooks/useToast';
 import { formatUnknownError } from 'utils/formatUnknownError';
 import { usePlausibleTracker } from 'hooks/usePlausibleTracker';
-import useAPI from '../useApi/useApi';
+import useAPI from '../useApi/useApi.js';
 
 export const useFavoriteFeaturesApi = () => {
     const { makeLightRequest, createRequest, errors, loading } = useAPI({
@@ -24,7 +24,7 @@ export const useFavoriteFeaturesApi = () => {
                 await makeLightRequest(req.caller, req.id);
 
                 setToastData({
-                    title: 'Toggle added to favorites',
+                    text: 'Feature flag added to favorites',
                     type: 'success',
                 });
                 trackEvent('favorite', {
@@ -52,7 +52,7 @@ export const useFavoriteFeaturesApi = () => {
                 await makeLightRequest(req.caller, req.id);
 
                 setToastData({
-                    title: 'Toggle removed from favorites',
+                    text: 'Feature flag removed from favorites',
                     type: 'success',
                 });
                 trackEvent('favorite', {

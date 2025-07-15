@@ -1,4 +1,5 @@
-import { parse } from 'pg-connection-string';
+import pgs from 'pg-connection-string';
+const { parse } = pgs;
 import merge from 'deepmerge';
 import { readFileSync, existsSync } from 'fs';
 import {
@@ -22,37 +23,39 @@ import {
     type IVersionOption,
     type ISSLOption,
     type UsernameAdminUser,
-} from './types/option';
-import { getDefaultLogProvider, LogLevel, validateLogProvider } from './logger';
-import { defaultCustomAuthDenyAll } from './default-custom-auth-deny-all';
-import { formatBaseUri } from './util/format-base-uri';
+} from './types/option.js';
+import {
+    getDefaultLogProvider,
+    LogLevel,
+    validateLogProvider,
+} from './logger.js';
+import { defaultCustomAuthDenyAll } from './default-custom-auth-deny-all.js';
+import { formatBaseUri } from './util/format-base-uri.js';
 import {
     hoursToMilliseconds,
     minutesToMilliseconds,
     secondsToMilliseconds,
 } from 'date-fns';
 import EventEmitter from 'events';
-import {
-    ApiTokenType,
-    mapLegacyToken,
-    validateApiToken,
-} from './types/models/api-token';
+import { validateApiToken } from './types/models/api-token.js';
 import {
     parseEnvVarBoolean,
+    parseEnvVarJSON,
     parseEnvVarNumber,
     parseEnvVarStrings,
-} from './util/parseEnvVar';
+} from './util/parseEnvVar.js';
 import {
     defaultExperimentalOptions,
     type IExperimentalOptions,
-} from './types/experimental';
+} from './types/experimental.js';
 import {
     DEFAULT_SEGMENT_VALUES_LIMIT,
     DEFAULT_STRATEGY_SEGMENTS_LIMIT,
-} from './util/segments';
-import FlagResolver from './util/flag-resolver';
-import { validateOrigins } from './util/validateOrigin';
-import type { ResourceLimitsSchema } from './openapi/spec/resource-limits-schema';
+} from './util/segments.js';
+import FlagResolver from './util/flag-resolver.js';
+import { validateOrigins } from './util/validateOrigin.js';
+import type { ResourceLimitsSchema } from './openapi/spec/resource-limits-schema.js';
+import { ApiTokenType } from './internals.js';
 
 const safeToUpper = (s?: string) => (s ? s.toUpperCase() : s);
 
@@ -258,11 +261,14 @@ const defaultDbOptions: WithOptional<IDBOption, 'user' | 'password' | 'host'> =
             propagateCreateError: false,
         },
         schema: process.env.DATABASE_SCHEMA || 'public',
-        disableMigration: false,
+        disableMigration: parseEnvVarBoolean(
+            process.env.DATABASE_DISABLE_MIGRATION,
+            false,
+        ),
         applicationName: process.env.DATABASE_APPLICATION_NAME || 'unleash',
     };
 
-const defaultSessionOption: ISessionOption = {
+const defaultSessionOption = (isEnterprise: boolean): ISessionOption => ({
     ttlHours: parseEnvVarNumber(process.env.SESSION_TTL_HOURS, 48),
     clearSiteDataOnLogout: parseEnvVarBoolean(
         process.env.SESSION_CLEAR_SITE_DATA_ON_LOGOUT,
@@ -270,7 +276,16 @@ const defaultSessionOption: ISessionOption = {
     ),
     cookieName: 'unleash-session',
     db: true,
-};
+    // default limit of 100 for enterprise, 5 for pro and oss
+    // at least 1 session should be allowed
+    maxParallelSessions: Math.max(
+        parseEnvVarNumber(
+            process.env.MAX_PARALLEL_SESSIONS,
+            isEnterprise ? 100 : 5,
+        ),
+        1,
+    ),
+});
 
 const defaultServerOption: IServerOption = {
     pipe: undefined,
@@ -322,17 +337,22 @@ const parseEnvVarInitialAdminUser = (): UsernameAdminUser | undefined => {
     return username && password ? { username, password } : undefined;
 };
 
-const defaultAuthentication: IAuthOption = {
-    demoAllowAdminLogin: parseEnvVarBoolean(
-        process.env.AUTH_DEMO_ALLOW_ADMIN_LOGIN,
-        false,
-    ),
-    enableApiToken: parseEnvVarBoolean(process.env.AUTH_ENABLE_API_TOKEN, true),
-    type: authTypeFromString(process.env.AUTH_TYPE),
-    customAuthHandler: defaultCustomAuthDenyAll,
-    createAdminUser: true,
-    initialAdminUser: parseEnvVarInitialAdminUser(),
-    initApiTokens: [],
+const buildDefaultAuthOption = () => {
+    return {
+        demoAllowAdminLogin: parseEnvVarBoolean(
+            process.env.AUTH_DEMO_ALLOW_ADMIN_LOGIN,
+            false,
+        ),
+        enableApiToken: parseEnvVarBoolean(
+            process.env.AUTH_ENABLE_API_TOKEN,
+            true,
+        ),
+        type: authTypeFromString(process.env.AUTH_TYPE),
+        customAuthHandler: defaultCustomAuthDenyAll,
+        createAdminUser: true,
+        initialAdminUser: parseEnvVarInitialAdminUser(),
+        initApiTokens: [],
+    };
 };
 
 const defaultImport: WithOptional<IImportOption, 'file'> = {
@@ -348,6 +368,7 @@ const defaultEmail: IEmailOption = {
     sender: process.env.EMAIL_SENDER || 'Unleash <noreply@getunleash.io>',
     smtpuser: process.env.EMAIL_USER,
     smtppass: process.env.EMAIL_PASSWORD,
+    optionalHeaders: parseEnvVarJSON(process.env.EMAIL_OPTIONAL_HEADERS, {}),
 };
 
 const dbPort = (dbConfig: Partial<IDBOption>): Partial<IDBOption> => {
@@ -396,13 +417,13 @@ const loadTokensFromString = (
         const [environment = '*'] = rest.split('.');
         const token = {
             createdAt: undefined,
-            project,
+            projects: [project],
             environment,
             secret,
             type: tokenType,
             tokenName: 'admin',
         };
-        validateApiToken(mapLegacyToken(token));
+        validateApiToken(token);
         return token;
     });
     return tokens;
@@ -491,6 +512,17 @@ const parseFrontendApiOrigins = (options: IUnleashOptions): string[] => {
     return frontendApiOrigins;
 };
 
+export function resolveIsOss(
+    isEnterprise: boolean,
+    isOssOption?: boolean,
+    uiEnvironment?: string,
+    testEnvironmentActive: boolean = false,
+): boolean {
+    return testEnvironmentActive
+        ? (isOssOption ?? false)
+        : !isEnterprise && uiEnvironment?.toLowerCase() !== 'pro';
+}
+
 export function createConfig(options: IUnleashOptions): IUnleashConfig {
     let extraDbOptions = {};
 
@@ -517,11 +549,6 @@ export function createConfig(options: IUnleashOptions): IUnleashConfig {
         options.db || {},
     ]);
 
-    const session: ISessionOption = mergeAll([
-        defaultSessionOption,
-        options.session || {},
-    ]);
-
     const logLevel =
         options.logLevel || LogLevel[process.env.LOG_LEVEL ?? LogLevel.error];
     const getLogger = options.getLogger || getDefaultLogProvider(logLevel);
@@ -543,12 +570,18 @@ export function createConfig(options: IUnleashOptions): IUnleashConfig {
     const initApiTokens = loadInitApiTokens();
 
     const authentication: IAuthOption = mergeAll([
-        defaultAuthentication,
+        buildDefaultAuthOption(),
         (options.authentication
             ? removeUndefinedKeys(options.authentication)
             : options.authentication) || {},
         { initApiTokens: initApiTokens },
     ]);
+    // make sure init tokens appear only once
+    authentication.initApiTokens = [
+        ...new Map(
+            authentication.initApiTokens.map((token) => [token.secret, token]),
+        ).values(),
+    ];
 
     const environmentEnableOverrides = loadEnvironmentEnableOverrides();
 
@@ -582,7 +615,10 @@ export function createConfig(options: IUnleashOptions): IUnleashConfig {
         options.secureHeaders ||
         parseEnvVarBoolean(process.env.SECURE_HEADERS, false);
 
-    const enableOAS = parseEnvVarBoolean(process.env.ENABLE_OAS, true);
+    const enableOAS =
+        options.enableOAS === undefined
+            ? parseEnvVarBoolean(process.env.ENABLE_OAS, true)
+            : options.enableOAS;
 
     const additionalCspAllowedDomains: ICspDomainConfig =
         parseCspConfig(options.additionalCspAllowedDomains) ||
@@ -615,6 +651,19 @@ export function createConfig(options: IUnleashOptions): IUnleashConfig {
         Boolean(options.enterpriseVersion) &&
         ui.environment?.toLowerCase() !== 'pro';
 
+    const isTest = process.env.NODE_ENV === 'test';
+    const isOss = resolveIsOss(
+        isEnterprise,
+        options.isOss,
+        ui.environment,
+        isTest,
+    );
+
+    const session: ISessionOption = mergeAll([
+        defaultSessionOption(isEnterprise),
+        options.session || {},
+    ]);
+
     const metricsRateLimiting = loadMetricsRateLimitingConfig(options);
 
     const rateLimiting = loadRateLimitingConfig(options);
@@ -622,7 +671,7 @@ export function createConfig(options: IUnleashOptions): IUnleashConfig {
     const feedbackUriPath = process.env.FEEDBACK_URI_PATH;
 
     const dailyMetricsStorageDays = Math.min(
-        parseEnvVarNumber(process.env.DAILY_METRICS_STORAGE_DAYS, 31),
+        parseEnvVarNumber(process.env.DAILY_METRICS_STORAGE_DAYS, 91),
         91,
     );
 
@@ -713,6 +762,9 @@ export function createConfig(options: IUnleashOptions): IUnleashConfig {
 
     const openAIAPIKey = process.env.OPENAI_API_KEY;
 
+    const unleashFrontendToken =
+        options.unleashFrontendToken || process.env.UNLEASH_FRONTEND_TOKEN;
+
     const defaultDaysToBeConsideredInactive = 180;
     const userInactivityThresholdInDays =
         options.userInactivityThresholdInDays ??
@@ -720,6 +772,10 @@ export function createConfig(options: IUnleashOptions): IUnleashConfig {
             process.env.USER_INACTIVITY_THRESHOLD_IN_DAYS,
             defaultDaysToBeConsideredInactive,
         );
+
+    const prometheusImpactMetricsApi =
+        options.prometheusImpactMetricsApi ||
+        process.env.PROMETHEUS_IMPACT_METRICS_API;
 
     return {
         db,
@@ -752,19 +808,18 @@ export function createConfig(options: IUnleashOptions): IUnleashConfig {
         clientFeatureCaching,
         accessControlMaxAge,
         prometheusApi,
+        prometheusImpactMetricsApi,
         publicFolder: options.publicFolder,
         disableScheduler: options.disableScheduler,
         isEnterprise: isEnterprise,
+        isOss: isOss,
         metricsRateLimiting,
         rateLimiting,
         feedbackUriPath,
         dailyMetricsStorageDays,
         openAIAPIKey,
         userInactivityThresholdInDays,
+        buildDate: process.env.BUILD_DATE,
+        unleashFrontendToken,
     };
 }
-
-module.exports = {
-    createConfig,
-    authTypeFromString,
-};

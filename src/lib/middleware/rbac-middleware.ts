@@ -4,14 +4,14 @@ import {
     DELETE_FEATURE,
     UPDATE_FEATURE,
     UPDATE_PROJECT_SEGMENT,
-} from '../types/permissions';
-import type { IUnleashConfig } from '../types/option';
-import type { IUnleashStores } from '../types/stores';
-import type User from '../types/user';
+} from '../types/permissions.js';
+import type { IUnleashConfig } from '../types/option.js';
+import type { IUnleashStores } from '../types/stores.js';
+import type User from '../types/user.js';
 import type { Request } from 'express';
-import { extractUserId } from '../util';
+import { extractUserId } from '../util/index.js';
 
-interface PermissionChecker {
+export interface PermissionChecker {
     hasPermission(
         user: User,
         permissions: string[],
@@ -33,7 +33,7 @@ export function findParam(
 }
 
 const rbacMiddleware = (
-    config: Pick<IUnleashConfig, 'getLogger'>,
+    config: Pick<IUnleashConfig, 'getLogger' | 'isOss'>,
     {
         featureToggleStore,
         segmentStore,
@@ -98,6 +98,24 @@ const rbacMiddleware = (
             ) {
                 projectId = 'default';
             }
+            if (config.isOss) {
+                if (projectId !== undefined && projectId !== 'default') {
+                    logger.error(
+                        'OSS is only allowed to work with default project.',
+                    );
+                    return false;
+                }
+                const ossEnvs = ['default', 'development', 'production'];
+                if (
+                    environment !== undefined &&
+                    !ossEnvs.includes(environment)
+                ) {
+                    logger.error(
+                        `OSS is only allowed to work with ${ossEnvs} environments.`,
+                    );
+                    return false;
+                }
+            }
 
             // DELETE segment does not include information about the segment's project
             // This is needed to check if the user has the right permissions on a project level
@@ -107,8 +125,11 @@ const rbacMiddleware = (
                 params.id
             ) {
                 const { id } = params;
-                const { project } = await segmentStore.get(id);
-                projectId = project;
+                const segment = await segmentStore.get(id);
+                if (segment === undefined) {
+                    return false;
+                }
+                projectId = segment.project;
             }
 
             return accessService.hasPermission(

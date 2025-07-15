@@ -1,8 +1,8 @@
 import UIContext, { type themeMode } from 'contexts/UIContext';
 import { useContext } from 'react';
 import { setLocalStorageItem } from 'utils/storage';
-import mainTheme from 'themes/theme';
-import darkTheme from 'themes/dark-theme';
+import { lightTheme } from 'themes/theme';
+import { darkTheme } from 'themes/dark-theme';
 import type { Theme } from '@mui/material/styles/createTheme';
 
 interface IUseThemeModeOutput {
@@ -15,13 +15,7 @@ export const useThemeMode = (): IUseThemeModeOutput => {
     const { themeMode, setThemeMode } = useContext(UIContext);
     const key = 'unleash-theme';
 
-    const resolveTheme = () => {
-        if (themeMode === 'light') {
-            return mainTheme;
-        }
-
-        return darkTheme;
-    };
+    const resolveTheme = () => (themeMode === 'light' ? lightTheme : darkTheme);
 
     const onSetThemeMode = () => {
         setThemeMode((prev: themeMode) => {

@@ -3,15 +3,23 @@
  * Do not edit manually.
  * See `gen:api` script in package.json
  */
+import type { UserSchemaAccountType } from './userSchemaAccountType.js';
 
 /**
  * An Unleash user
  */
 export interface UserSchema {
     /** A user is either an actual User or a Service Account */
-    accountType?: string;
+    accountType?: UserSchemaAccountType;
+    /**
+     * Count of active browser sessions for this user
+     * @nullable
+     */
+    activeSessions?: number | null;
     /** The user was created at this time */
     createdAt?: string;
+    /** Experimental. The number of deleted browser sessions after last login */
+    deletedSessions?: number;
     /** Email of the user */
     email?: string;
     /** Is the welcome email sent to the user or not */
@@ -22,11 +30,6 @@ export interface UserSchema {
     imageUrl?: string;
     /** If the user is actively inviting other users, this is the link that can be shared with other users */
     inviteLink?: string;
-    /**
-     * Deprecated in v5. Used internally to know which operations the user should be allowed to perform
-     * @deprecated
-     */
-    isAPI?: boolean;
     /**
      * How many unsuccessful attempts at logging in has the user made
      * @minimum 0

@@ -1,13 +1,13 @@
-import type { IFavoriteFeaturesStore } from '../../lib/types';
-import type { IFavoriteFeatureKey } from '../../lib/types/stores/favorite-features';
-import type { IFavoriteFeature } from '../../lib/types/favorites';
+import type { IFavoriteFeaturesStore } from '../../lib/types/index.js';
+import type { IFavoriteFeatureKey } from '../../lib/types/stores/favorite-features.js';
+import type { IFavoriteFeature } from '../../lib/types/favorites.js';
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export default class FakeFavoriteFeaturesStore
     implements IFavoriteFeaturesStore
 {
     addFavoriteFeature(
         favorite: IFavoriteFeatureKey,
-    ): Promise<IFavoriteFeature> {
+    ): Promise<IFavoriteFeature | undefined> {
         return Promise.resolve(undefined);
     }
 
@@ -25,7 +25,7 @@ export default class FakeFavoriteFeaturesStore
         return Promise.resolve(false);
     }
 
-    get(key: IFavoriteFeatureKey): Promise<IFavoriteFeature> {
+    get(key: IFavoriteFeatureKey): Promise<IFavoriteFeature | undefined> {
         return Promise.resolve(undefined);
     }
 

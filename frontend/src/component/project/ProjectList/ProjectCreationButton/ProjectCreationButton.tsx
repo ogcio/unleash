@@ -7,7 +7,7 @@ import Add from '@mui/icons-material/Add';
 import { PremiumFeature } from 'component/common/PremiumFeature/PremiumFeature';
 import { ReactComponent as ProPlanIcon } from 'assets/icons/pro-enterprise-feature-badge.svg';
 import { ReactComponent as ProPlanIconLight } from 'assets/icons/pro-enterprise-feature-badge-light.svg';
-import { CreateProjectDialog } from '../../Project/CreateProject/NewCreateProjectForm/CreateProjectDialog';
+import { CreateProjectDialog } from '../../Project/CreateProject/NewCreateProjectForm/CreateProjectDialog.tsx';
 import { ThemeMode } from 'component/common/ThemeMode/ThemeMode';
 import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
 
@@ -22,13 +22,18 @@ const NAVIGATE_TO_CREATE_PROJECT = 'NAVIGATE_TO_CREATE_PROJECT';
 function resolveCreateButtonData(
     isOss: boolean,
     hasAccess: boolean,
+    mode: 'plans' | 'upgrade' = 'plans',
 ): ICreateButtonData {
     if (isOss) {
         return {
             disabled: true,
             tooltip: {
                 titleComponent: (
-                    <PremiumFeature feature='adding-new-projects' tooltip />
+                    <PremiumFeature
+                        feature='adding-new-projects'
+                        mode={mode}
+                        tooltip
+                    />
                 ),
                 sx: { maxWidth: '320px' },
                 variant: 'custom',
@@ -70,6 +75,7 @@ export const ProjectCreationButton: FC<ProjectCreationButtonProps> = ({
     const createButtonData = resolveCreateButtonData(
         isOss(),
         hasAccess(CREATE_PROJECT),
+        'upgrade',
     );
 
     return (

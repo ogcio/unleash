@@ -1,6 +1,6 @@
 import { render } from 'utils/testRenderer';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { ImportModal } from './ImportModal';
+import { ImportModal } from './ImportModal.tsx';
 import { testServerRoute, testServerSetup } from 'utils/testServer';
 import userEvent from '@testing-library/user-event';
 import { CREATE_FEATURE } from 'component/providers/AccessProvider/permissions';
@@ -59,7 +59,7 @@ test('Import happy path', async () => {
 
     const codeEditorLabel = screen.getByText('Code editor');
     codeEditorLabel.click();
-    const editor = screen.getByLabelText('Exported toggles');
+    const editor = screen.getByLabelText('Exported feature flags');
     expect(editor.textContent).toBe('{}');
 
     screen.getByText('Validate').click();
@@ -92,7 +92,7 @@ test('Block when importing non json content', async () => {
 
     const codeEditorLabel = screen.getByText('Code editor');
     codeEditorLabel.click();
-    const editor = await screen.findByLabelText('Exported toggles');
+    const editor = await screen.findByLabelText('Exported feature flags');
     await userEvent.type(editor, 'invalid non json');
 
     const validateButton = screen.getByText('Validate');
@@ -148,5 +148,5 @@ test('Show validation errors', async () => {
     await screen.findByText('itemF');
 
     const importButton = screen.getByText('Import configuration');
-    expect(importButton).toBeDisabled();
+    expect(importButton).toHaveAttribute('aria-disabled', 'true');
 });

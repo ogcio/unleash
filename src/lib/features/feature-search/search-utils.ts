@@ -2,7 +2,7 @@ import type { Knex } from 'knex';
 import type {
     IQueryOperator,
     IQueryParam,
-} from '../feature-toggle/types/feature-toggle-strategies-store-type';
+} from '../feature-toggle/types/feature-toggle-strategies-store-type.js';
 
 export interface NormalizeParamsDefaults {
     limitDefault: number;
@@ -116,7 +116,7 @@ export const parseSearchOperatorValue = (
         return {
             field,
             operator: match[1] as IQueryOperator,
-            values: match[2].split(','),
+            values: match[2].split(',').map((value) => value.trim()),
         };
     }
 

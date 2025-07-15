@@ -24,13 +24,13 @@ import type { IStrategy } from 'interfaces/strategy';
 import { LinkCell } from 'component/common/Table/cells/LinkCell/LinkCell';
 import { sortTypes } from 'utils/sortTypes';
 import { useTable, useSortBy } from 'react-table';
-import { StrategySwitch } from './StrategySwitch/StrategySwitch';
-import { StrategyEditButton } from './StrategyEditButton/StrategyEditButton';
-import { StrategyDeleteButton } from './StrategyDeleteButton/StrategyDeleteButton';
+import { StrategySwitch } from './StrategySwitch/StrategySwitch.tsx';
+import { StrategyEditButton } from './StrategyEditButton/StrategyEditButton.tsx';
+import { StrategyDeleteButton } from './StrategyDeleteButton/StrategyDeleteButton.tsx';
 import { Badge } from 'component/common/Badge/Badge';
 import { HelpIcon } from 'component/common/HelpIcon/HelpIcon';
-import { CustomStrategyInfo } from '../CustomStrategyInfo/CustomStrategyInfo';
-import { AddStrategyButton } from './AddStrategyButton/AddStrategyButton';
+import { CustomStrategyInfo } from '../CustomStrategyInfo/CustomStrategyInfo.tsx';
+import { AddStrategyButton } from './AddStrategyButton/AddStrategyButton.tsx';
 
 interface IDialogueMetaData {
     show: boolean;
@@ -116,7 +116,9 @@ const StrategyDeprecationWarning = () => (
         version. We recommend not using custom strategies going forward and
         instead using the predefined strategies with{' '}
         <Link
-            href={'https://docs.getunleash.io/reference/strategy-constraints'}
+            href={
+                'https://docs.getunleash.io/reference/activation-strategies#constraints'
+            }
             target='_blank'
             variant='body2'
         >
@@ -182,8 +184,7 @@ export const StrategiesList = () => {
                             refetchStrategies();
                             setToastData({
                                 type: 'success',
-                                title: 'Success',
-                                text: 'Strategy reactivated successfully',
+                                text: 'Strategy reactivated',
                             });
                         } catch (error: unknown) {
                             setToastApiError(formatUnknownError(error));
@@ -200,8 +201,7 @@ export const StrategiesList = () => {
                             refetchStrategies();
                             setToastData({
                                 type: 'success',
-                                title: 'Success',
-                                text: 'Strategy deprecated successfully',
+                                text: 'Strategy deprecated',
                             });
                         } catch (error: unknown) {
                             setToastApiError(formatUnknownError(error));
@@ -230,8 +230,7 @@ export const StrategiesList = () => {
                         refetchStrategies();
                         setToastData({
                             type: 'success',
-                            title: 'Success',
-                            text: 'Strategy deleted successfully',
+                            text: 'Strategy deleted',
                         });
                     } catch (error: unknown) {
                         setToastApiError(formatUnknownError(error));
@@ -409,13 +408,22 @@ export const StrategiesList = () => {
                         <TableBody {...getTableBodyProps()}>
                             {rows.map((row) => {
                                 prepareRow(row);
+                                const { key, ...rowProps } = row.getRowProps();
                                 return (
-                                    <TableRow hover {...row.getRowProps()}>
-                                        {row.cells.map((cell) => (
-                                            <TableCell {...cell.getCellProps()}>
-                                                {cell.render('Cell')}
-                                            </TableCell>
-                                        ))}
+                                    <TableRow hover key={key} {...rowProps}>
+                                        {row.cells.map((cell) => {
+                                            const { key, ...cellProps } =
+                                                cell.getCellProps();
+
+                                            return (
+                                                <TableCell
+                                                    key={key}
+                                                    {...cellProps}
+                                                >
+                                                    {cell.render('Cell')}
+                                                </TableCell>
+                                            );
+                                        })}
                                     </TableRow>
                                 );
                             })}
@@ -460,13 +468,22 @@ export const StrategiesList = () => {
                         <TableBody {...customGetTableBodyProps()}>
                             {customRows.map((row) => {
                                 customPrepareRow(row);
+                                const { key, ...rowProps } = row.getRowProps();
                                 return (
-                                    <TableRow hover {...row.getRowProps()}>
-                                        {row.cells.map((cell) => (
-                                            <TableCell {...cell.getCellProps()}>
-                                                {cell.render('Cell')}
-                                            </TableCell>
-                                        ))}
+                                    <TableRow hover key={key} {...rowProps}>
+                                        {row.cells.map((cell) => {
+                                            const { key, ...cellProps } =
+                                                cell.getCellProps();
+
+                                            return (
+                                                <TableCell
+                                                    key={key}
+                                                    {...cellProps}
+                                                >
+                                                    {cell.render('Cell')}
+                                                </TableCell>
+                                            );
+                                        })}
                                     </TableRow>
                                 );
                             })}

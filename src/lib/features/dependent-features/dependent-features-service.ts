@@ -1,21 +1,21 @@
-import { InvalidOperationError, PermissionError } from '../../error';
-import type { CreateDependentFeatureSchema } from '../../openapi';
-import type { IDependentFeaturesStore } from './dependent-features-store-type';
+import { InvalidOperationError, PermissionError } from '../../error/index.js';
+import type { CreateDependentFeatureSchema } from '../../openapi/index.js';
+import type { IDependentFeaturesStore } from './dependent-features-store-type.js';
 import type {
     FeatureDependency,
     FeatureDependencyId,
-} from './dependent-features';
-import type { IDependentFeaturesReadModel } from './dependent-features-read-model-type';
-import type { EventService } from '../../services';
-import type { IAuditUser, IUser } from '../../server-impl';
+} from './dependent-features.js';
+import type { IDependentFeaturesReadModel } from './dependent-features-read-model-type.js';
+import type { EventService } from '../../services/index.js';
+import type { IAuditUser, IUser } from '../../types/index.js';
 import {
     FeatureDependenciesRemovedEvent,
     FeatureDependencyAddedEvent,
     FeatureDependencyRemovedEvent,
     SKIP_CHANGE_REQUEST,
-} from '../../types';
-import type { IChangeRequestAccessReadModel } from '../change-request-access-service/change-request-access-read-model';
-import type { IFeaturesReadModel } from '../feature-toggle/types/features-read-model-type';
+} from '../../types/index.js';
+import type { IChangeRequestAccessReadModel } from '../change-request-access-service/change-request-access-read-model.js';
+import type { IFeaturesReadModel } from '../feature-toggle/types/features-read-model-type.js';
 
 interface IDependentFeaturesServiceDeps {
     dependentFeaturesStore: IDependentFeaturesStore;
@@ -214,17 +214,26 @@ export class DependentFeaturesService {
         projectId: string,
         auditUser: IAuditUser,
     ): Promise<void> {
-        await this.dependentFeaturesStore.deleteAll(features);
-        await this.eventService.storeEvents(
-            features.map(
-                (feature) =>
-                    new FeatureDependenciesRemovedEvent({
-                        project: projectId,
-                        featureName: feature,
-                        auditUser,
-                    }),
-            ),
+        const dependencies =
+            await this.dependentFeaturesReadModel.getDependencies(features);
+        const featuresWithDependencies = dependencies.map(
+            (dependency) => dependency.feature,
         );
+        if (featuresWithDependencies.length > 0) {
+            await this.dependentFeaturesStore.deleteAll(
+                featuresWithDependencies,
+            );
+            await this.eventService.storeEvents(
+                featuresWithDependencies.map(
+                    (feature) =>
+                        new FeatureDependenciesRemovedEvent({
+                            project: projectId,
+                            featureName: feature,
+                            auditUser,
+                        }),
+                ),
+            );
+        }
     }
 
     async getPossibleParentFeatures(feature: string): Promise<string[]> {

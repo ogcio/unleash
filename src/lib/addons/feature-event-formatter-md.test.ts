@@ -7,10 +7,11 @@ import {
     FEATURE_STRATEGY_REMOVE,
     FEATURE_STRATEGY_UPDATE,
     type IEvent,
-    SYSTEM_USER_ID,
-} from '../types';
+    PROJECT_ARCHIVED,
+} from '../events/index.js';
+import { SYSTEM_USER_ID } from '../types/index.js';
 
-import { FeatureEventFormatterMd } from './feature-event-formatter-md';
+import { FeatureEventFormatterMd } from './feature-event-formatter-md.js';
 import {
     DATE_AFTER,
     DATE_BEFORE,
@@ -27,7 +28,7 @@ import {
     STR_CONTAINS,
     STR_ENDS_WITH,
     STR_STARTS_WITH,
-} from '../util';
+} from '../util/index.js';
 
 const testCases: [string, IEvent][] = [
     [
@@ -352,46 +353,6 @@ const testCases: [string, IEvent][] = [
             ],
     ),
     [
-        'when userIds changed',
-        {
-            id: 920,
-            type: FEATURE_STRATEGY_UPDATE,
-            createdBy: 'user@company.com',
-            createdByUserId: SYSTEM_USER_ID,
-            createdAt: new Date('2022-06-01T10:03:11.549Z'),
-            data: {
-                name: 'userWithId',
-                constraints: [
-                    {
-                        values: ['x', 'y'],
-                        inverted: false,
-                        operator: IN,
-                        contextName: 'appName',
-                        caseInsensitive: false,
-                    },
-                ],
-                parameters: {
-                    userIds: 'a,b',
-                },
-                sortOrder: 9999,
-                id: '9a995d94-5944-4897-a82f-0f7e65c2fb3f',
-            },
-            preData: {
-                name: 'userWithId',
-                constraints: [],
-                parameters: {
-                    userIds: '',
-                },
-                sortOrder: 9999,
-                id: '9a995d94-5944-4897-a82f-0f7e65c2fb3f',
-            },
-            tags: [],
-            featureName: 'new-feature',
-            project: 'my-other-project',
-            environment: 'production',
-        },
-    ],
-    [
         'when IPs changed',
         {
             id: 920,
@@ -509,6 +470,7 @@ const testCases: [string, IEvent][] = [
             createdByUserId: SYSTEM_USER_ID,
             data: {
                 changeRequestId: 1,
+                scheduledDate: '2024-06-01T10:03:11.549Z',
             },
             preData: {},
             tags: [],
@@ -567,6 +529,22 @@ const testCases: [string, IEvent][] = [
             },
             preData: {},
             tags: [],
+            project: 'my-other-project',
+            environment: 'production',
+        },
+    ],
+    [
+        'when project archived',
+        {
+            id: 922,
+            type: PROJECT_ARCHIVED,
+            createdBy: 'user@company.com',
+            createdByUserId: SYSTEM_USER_ID,
+            createdAt: new Date('2024-11-25T10:33:59.459Z'),
+            data: null,
+            preData: null,
+            tags: [],
+            featureName: undefined,
             project: 'my-other-project',
             environment: 'production',
         },

@@ -1,12 +1,18 @@
-import type { IOnboardingReadModel, IUnleashStores } from '../../../lib/types';
-import dbInit, { type ITestDb } from '../../../test/e2e/helpers/database-init';
-import getLogger from '../../../test/fixtures/no-logger';
+import type {
+    IOnboardingReadModel,
+    IUnleashStores,
+} from '../../../lib/types/index.js';
+import dbInit, {
+    type ITestDb,
+} from '../../../test/e2e/helpers/database-init.js';
+import getLogger from '../../../test/fixtures/no-logger.js';
 import { minutesToMilliseconds } from 'date-fns';
-import type { OnboardingService } from './onboarding-service';
-import { createTestConfig } from '../../../test/config/test-config';
-import { createOnboardingService } from './createOnboardingService';
+import type { OnboardingService } from './onboarding-service.js';
+import { createTestConfig } from '../../../test/config/test-config.js';
+import { createOnboardingService } from './createOnboardingService.js';
 import type EventEmitter from 'events';
-import { STAGE_ENTERED, USER_LOGIN } from '../../metric-events';
+import { STAGE_ENTERED, USER_LOGIN } from '../../metric-events.js';
+import { vi } from 'vitest';
 
 let db: ITestDb;
 let stores: IUnleashStores;
@@ -17,7 +23,7 @@ let onboardingReadModel: IOnboardingReadModel;
 beforeAll(async () => {
     db = await dbInit('onboarding_store', getLogger);
     const config = createTestConfig({
-        experimental: { flags: { onboardingMetrics: true } },
+        experimental: { flags: {} },
     });
     stores = db.stores;
     eventBus = config.eventBus;
@@ -35,26 +41,25 @@ beforeEach(async () => {
     await stores.projectStore.deleteAll();
     await stores.onboardingStore.deleteAll();
     await stores.userStore.deleteAll();
-    jest.useRealTimers();
+    vi.useRealTimers();
 });
 
 test('Default project should take first user created instead of project created as start time', async () => {
-    jest.useFakeTimers();
-    jest.setSystemTime(new Date());
-    const { userStore, featureToggleStore, projectStore, projectReadModel } =
-        stores;
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date());
+    const { userStore, featureToggleStore, projectStore } = stores;
 
     // default projects are created in advance and should be ignored
     await projectStore.create({ id: 'default', name: 'irrelevant' });
 
-    jest.advanceTimersByTime(minutesToMilliseconds(1));
+    vi.advanceTimersByTime(minutesToMilliseconds(1));
     const user = await userStore.insert({});
     await featureToggleStore.create('default', {
         name: 'test-default',
         createdByUserId: user.id,
     });
 
-    jest.advanceTimersByTime(minutesToMilliseconds(1));
+    vi.advanceTimersByTime(minutesToMilliseconds(1));
     await onboardingService.insert({
         type: 'flag-created',
         flag: 'test-default',
@@ -77,12 +82,12 @@ test('Default project should take first user created instead of project created 
 });
 
 test('Ignore events for existing customers', async () => {
-    jest.useFakeTimers();
-    jest.setSystemTime(new Date(2024, 8, 2)); // day before we added metrics
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2024, 8, 2)); // day before we added metrics
     const { userStore } = stores;
     await userStore.insert({});
 
-    jest.setSystemTime(new Date());
+    vi.setSystemTime(new Date());
     await onboardingService.insert({ type: 'first-user-login' });
 
     const { rows: instanceEvents } = await db.rawDatabase.raw(
@@ -104,10 +109,9 @@ test('Ignore system user in onboarding events', async () => {
 });
 
 test('Storing onboarding events', async () => {
-    jest.useFakeTimers();
-    jest.setSystemTime(new Date());
-    const { userStore, featureToggleStore, projectStore, projectReadModel } =
-        stores;
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date());
+    const { userStore, featureToggleStore, projectStore } = stores;
     const user = await userStore.insert({});
     await projectStore.create({ id: 'test_project', name: 'irrelevant' });
     await featureToggleStore.create('test_project', {
@@ -115,23 +119,23 @@ test('Storing onboarding events', async () => {
         createdByUserId: user.id,
     });
 
-    jest.advanceTimersByTime(minutesToMilliseconds(1));
+    vi.advanceTimersByTime(minutesToMilliseconds(1));
     await onboardingService.insert({ type: 'first-user-login' });
-    jest.advanceTimersByTime(minutesToMilliseconds(1));
+    vi.advanceTimersByTime(minutesToMilliseconds(1));
     await onboardingService.insert({ type: 'second-user-login' });
-    jest.advanceTimersByTime(minutesToMilliseconds(1));
+    vi.advanceTimersByTime(minutesToMilliseconds(1));
     await onboardingService.insert({ type: 'flag-created', flag: 'test' });
     await onboardingService.insert({ type: 'flag-created', flag: 'test' });
     await onboardingService.insert({ type: 'flag-created', flag: 'invalid' });
-    jest.advanceTimersByTime(minutesToMilliseconds(1));
+    vi.advanceTimersByTime(minutesToMilliseconds(1));
     await onboardingService.insert({ type: 'pre-live', flag: 'test' });
     await onboardingService.insert({ type: 'pre-live', flag: 'test' });
     await onboardingService.insert({ type: 'pre-live', flag: 'invalid' });
-    jest.advanceTimersByTime(minutesToMilliseconds(1));
+    vi.advanceTimersByTime(minutesToMilliseconds(1));
     await onboardingService.insert({ type: 'live', flag: 'test' });
-    jest.advanceTimersByTime(minutesToMilliseconds(1));
+    vi.advanceTimersByTime(minutesToMilliseconds(1));
     await onboardingService.insert({ type: 'live', flag: 'test' });
-    jest.advanceTimersByTime(minutesToMilliseconds(1));
+    vi.advanceTimersByTime(minutesToMilliseconds(1));
     await onboardingService.insert({ type: 'live', flag: 'invalid' });
 
     const { rows: instanceEvents } = await db.rawDatabase.raw(
@@ -170,17 +174,16 @@ const reachedOnboardingEvents = (count: number) => {
 };
 
 test('Reacting to events', async () => {
-    jest.useFakeTimers();
-    jest.setSystemTime(new Date());
-    const { userStore, featureToggleStore, projectStore, projectReadModel } =
-        stores;
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date());
+    const { userStore, featureToggleStore, projectStore } = stores;
     const user = await userStore.insert({});
     await projectStore.create({ id: 'test_project', name: 'irrelevant' });
     await featureToggleStore.create('test_project', {
         name: 'test',
         createdByUserId: user.id,
     });
-    jest.advanceTimersByTime(minutesToMilliseconds(1));
+    vi.advanceTimersByTime(minutesToMilliseconds(1));
 
     eventBus.emit(USER_LOGIN, { loginOrder: 0 });
     eventBus.emit(USER_LOGIN, { loginOrder: 1 });

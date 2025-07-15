@@ -1,17 +1,17 @@
-import Addon from './addon';
+import Addon from './addon.js';
 
-import teamsDefinition from './teams-definition';
+import teamsDefinition from './teams-definition.js';
 import {
     type IAddonConfig,
     type IFlagResolver,
     serializeDates,
-} from '../types';
+} from '../types/index.js';
 import {
     type FeatureEventFormatter,
     FeatureEventFormatterMd,
-} from './feature-event-formatter-md';
-import type { IEvent } from '../types/events';
-import type { IntegrationEventState } from '../features/integration-events/integration-events-store';
+} from './feature-event-formatter-md.js';
+import type { IEvent } from '../events/index.js';
+import type { IntegrationEventState } from '../features/integration-events/integration-events-store.js';
 
 interface ITeamsParameters {
     url: string;
@@ -20,7 +20,7 @@ interface ITeamsParameters {
 export default class TeamsAddon extends Addon {
     private msgFormatter: FeatureEventFormatter;
 
-    flagResolver: IFlagResolver;
+    declare flagResolver: IFlagResolver;
 
     constructor(args: IAddonConfig) {
         super(teamsDefinition, args);
@@ -94,6 +94,7 @@ export default class TeamsAddon extends Addon {
             headers: { 'Content-Type': 'application/json', ...extraHeaders },
             body: JSON.stringify(body),
         };
+
         const res = await this.fetchRetry(url, requestOpts);
 
         this.logger.info(`Handled event "${event.type}".`);

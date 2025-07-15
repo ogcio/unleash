@@ -1,18 +1,22 @@
-import type { IUnleashConfig } from '../types/option';
-import type { IFavoriteProjectsStore, IUnleashStores } from '../types/stores';
-import type { Logger } from '../logger';
-import type { IFavoriteFeaturesStore } from '../types/stores/favorite-features';
-import type { IFavoriteFeature, IFavoriteProject } from '../types/favorites';
+import type { IUnleashConfig } from '../types/option.js';
+import type {
+    IFavoriteProjectsStore,
+    IUnleashStores,
+} from '../types/stores.js';
+import type { Logger } from '../logger.js';
+import type { IFavoriteFeaturesStore } from '../types/stores/favorite-features.js';
+import type { IFavoriteFeature, IFavoriteProject } from '../types/favorites.js';
 import {
     FeatureFavoritedEvent,
     FeatureUnfavoritedEvent,
     type IAuditUser,
     ProjectFavoritedEvent,
     ProjectUnfavoritedEvent,
-} from '../types';
-import type { IUser } from '../types/user';
-import type { IFavoriteProjectKey } from '../types/stores/favorite-projects';
-import type EventService from '../features/events/event-service';
+} from '../types/index.js';
+import type { IUser } from '../types/user.js';
+import type { IFavoriteProjectKey } from '../types/stores/favorite-projects.js';
+import type EventService from '../features/events/event-service.js';
+import { NotFoundError } from '../error/index.js';
 
 export interface IFavoriteFeatureProps {
     feature: string;
@@ -61,6 +65,11 @@ export class FavoritesService {
             feature: feature,
             userId: user.id,
         });
+        if (data === undefined) {
+            throw new NotFoundError(
+                `Feature with name ${feature} did not exist`,
+            );
+        }
         await this.eventService.storeEvent(
             new FeatureFavoritedEvent({
                 featureName: feature,
@@ -97,10 +106,13 @@ export class FavoritesService {
         { project, user }: IFavoriteProjectProps,
         auditUser: IAuditUser,
     ): Promise<IFavoriteProject> {
-        const data = this.favoriteProjectsStore.addFavoriteProject({
+        const data = await this.favoriteProjectsStore.addFavoriteProject({
             project,
             userId: user.id,
         });
+        if (data === undefined) {
+            throw new NotFoundError(`Project with id ${project} was not found`);
+        }
         await this.eventService.storeEvent(
             new ProjectFavoritedEvent({
                 data: {
@@ -117,7 +129,7 @@ export class FavoritesService {
         { project, user }: IFavoriteProjectProps,
         auditUser: IAuditUser,
     ): Promise<void> {
-        const data = this.favoriteProjectsStore.delete({
+        const data = await this.favoriteProjectsStore.delete({
             project: project,
             userId: user.id,
         });
@@ -130,7 +142,6 @@ export class FavoritesService {
                 auditUser,
             }),
         );
-        return data;
     }
 
     async isFavoriteProject(favorite: IFavoriteProjectKey): Promise<boolean> {

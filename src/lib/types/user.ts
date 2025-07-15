@@ -1,7 +1,8 @@
-import Joi, { ValidationError } from 'joi';
-import { generateImageUrl } from '../util/generateImageUrl';
+import Joi from 'joi';
+const { ValidationError } = Joi;
+import { generateImageUrl } from '../util/generateImageUrl.js';
+import type { AccountTypes } from '../events/index.js';
 
-export const AccountTypes = ['User', 'Service Account'] as const;
 type AccountType = (typeof AccountTypes)[number];
 
 export interface UserData {
@@ -31,6 +32,8 @@ export interface IUser {
     imageUrl?: string;
     accountType?: AccountType;
     scimId?: string;
+    deletedSessions?: number;
+    activeSessions?: number;
 }
 
 export type MinimalUser = Pick<
@@ -48,7 +51,7 @@ export interface IAuditUser {
     ip: string;
 }
 
-export default class User implements IUser {
+export class User implements IUser {
     isAPI: boolean = false;
 
     id: number;
@@ -88,9 +91,6 @@ export default class User implements IUser {
         if (!id) {
             throw new ValidationError('Id is required', [], undefined);
         }
-        Joi.assert(email, Joi.string().email({ ignoreLength: true }), 'Email');
-        Joi.assert(username, Joi.string(), 'Username');
-        Joi.assert(name, Joi.string(), 'Name');
 
         this.id = id;
         this.name = name!;
@@ -113,4 +113,4 @@ export interface IUserWithRootRole extends IUser {
     rootRole: number;
 }
 
-module.exports = User;
+export default User;

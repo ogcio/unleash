@@ -5,24 +5,26 @@ import {
     type IEnvironmentStore,
     type IFeatureEnvironmentStore,
     type IFeatureStrategiesStore,
-    type IProjectEnvironment,
+    type IProjectsAvailableOnEnvironment,
     type ISortOrder,
     type IUnleashConfig,
     type IUnleashStores,
     ProjectEnvironmentAdded,
     ProjectEnvironmentRemoved,
     SYSTEM_USER_AUDIT,
-} from '../../types';
-import type { Logger } from '../../logger';
-import { BadDataError, UNIQUE_CONSTRAINT_VIOLATION } from '../../error';
-import NameExistsError from '../../error/name-exists-error';
-import { sortOrderSchema } from '../../services/sort-order-schema';
-import NotFoundError from '../../error/notfound-error';
-import type { IProjectStore } from '../../features/project/project-store-type';
-import MinimumOneEnvironmentError from '../../error/minimum-one-environment-error';
-import type { IFlagResolver } from '../../types/experimental';
-import type { CreateFeatureStrategySchema } from '../../openapi';
-import type EventService from '../events/event-service';
+} from '../../types/index.js';
+import type { Logger } from '../../logger.js';
+import {
+    BadDataError,
+    UNIQUE_CONSTRAINT_VIOLATION,
+} from '../../error/index.js';
+import NameExistsError from '../../error/name-exists-error.js';
+import { sortOrderSchema } from '../../services/sort-order-schema.js';
+import NotFoundError from '../../error/notfound-error.js';
+import type { IProjectStore } from '../../features/project/project-store-type.js';
+import type { IFlagResolver } from '../../types/experimental.js';
+import type { CreateFeatureStrategySchema } from '../../openapi/index.js';
+import type EventService from '../events/event-service.js';
 
 export default class EnvironmentService {
     private logger: Logger;
@@ -72,13 +74,35 @@ export default class EnvironmentService {
     }
 
     async get(name: string): Promise<IEnvironment> {
-        return this.environmentStore.get(name);
+        const env = await this.environmentStore.get(name);
+        if (env === undefined) {
+            throw new NotFoundError(
+                `Could not find environment with name ${name}`,
+            );
+        }
+        return env;
     }
 
     async getProjectEnvironments(
         projectId: string,
-    ): Promise<IProjectEnvironment[]> {
-        return this.environmentStore.getProjectEnvironments(projectId);
+    ): Promise<IProjectsAvailableOnEnvironment[]> {
+        // This function produces an object for every environment, in that object is a boolean
+        // describing whether that environment is enabled - aka not deprecated
+        const environments =
+            await this.projectStore.getEnvironmentsForProject(projectId);
+        const environmentsOnProject = new Set(
+            environments.map((env) => env.environment),
+        );
+
+        const allEnvironments =
+            await this.environmentStore.getProjectEnvironments(projectId);
+
+        return allEnvironments.map((env) => {
+            return {
+                ...env,
+                visible: environmentsOnProject.has(env.name),
+            };
+        });
     }
 
     async updateSortOrder(sortOrder: ISortOrder): Promise<void> {
@@ -94,7 +118,7 @@ export default class EnvironmentService {
     async toggleEnvironment(name: string, value: boolean): Promise<void> {
         const exists = await this.environmentStore.exists(name);
         if (exists) {
-            return this.environmentStore.updateProperty(name, 'enabled', value);
+            return this.environmentStore.toggle(name, value);
         }
         throw new NotFoundError(`Could not find environment ${name}`);
     }
@@ -254,22 +278,13 @@ export default class EnvironmentService {
         const projectEnvs =
             await this.projectStore.getEnvironmentsForProject(projectId);
 
-        if (projectEnvs.length > 1) {
-            await this.forceRemoveEnvironmentFromProject(
+        await this.forceRemoveEnvironmentFromProject(environment, projectId);
+        await this.eventService.storeEvent(
+            new ProjectEnvironmentRemoved({
+                project: projectId,
                 environment,
-                projectId,
-            );
-            await this.eventService.storeEvent(
-                new ProjectEnvironmentRemoved({
-                    project: projectId,
-                    environment,
-                    auditUser,
-                }),
-            );
-            return;
-        }
-        throw new MinimumOneEnvironmentError(
-            'You must always have one active environment',
+                auditUser,
+            }),
         );
     }
 }

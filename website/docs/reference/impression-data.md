@@ -1,10 +1,11 @@
 ---
-title: Impression Data
+title: Impression data
+pagination_next: reference/events
 ---
 
 :::note Availability
 
-**Version**: `4.7+`. Requires [SDK compatibility](../reference/sdks#server-side-sdk-compatibility-table).
+**Version**: `4.7+`. Requires [SDK compatibility](../reference/sdks#feature-compatibility-in-server-side-sdks).
 
 :::
 
@@ -81,13 +82,13 @@ This table describes all the properties on the impression events:
 
 Impression data is strictly an **opt-in** feature and must be enabled on a **per-flag basis**. You can enable and disable it both when you create a flag and when you edit a flag.
 
-You can enable impression data via the impression data flag in the admin UI's flag creation form. You can also go via the [the API, using the `impressionData` option](/reference/api/legacy/unleash/admin/features-v2#create-toggle). For more detailed instructions, see [the section on enabling impression data in the how-to guide for capturing impression data](../how-to/how-to-capture-impression-data#step-1).
+You can enable impression data via the impression data flag in the admin UI's flag creation form. You can also go via the [the API, using the `impressionData` option](/reference/api/legacy/unleash/admin/features-v2#create-toggle). For more detailed instructions, see [the section on enabling impression data in the how-to guide for capturing impression data](/feature-flag-tutorials/use-cases/how-to-capture-impression-data).
 
 ![A feature flag creation form. At the end of the form is a heading that says "Impression data", a short paragraph that describes the feature, and a flag to opt in or out of it.](/img/create_feat_impression.png)
 
 ## Example setup
 
-The exact setup will vary depending on your [client SDK](./sdks). The below example configures the [Unleash Proxy client../reference/sdks/javascript-browser) to listen for impression events and log them to the console. If "my-feature-flag" is configured to emit impression data, then it will trigger an impression event as soon as Unleash is ready.
+The exact setup will vary depending on your [client SDK](./sdks). The below example configures the [Unleash Proxy client](/reference/sdks/javascript-browser) to listen for impression events and log them to the console. If "my-feature-flag" is configured to emit impression data, then it will trigger an impression event as soon as Unleash is ready.
 
 ```js
 const unleash = new UnleashClient({

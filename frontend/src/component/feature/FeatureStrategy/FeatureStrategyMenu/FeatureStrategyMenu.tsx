@@ -5,11 +5,22 @@ import PermissionButton, {
     type IPermissionButtonProps,
 } from 'component/common/PermissionButton/PermissionButton';
 import { CREATE_FEATURE_STRATEGY } from 'component/providers/AccessProvider/permissions';
-import { Popover, styled } from '@mui/material';
-import { FeatureStrategyMenuCards } from './FeatureStrategyMenuCards/FeatureStrategyMenuCards';
-import { formatCreateStrategyPath } from '../FeatureStrategyCreate/FeatureStrategyCreate';
+import { Dialog, styled } from '@mui/material';
+import { FeatureStrategyMenuCards } from './FeatureStrategyMenuCards/FeatureStrategyMenuCards.tsx';
+import { formatCreateStrategyPath } from '../FeatureStrategyCreate/FeatureStrategyCreate.tsx';
 import MoreVert from '@mui/icons-material/MoreVert';
 import { usePlausibleTracker } from 'hooks/usePlausibleTracker';
+import type { IReleasePlanTemplate } from 'interfaces/releasePlans';
+import { useChangeRequestApi } from 'hooks/api/actions/useChangeRequestApi/useChangeRequestApi';
+import { usePendingChangeRequests } from 'hooks/api/getters/usePendingChangeRequests/usePendingChangeRequests';
+import useToast from 'hooks/useToast';
+import { useReleasePlansApi } from 'hooks/api/actions/useReleasePlansApi/useReleasePlansApi';
+import { useReleasePlans } from 'hooks/api/getters/useReleasePlans/useReleasePlans';
+import { useChangeRequestsEnabled } from 'hooks/useChangeRequestsEnabled';
+import { formatUnknownError } from 'utils/formatUnknownError';
+import { useUiFlag } from 'hooks/useUiFlag';
+import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
+import { ReleasePlanReviewDialog } from '../../FeatureView/FeatureOverview/ReleasePlan/ReleasePlanReviewDialog.tsx';
 
 interface IFeatureStrategyMenuProps {
     label: string;
@@ -22,18 +33,18 @@ interface IFeatureStrategyMenuProps {
     disableReason?: string;
 }
 
-const StyledStrategyMenu = styled('div')({
-    flexShrink: 0,
-});
+const StyledStrategyMenu = styled('div')(({ theme }) => ({
+    display: 'flex',
+    flexFlow: 'row',
+    justifyContent: 'flex-end',
+    gap: theme.spacing(1),
+}));
 
 const StyledAdditionalMenuButton = styled(PermissionButton)(({ theme }) => ({
     minWidth: 0,
     width: theme.spacing(4.5),
-    alignItems: 'center',
-    justifyContent: 'center',
-    align: 'center',
-    flexDirection: 'column',
-    marginLeft: theme.spacing(1),
+    alignSelf: 'stretch',
+    paddingBlock: 0,
 }));
 
 export const FeatureStrategyMenu = ({
@@ -46,14 +57,32 @@ export const FeatureStrategyMenu = ({
     matchWidth,
     disableReason,
 }: IFeatureStrategyMenuProps) => {
-    const [anchor, setAnchor] = useState<Element>();
+    const [isStrategyMenuDialogOpen, setIsStrategyMenuDialogOpen] =
+        useState<boolean>(false);
+    const [onlyReleasePlans, setOnlyReleasePlans] = useState<boolean>(false);
     const navigate = useNavigate();
     const { trackEvent } = usePlausibleTracker();
-    const isPopoverOpen = Boolean(anchor);
-    const popoverId = isPopoverOpen ? 'FeatureStrategyMenuPopover' : undefined;
+    const [selectedTemplate, setSelectedTemplate] =
+        useState<IReleasePlanTemplate>();
+    const [addReleasePlanOpen, setAddReleasePlanOpen] = useState(false);
+    const dialogId = isStrategyMenuDialogOpen
+        ? 'FeatureStrategyMenuDialog'
+        : undefined;
+    const { setToastApiError, setToastData } = useToast();
+    const { isChangeRequestConfigured } = useChangeRequestsEnabled(projectId);
+    const { addChange } = useChangeRequestApi();
+    const { refetch: refetchChangeRequests } =
+        usePendingChangeRequests(projectId);
+    const { refetch } = useReleasePlans(projectId, featureId, environmentId);
+    const { addReleasePlanToFeature } = useReleasePlansApi();
+    const { isOss } = useUiConfig();
+    const releasePlansEnabled = useUiFlag('releasePlans');
+    const displayReleasePlanButton = !isOss() && releasePlansEnabled;
+    const crProtected =
+        releasePlansEnabled && isChangeRequestConfigured(environmentId);
 
     const onClose = () => {
-        setAnchor(undefined);
+        setIsStrategyMenuDialogOpen(false);
     };
 
     const openDefaultStrategyCreationModal = (event: React.SyntheticEvent) => {
@@ -66,7 +95,60 @@ export const FeatureStrategyMenu = ({
     };
 
     const openMoreStrategies = (event: React.SyntheticEvent) => {
-        setAnchor(event.currentTarget);
+        setOnlyReleasePlans(false);
+        setIsStrategyMenuDialogOpen(true);
+    };
+
+    const openReleasePlans = (event: React.SyntheticEvent) => {
+        setOnlyReleasePlans(true);
+        setIsStrategyMenuDialogOpen(true);
+    };
+
+    const addReleasePlan = async (template: IReleasePlanTemplate) => {
+        try {
+            if (crProtected) {
+                await addChange(projectId, environmentId, {
+                    feature: featureId,
+                    action: 'addReleasePlan',
+                    payload: {
+                        templateId: template.id,
+                    },
+                });
+
+                setToastData({
+                    type: 'success',
+                    text: 'Added to draft',
+                });
+
+                refetchChangeRequests();
+            } else {
+                await addReleasePlanToFeature(
+                    featureId,
+                    template.id,
+                    projectId,
+                    environmentId,
+                );
+
+                setToastData({
+                    type: 'success',
+                    text: 'Release plan added',
+                });
+
+                refetch();
+            }
+            trackEvent('release-management', {
+                props: {
+                    eventType: 'add-plan',
+                    plan: template.name,
+                },
+            });
+        } catch (error: unknown) {
+            setToastApiError(formatUnknownError(error));
+        } finally {
+            setAddReleasePlanOpen(false);
+            setSelectedTemplate(undefined);
+            onClose();
+        }
     };
 
     const createStrategyPath = formatCreateStrategyPath(
@@ -79,14 +161,33 @@ export const FeatureStrategyMenu = ({
 
     return (
         <StyledStrategyMenu onClick={(event) => event.stopPropagation()}>
+            {displayReleasePlanButton ? (
+                <PermissionButton
+                    data-testid='ADD_TEMPLATE_BUTTON'
+                    permission={CREATE_FEATURE_STRATEGY}
+                    projectId={projectId}
+                    environmentId={environmentId}
+                    onClick={openReleasePlans}
+                    aria-labelledby={dialogId}
+                    variant='outlined'
+                    sx={{ minWidth: matchWidth ? '282px' : 'auto' }}
+                    disabled={Boolean(disableReason)}
+                    tooltipProps={{
+                        title: disableReason ? disableReason : undefined,
+                    }}
+                >
+                    Use template
+                </PermissionButton>
+            ) : null}
+
             <PermissionButton
+                data-testid='ADD_STRATEGY_BUTTON'
                 permission={CREATE_FEATURE_STRATEGY}
                 projectId={projectId}
                 environmentId={environmentId}
                 onClick={openDefaultStrategyCreationModal}
-                aria-labelledby={popoverId}
+                aria-labelledby={dialogId}
                 variant={variant}
-                size={size}
                 sx={{ minWidth: matchWidth ? '282px' : 'auto' }}
                 disabled={Boolean(disableReason)}
                 tooltipProps={{
@@ -101,37 +202,61 @@ export const FeatureStrategyMenu = ({
                 projectId={projectId}
                 environmentId={environmentId}
                 onClick={openMoreStrategies}
-                aria-labelledby={popoverId}
                 variant='outlined'
-                size={size}
                 hideLockIcon
                 disabled={Boolean(disableReason)}
                 tooltipProps={{
                     title: disableReason ? disableReason : 'More strategies',
                 }}
             >
-                <MoreVert
-                    sx={(theme) => ({ margin: theme.spacing(0.25, 0) })}
-                />
+                <MoreVert />
             </StyledAdditionalMenuButton>
-            <Popover
-                id={popoverId}
-                open={isPopoverOpen}
-                anchorEl={anchor}
+            <Dialog
+                open={isStrategyMenuDialogOpen}
                 onClose={onClose}
-                onClick={onClose}
+                maxWidth='md'
                 PaperProps={{
-                    sx: (theme) => ({
-                        paddingBottom: theme.spacing(1),
-                    }),
+                    sx: {
+                        borderRadius: '12px',
+                    },
                 }}
             >
                 <FeatureStrategyMenuCards
                     projectId={projectId}
                     featureId={featureId}
                     environmentId={environmentId}
+                    onlyReleasePlans={onlyReleasePlans}
+                    onAddReleasePlan={(template) => {
+                        setSelectedTemplate(template);
+                        addReleasePlan(template);
+                    }}
+                    onReviewReleasePlan={(template) => {
+                        setSelectedTemplate(template);
+                        setAddReleasePlanOpen(true);
+                        onClose();
+                    }}
+                    onClose={onClose}
                 />
-            </Popover>
+            </Dialog>
+            {selectedTemplate && (
+                <ReleasePlanReviewDialog
+                    open={addReleasePlanOpen}
+                    setOpen={(open) => {
+                        setAddReleasePlanOpen(open);
+                        if (!open) {
+                            setIsStrategyMenuDialogOpen(true);
+                        }
+                    }}
+                    onConfirm={() => {
+                        addReleasePlan(selectedTemplate);
+                    }}
+                    template={selectedTemplate}
+                    projectId={projectId}
+                    featureName={featureId}
+                    environment={environmentId}
+                    crProtected={crProtected}
+                />
+            )}
         </StyledStrategyMenu>
     );
 };

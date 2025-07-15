@@ -8,14 +8,14 @@ import {
     Typography,
 } from '@mui/material';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
-import { StyledFileDropZone } from './StyledFileDropZone';
+import { StyledFileDropZone } from './StyledFileDropZone.tsx';
 import { PulsingAvatar } from 'component/common/PulsingAvatar/PulsingAvatar';
 import ArrowUpward from '@mui/icons-material/ArrowUpward';
-import { ImportExplanation } from './ImportExplanation';
+import { ImportExplanation } from './ImportExplanation.tsx';
 import { type FC, type ReactNode, useState } from 'react';
 import useToast from 'hooks/useToast';
-import { ImportLayoutContainer } from '../ImportLayoutContainer';
-import { ActionsContainer } from '../ActionsContainer';
+import { ImportLayoutContainer } from '../ImportLayoutContainer.tsx';
+import { ActionsContainer } from '../ActionsContainer.tsx';
 import {
     CODE_EDITOR_TAB,
     CODE_TEXT_FIELD,
@@ -89,14 +89,14 @@ export const ImportArea: FC<{
                         setActiveTab('code');
                         setToastData({
                             type: 'success',
-                            title: 'File uploaded',
+                            text: 'File uploaded',
                         });
                     }}
                     onError={(error) => {
                         setImportPayload('');
                         setToastData({
                             type: 'error',
-                            title: error,
+                            text: error,
                         });
                     }}
                     onDragStatusChange={setDragActive}
@@ -121,7 +121,7 @@ export const ImportArea: FC<{
             }
             elseShow={
                 <StyledTextField
-                    label='Exported toggles'
+                    label='Exported feature flags'
                     variant='outlined'
                     onChange={(event) => setImportPayload(event.target.value)}
                     value={importPayload}

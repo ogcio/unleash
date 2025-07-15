@@ -1,8 +1,9 @@
+import NotImplementedError from '../../lib/error/not-implemented-error.js';
 import type {
     IUserFeedback,
     IUserFeedbackKey,
     IUserFeedbackStore,
-} from '../../lib/types/stores/user-feedback-store';
+} from '../../lib/types/stores/user-feedback-store.js';
 
 export default class FakeUserFeedbackStore implements IUserFeedbackStore {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -23,7 +24,7 @@ export default class FakeUserFeedbackStore implements IUserFeedbackStore {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     get(key: IUserFeedbackKey): Promise<IUserFeedback> {
-        return Promise.resolve(undefined);
+        throw new NotImplementedError('This is not implemented yet');
     }
 
     getAll(): Promise<IUserFeedback[]> {
@@ -37,11 +38,11 @@ export default class FakeUserFeedbackStore implements IUserFeedbackStore {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     getFeedback(userId: number, feedbackId: string): Promise<IUserFeedback> {
-        return Promise.resolve(undefined);
+        throw new NotImplementedError('This is not implemented yet');
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     updateFeedback(feedback: IUserFeedback): Promise<IUserFeedback> {
-        return Promise.resolve(undefined);
+        throw new NotImplementedError('This is not implemented yet');
     }
 }

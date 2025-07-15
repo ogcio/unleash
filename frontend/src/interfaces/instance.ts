@@ -1,3 +1,17 @@
+type InstancePrices = {
+    pro?: {
+        base?: number;
+        seat?: number;
+        traffic?: number;
+    };
+    payg?: {
+        seat?: number;
+        traffic?: number;
+    };
+};
+
+type InstanceBilling = 'pay-as-you-go' | 'subscription';
+
 export interface IInstanceStatus {
     plan: InstancePlan;
     trialExpiry?: string;
@@ -6,6 +20,10 @@ export interface IInstanceStatus {
     billingCenter?: string;
     state?: InstanceState;
     seats?: number;
+    minSeats?: number;
+    isCustomBilling?: boolean;
+    prices?: InstancePrices;
+    billing?: InstanceBilling;
 }
 
 export enum InstanceState {

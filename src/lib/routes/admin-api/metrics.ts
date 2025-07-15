@@ -1,37 +1,38 @@
 import type { Request, Response } from 'express';
-import Controller from '../controller';
-import { NONE, UPDATE_APPLICATION } from '../../types/permissions';
-import type { IUnleashConfig } from '../../types/option';
-import type { IUnleashServices } from '../../types/services';
-import type { Logger } from '../../logger';
-import type ClientInstanceService from '../../features/metrics/instance/instance-service';
-import { createRequestSchema } from '../../openapi/util/create-request-schema';
-import { createResponseSchema } from '../../openapi/util/create-response-schema';
-import type { ApplicationSchema } from '../../openapi/spec/application-schema';
-import type { ApplicationsSchema } from '../../openapi/spec/applications-schema';
+import Controller from '../controller.js';
+import { NONE, UPDATE_APPLICATION } from '../../types/permissions.js';
+import type { IUnleashConfig } from '../../types/option.js';
+import type { IUnleashServices } from '../../services/index.js';
+import type { Logger } from '../../logger.js';
+import type ClientInstanceService from '../../features/metrics/instance/instance-service.js';
+import { createRequestSchema } from '../../openapi/util/create-request-schema.js';
+import { createResponseSchema } from '../../openapi/util/create-response-schema.js';
+import type { ApplicationSchema } from '../../openapi/spec/application-schema.js';
+import type { ApplicationsSchema } from '../../openapi/spec/applications-schema.js';
 import {
     emptyResponse,
     getStandardResponses,
-} from '../../openapi/util/standard-responses';
-import type { CreateApplicationSchema } from '../../openapi/spec/create-application-schema';
-import type { IAuthRequest } from '../unleash-types';
-import { extractUserIdFromUser } from '../../util';
-import { type IFlagResolver, serializeDates } from '../../types';
+} from '../../openapi/util/standard-responses.js';
+import type { CreateApplicationSchema } from '../../openapi/spec/create-application-schema.js';
+import type { IAuthRequest } from '../unleash-types.js';
+import { extractUserIdFromUser } from '../../util/index.js';
+import { type IFlagResolver, serializeDates } from '../../types/index.js';
 import {
     type ApplicationOverviewSchema,
     applicationOverviewSchema,
-} from '../../openapi/spec/application-overview-schema';
-import type { OpenApiService } from '../../services';
-import { applicationsQueryParameters } from '../../openapi/spec/applications-query-parameters';
-import { normalizeQueryParams } from '../../features/feature-search/search-utils';
+} from '../../openapi/spec/application-overview-schema.js';
+import type { OpenApiService } from '../../services/index.js';
+import { applicationsQueryParameters } from '../../openapi/spec/applications-query-parameters.js';
+import { normalizeQueryParams } from '../../features/feature-search/search-utils.js';
 import {
     applicationEnvironmentInstancesSchema,
     type ApplicationEnvironmentInstancesSchema,
-} from '../../openapi/spec/application-environment-instances-schema';
+} from '../../openapi/spec/application-environment-instances-schema.js';
 import {
     outdatedSdksSchema,
     type OutdatedSdksSchema,
-} from '../../openapi/spec/outdated-sdks-schema';
+} from '../../openapi/spec/outdated-sdks-schema.js';
+import UnknownFlagsController from '../../features/metrics/unknown-flags/unknown-flags-controller.js';
 
 class MetricsController extends Controller {
     private logger: Logger;
@@ -46,8 +47,12 @@ class MetricsController extends Controller {
         config: IUnleashConfig,
         {
             clientInstanceService,
+            unknownFlagsService,
             openApiService,
-        }: Pick<IUnleashServices, 'clientInstanceService' | 'openApiService'>,
+        }: Pick<
+            IUnleashServices,
+            'clientInstanceService' | 'unknownFlagsService' | 'openApiService'
+        >,
     ) {
         super(config);
         this.logger = config.getLogger('/admin-api/metrics.ts');
@@ -61,6 +66,14 @@ class MetricsController extends Controller {
         this.get('/seen-apps', this.deprecated);
         this.get('/feature-toggles', this.deprecated);
         this.get('/feature-toggles/:name', this.deprecated);
+
+        this.use(
+            '/unknown-flags',
+            new UnknownFlagsController(config, {
+                unknownFlagsService,
+                openApiService,
+            }).router,
+        );
 
         this.route({
             method: 'post',
@@ -168,9 +181,9 @@ class MetricsController extends Controller {
                 openApiService.validPath({
                     tags: ['Metrics'],
                     operationId: 'getApplicationEnvironmentInstances',
-                    summary: 'Get application environment instances',
+                    summary: 'Get application environment instances (Last 24h)',
                     description:
-                        'Returns an overview of the instances for the given `appName` and `environment` that receive traffic.',
+                        'Returns an overview of the instances for the given `appName` and `environment` that have received traffic in the last 24 hours.',
                     responses: {
                         200: createResponseSchema(
                             'applicationEnvironmentInstancesSchema',
@@ -315,7 +328,7 @@ class MetricsController extends Controller {
     ): Promise<void> {
         const { appName, environment } = req.params;
         const instances =
-            await this.clientInstanceService.getApplicationEnvironmentInstances(
+            await this.clientInstanceService.getRecentApplicationEnvironmentInstances(
                 appName,
                 environment,
             );

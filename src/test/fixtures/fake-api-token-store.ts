@@ -1,9 +1,9 @@
-import type { IApiTokenStore } from '../../lib/types/stores/api-token-store';
+import type { IApiTokenStore } from '../../lib/types/stores/api-token-store.js';
 import type {
     ApiTokenType,
     IApiToken,
     IApiTokenCreate,
-} from '../../lib/types/models/api-token';
+} from '../../lib/types/model.js';
 
 import EventEmitter from 'events';
 
@@ -37,9 +37,10 @@ export default class FakeApiTokenStore
         return this.tokens.some((token) => token.secret === key);
     }
 
-    async get(key: string): Promise<IApiToken> {
-        // get can return undefined. See api-token-store.e2e.test.ts
-        return this.tokens.find((t) => t.secret === key);
+    async get(key: string): Promise<IApiToken | undefined> {
+        const found = this.tokens.find((t) => t.secret === key);
+        // clone the object to get a copy
+        return found ? { ...found } : undefined;
     }
 
     async getAll(): Promise<IApiToken[]> {
@@ -73,10 +74,16 @@ export default class FakeApiTokenStore
             });
     }
 
-    async setExpiry(secret: string, expiresAt: Date): Promise<IApiToken> {
-        const t = await this.get(secret);
-        t.expiresAt = expiresAt;
-        return t;
+    async setExpiry(
+        secret: string,
+        expiresAt: Date,
+    ): Promise<IApiToken | undefined> {
+        const found = this.tokens.find((t) => t.secret === secret);
+        if (!found) {
+            return undefined;
+        }
+        found.expiresAt = expiresAt;
+        return found;
     }
 
     async countDeprecatedTokens(): Promise<{
@@ -91,5 +98,9 @@ export default class FakeApiTokenStore
             legacyTokens: 0,
             activeLegacyTokens: 0,
         };
+    }
+
+    async countProjectTokens(): Promise<number> {
+        return 0;
     }
 }

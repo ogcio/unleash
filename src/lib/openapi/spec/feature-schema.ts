@@ -1,12 +1,12 @@
 import type { FromSchema } from 'json-schema-to-ts';
-import { variantSchema } from './variant-schema';
-import { constraintSchema } from './constraint-schema';
-import { overrideSchema } from './override-schema';
-import { parametersSchema } from './parameters-schema';
-import { featureStrategySchema } from './feature-strategy-schema';
-import { tagSchema } from './tag-schema';
-import { featureEnvironmentSchema } from './feature-environment-schema';
-import { strategyVariantSchema } from './strategy-variant-schema';
+import { variantSchema } from './variant-schema.js';
+import { constraintSchema } from './constraint-schema.js';
+import { overrideSchema } from './override-schema.js';
+import { parametersSchema } from './parameters-schema.js';
+import { featureStrategySchema } from './feature-strategy-schema.js';
+import { tagSchema } from './tag-schema.js';
+import { featureEnvironmentSchema } from './feature-environment-schema.js';
+import { strategyVariantSchema } from './strategy-variant-schema.js';
 
 export const featureSchema = {
     $id: '#/components/schemas/featureSchema',
@@ -247,6 +247,35 @@ export const featureSchema = {
                     },
                 },
             },
+        },
+        links: {
+            type: 'array',
+            items: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['id', 'url'],
+                properties: {
+                    id: {
+                        type: 'string',
+                        example: '01JTJNCJ5XVP2KPJFA03YRBZCA',
+                        description: 'The id of the link',
+                    },
+                    url: {
+                        type: 'string',
+                        example:
+                            'https://github.com/search?q=cleanupReminder&type=code',
+                        description: 'The URL the feature is linked to',
+                    },
+                    title: {
+                        type: 'string',
+                        example: 'Github cleanup',
+                        description: 'The description of the link',
+                        nullable: true,
+                    },
+                },
+            },
+            description:
+                'The list of links. This is an experimental field and may change.',
         },
     },
     components: {

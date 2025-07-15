@@ -1,13 +1,13 @@
-import type { Logger } from '../logger';
-import type { IUnleashConfig } from '../types/option';
-import type { IUnleashStores } from '../types/stores';
+import type { Logger } from '../logger.js';
+import type { IUnleashConfig } from '../types/option.js';
+import type { IUnleashStores } from '../types/stores.js';
 import type {
     IMinimalStrategy,
     IStrategy,
     IStrategyStore,
-} from '../types/stores/strategy-store';
-import NotFoundError from '../error/notfound-error';
-import type EventService from '../features/events/event-service';
+} from '../types/stores/strategy-store.js';
+import NotFoundError from '../error/notfound-error.js';
+import type EventService from '../features/events/event-service.js';
 import {
     type IAuditUser,
     StrategyCreatedEvent,
@@ -15,17 +15,9 @@ import {
     StrategyDeprecatedEvent,
     StrategyReactivatedEvent,
     StrategyUpdatedEvent,
-} from '../types';
-
-const strategySchema = require('./strategy-schema');
-const NameExistsError = require('../error/name-exists-error');
-const {
-    STRATEGY_CREATED,
-    STRATEGY_DELETED,
-    STRATEGY_DEPRECATED,
-    STRATEGY_REACTIVATED,
-    STRATEGY_UPDATED,
-} = require('../types/events');
+} from '../types/index.js';
+import strategySchema from './strategy-schema.js';
+import { NameExistsError } from '../error/index.js';
 
 class StrategyService {
     private logger: Logger;
@@ -48,7 +40,7 @@ class StrategyService {
         return this.strategyStore.getAll();
     }
 
-    async getStrategy(name: string): Promise<IStrategy> {
+    async getStrategy(name: string): Promise<IStrategy | undefined> {
         return this.strategyStore.get(name);
     }
 
@@ -110,7 +102,7 @@ class StrategyService {
     async createStrategy(
         value: IMinimalStrategy,
         auditUser: IAuditUser,
-    ): Promise<IStrategy> {
+    ): Promise<IStrategy | undefined> {
         const strategy = await strategySchema.validateAsync(value);
         strategy.deprecated = false;
         await this._validateStrategyName(strategy);
@@ -158,11 +150,10 @@ class StrategyService {
     }
 
     // This check belongs in the store.
-    _validateEditable(strategy: IStrategy): void {
-        if (!strategy.editable) {
-            throw new Error(`Cannot edit strategy ${strategy.name}`);
+    _validateEditable(strategy: IStrategy | undefined): void {
+        if (!strategy?.editable) {
+            throw new Error(`Cannot edit strategy ${strategy?.name}`);
         }
     }
 }
 export default StrategyService;
-module.exports = StrategyService;

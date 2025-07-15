@@ -1,9 +1,9 @@
 import joi from 'joi';
-import { nameType } from '../routes/util';
+import { nameType } from '../routes/util.js';
 
 export const nameSchema = joi.object().keys({ name: nameType });
 
-const legalValueSchema = joi.object().keys({
+export const legalValueSchema = joi.object().keys({
     value: joi.string().min(1).max(100).required(),
     description: joi.string().allow('').allow(null).optional(),
 });

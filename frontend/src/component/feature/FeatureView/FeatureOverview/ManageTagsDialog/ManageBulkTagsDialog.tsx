@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState, type VFC } from 'react';
+import { type FC, useEffect, useReducer, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
     type AutocompleteProps,
@@ -7,23 +7,24 @@ import {
     Typography,
 } from '@mui/material';
 import { Dialogue } from 'component/common/Dialogue/Dialogue';
-import { TagTypeSelect } from './TagTypeSelect';
-import { type TagOption, TagsInput } from './TagsInput';
+import { TagTypeSelect } from './TagTypeSelect.tsx';
+import { type TagOption, TagsInput } from './TagsInput.tsx';
 import useTags from 'hooks/api/getters/useTags/useTags';
 import useTagTypes from 'hooks/api/getters/useTagTypes/useTagTypes';
-import type { ITag, ITagType } from 'interfaces/tags';
+import type { ITagType } from 'interfaces/tags';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 import useTagApi from 'hooks/api/actions/useTagApi/useTagApi';
+import type { TagSchema } from 'openapi';
 
 type Payload = {
-    addedTags: ITag[];
-    removedTags: ITag[];
+    addedTags: TagSchema[];
+    removedTags: TagSchema[];
 };
 
 interface IManageBulkTagsDialogProps {
     open: boolean;
-    initialValues: ITag[];
-    initialIndeterminateValues: ITag[];
+    initialValues: TagSchema[];
+    initialIndeterminateValues: TagSchema[];
     onCancel: () => void;
     onSubmit: (payload: Payload) => void;
 }
@@ -36,27 +37,28 @@ const StyledDialogFormContent = styled('section')(({ theme }) => ({
 
 const formId = 'manage-tags-form';
 
-const mergeTags = (tags: ITag[], newTag: ITag) => [
+const mergeTags = (tags: TagSchema[], newTag: TagSchema) => [
     ...tags,
     ...(tags.some((x) => x.value === newTag.value && x.type === newTag.type)
         ? []
         : [newTag]),
 ];
 
-const filterTags = (tags: ITag[], tag: ITag) =>
+const filterTags = (tags: TagSchema[], tag: TagSchema) =>
     tags.filter((x) => !(x.value === tag.value && x.type === tag.type));
 
-const payloadReducer = (
+export const payloadReducer = (
     state: Payload,
     action:
         | {
               type: 'add' | 'remove';
-              payload: ITag;
+              payload: TagSchema;
           }
         | {
               type: 'clear';
-              payload: ITag[];
-          },
+              payload: TagSchema[];
+          }
+        | { type: 'reset' },
 ) => {
     switch (action.type) {
         case 'add':
@@ -76,6 +78,11 @@ const payloadReducer = (
                 addedTags: [],
                 removedTags: action.payload,
             };
+        case 'reset':
+            return {
+                addedTags: [],
+                removedTags: [],
+            };
         default:
             return state;
     }
@@ -87,7 +94,7 @@ const emptyTagType = {
     icon: '',
 };
 
-export const ManageBulkTagsDialog: VFC<IManageBulkTagsDialogProps> = ({
+export const ManageBulkTagsDialog: FC<IManageBulkTagsDialogProps> = ({
     open,
     initialValues,
     initialIndeterminateValues,
@@ -105,6 +112,11 @@ export const ManageBulkTagsDialog: VFC<IManageBulkTagsDialogProps> = ({
         addedTags: [],
         removedTags: [],
     });
+
+    const submitAndReset = () => {
+        onSubmit(payload);
+        dispatch({ type: 'reset' });
+    };
 
     const resetTagType = (
         tagType: ITagType = tagTypes.length > 0 ? tagTypes[0] : emptyTagType,
@@ -160,7 +172,7 @@ export const ManageBulkTagsDialog: VFC<IManageBulkTagsDialogProps> = ({
             value,
             type,
         }).then(async () => {
-            await refetchTags();
+            refetchTags();
             setSelectedTags((prev) => [...prev, { title: value }]);
             dispatch({
                 type: 'add',
@@ -230,7 +242,7 @@ export const ManageBulkTagsDialog: VFC<IManageBulkTagsDialogProps> = ({
             secondaryButtonText='Cancel'
             primaryButtonText='Save tags'
             title='Update feature flag tags'
-            onClick={() => onSubmit(payload)}
+            onClick={submitAndReset}
             disabledPrimaryButton={
                 payload.addedTags.length === 0 &&
                 payload.removedTags.length === 0
@@ -244,7 +256,7 @@ export const ManageBulkTagsDialog: VFC<IManageBulkTagsDialogProps> = ({
             >
                 Tags allow you to group features together
             </Typography>
-            <form id={formId} onSubmit={() => onSubmit(payload)}>
+            <form id={formId} onSubmit={submitAndReset}>
                 <StyledDialogFormContent>
                     <TagTypeSelect
                         key={tagTypesLoading ? 'loading' : tagTypes.length}

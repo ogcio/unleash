@@ -1,8 +1,8 @@
-import type { IEventStore } from '../../lib/types/stores/event-store';
-import type { IBaseEvent, IEvent } from '../../lib/types/events';
-import { sharedEventEmitter } from '../../lib/util/anyEventEmitter';
-import type { IQueryOperations } from '../../lib/features/events/event-store';
-import type { DeprecatedSearchEventsSchema } from '../../lib/openapi';
+import type { IEventStore } from '../../lib/types/stores/event-store.js';
+import type { IBaseEvent, IEvent } from '../../lib/events/index.js';
+import { sharedEventEmitter } from '../../lib/util/anyEventEmitter.js';
+import type { IQueryOperations } from '../../lib/features/events/event-store.js';
+import type { ProjectActivitySchema } from '../../lib/openapi/index.js';
 import type EventEmitter from 'events';
 
 class FakeEventStore implements IEventStore {
@@ -13,6 +13,15 @@ class FakeEventStore implements IEventStore {
     constructor() {
         this.eventEmitter.setMaxListeners(0);
         this.events = [];
+    }
+    getRevisionRange(start: number, end: number): Promise<IEvent[]> {
+        throw new Error('Method not implemented.');
+    }
+
+    getProjectRecentEventActivity(
+        project: string,
+    ): Promise<ProjectActivitySchema> {
+        throw new Error('Method not implemented.');
     }
 
     getEventCreators(): Promise<{ id: number; name: string }[]> {
@@ -69,12 +78,6 @@ class FakeEventStore implements IEventStore {
         return Promise.resolve(0);
     }
 
-    deprecatedFilteredCount(
-        search: DeprecatedSearchEventsSchema,
-    ): Promise<number> {
-        return Promise.resolve(0);
-    }
-
     destroy(): void {}
 
     async exists(key: number): Promise<boolean> {
@@ -89,9 +92,6 @@ class FakeEventStore implements IEventStore {
         return this.events;
     }
 
-    async deprecatedSearchEvents(): Promise<IEvent[]> {
-        throw new Error('Method not implemented.');
-    }
     async searchEvents(): Promise<IEvent[]> {
         throw new Error('Method not implemented.');
     }
@@ -137,5 +137,4 @@ class FakeEventStore implements IEventStore {
     }
 }
 
-module.exports = FakeEventStore;
 export default FakeEventStore;

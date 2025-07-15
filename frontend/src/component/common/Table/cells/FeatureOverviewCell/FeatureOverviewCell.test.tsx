@@ -1,11 +1,11 @@
 import { screen } from '@testing-library/react';
 import { render } from 'utils/testRenderer';
-import { FeatureOverviewCell as makeFeatureOverviewCell } from './FeatureOverviewCell';
+import { createFeatureOverviewCell } from './FeatureOverviewCell.tsx';
 
 const noOp = () => {};
 
 test('Display full overview information', () => {
-    const FeatureOverviewCell = makeFeatureOverviewCell(noOp, noOp);
+    const FeatureOverviewCell = createFeatureOverviewCell(noOp, noOp);
 
     render(
         <FeatureOverviewCell
@@ -22,6 +22,7 @@ test('Display full overview information', () => {
                     type: 'release',
                     dependencyType: 'child',
                     project: 'my_project',
+                    archivedAt: null,
                 },
             }}
         />,
@@ -42,7 +43,7 @@ test('Display full overview information', () => {
 });
 
 test('Display minimal overview information', () => {
-    const FeatureOverviewCell = makeFeatureOverviewCell(noOp, noOp);
+    const FeatureOverviewCell = createFeatureOverviewCell(noOp, noOp);
 
     render(
         <FeatureOverviewCell
@@ -54,6 +55,7 @@ test('Display minimal overview information', () => {
                     type: '',
                     dependencyType: null,
                     project: 'my_project',
+                    archivedAt: null,
                 },
             }}
         />,
@@ -64,4 +66,27 @@ test('Display minimal overview information', () => {
         'href',
         '/projects/my_project/features/my_feature',
     );
+});
+
+test('show archived information', () => {
+    const FeatureOverviewCell = createFeatureOverviewCell(noOp, noOp);
+
+    render(
+        <FeatureOverviewCell
+            row={{
+                original: {
+                    name: 'archived_feature',
+                    tags: [],
+                    description: '',
+                    type: '',
+                    dependencyType: null,
+                    project: 'my_project',
+                    archivedAt: '2024-11-09',
+                },
+            }}
+        />,
+    );
+
+    expect(screen.getByText('archived_feature')).toBeInTheDocument();
+    expect(screen.getByText('Archived')).toBeInTheDocument();
 });

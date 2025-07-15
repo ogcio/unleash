@@ -1,9 +1,9 @@
-import dbInit, { type ITestDb } from '../../helpers/database-init';
+import dbInit, { type ITestDb } from '../../helpers/database-init.js';
 import {
     type IUnleashTest,
     setupAppWithCustomConfig,
-} from '../../helpers/test-helper';
-import getLogger from '../../../fixtures/no-logger';
+} from '../../helpers/test-helper.js';
+import getLogger from '../../../fixtures/no-logger.js';
 
 let app: IUnleashTest;
 let db: ITestDb;
@@ -17,6 +17,16 @@ beforeAll(async () => {
             },
         },
     });
+    await db.stores.strategyStore.createStrategy({
+        name: 'toBeDeleted',
+        description: 'toBeDeleted strategy',
+        parameters: [],
+    });
+    await db.stores.strategyStore.createStrategy({
+        name: 'toBeUpdated',
+        description: 'toBeUpdated strategy',
+        parameters: [],
+    });
 });
 
 afterAll(async () => {
@@ -27,13 +37,11 @@ afterAll(async () => {
 test('gets all strategies', async () => {
     expect.assertions(1);
 
-    return app.request
+    const { body } = await app.request
         .get('/api/admin/strategies')
         .expect('Content-Type', /json/)
-        .expect(200)
-        .expect((res) => {
-            expect(res.body.strategies).toHaveLength(3);
-        });
+        .expect(200);
+    expect(body.strategies).toHaveLength(6);
 });
 
 test('gets a strategy by name', async () => {
@@ -91,9 +99,7 @@ test('refuses to create a strategy with an existing name', async () => {
 test('deletes a new strategy', async () => {
     expect.assertions(0);
 
-    return app.request
-        .delete('/api/admin/strategies/usersWithEmail')
-        .expect(200);
+    return app.request.delete('/api/admin/strategies/toBeDeleted').expect(200);
 });
 
 test("can't delete a strategy that dose not exist", async () => {
@@ -106,10 +112,10 @@ test('updates a exiting strategy', async () => {
     expect.assertions(0);
 
     return app.request
-        .put('/api/admin/strategies/default')
+        .put('/api/admin/strategies/toBeUpdated')
         .send({
-            name: 'default',
-            description: 'Default is the best!',
+            name: 'toBeUpdated',
+            description: 'toBeUpdated is the best!',
             parameters: [],
         })
         .set('Content-Type', 'application/json')

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import UserForm from '../UserForm/UserForm';
-import useAddUserForm from '../hooks/useAddUserForm';
+import UserForm from '../UserForm/UserForm.tsx';
+import useAddUserForm from '../hooks/useAddUserForm.ts';
 import { scrollToTop } from 'component/common/util';
 import { useEffect } from 'react';
 import { UpdateButton } from 'component/common/UpdateButton/UpdateButton';
@@ -60,7 +60,7 @@ const EditUser = () => {
                 refetch();
                 navigate('/admin/users');
                 setToastData({
-                    title: 'User information updated',
+                    text: 'User information updated',
                     type: 'success',
                 });
             } catch (error: unknown) {
