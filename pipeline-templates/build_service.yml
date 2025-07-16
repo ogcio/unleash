@@ -8,7 +8,7 @@ parameters:
   - name: buildArguments
     default: ""
   - name: dockerfile
-    default: "./Dockerfile"
+    default: "./Dockerfile.ogcio"
 
 jobs:
   - job: Build
