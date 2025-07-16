@@ -24,7 +24,7 @@
   "exclude": [
     "bin",
     "docs",
-    "docker",
+    "ogcio",
     "examples",
     "migrations",
     "node_modules",

@@ -14,4 +14,4 @@ frontend/node_modules
 !.yarnrc.yml
 !frontend/.yarn/**
 node_modules
-!docker/index.js
+!ogcio

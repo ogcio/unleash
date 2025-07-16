@@ -15,7 +15,10 @@ RUN yarn build:frontend:if-needed
 
 RUN mkdir -p /unleash/build/frontend && mv /unleash/frontend/build /unleash/build/frontend/build
 
-RUN yarn workspaces focus -A --production
+WORKDIR /unleash/ogcio
+
+RUN yarn set version stable 
+# RUN yarn workspaces focus -A --production
 
 FROM node:$NODE_VERSION
 
@@ -25,7 +28,9 @@ ENV TZ=UTC
 
 WORKDIR /unleash
 
-COPY --from=builder /unleash/build /unleash/
+COPY --from=builder /unleash/ogcio /unleash/ogcio
+
+COPY --from=builder /unleash/build /unleash/build
 
 COPY --from=builder /unleash/node_modules /unleash/node_modules
 
@@ -35,4 +40,4 @@ EXPOSE 4242
 
 USER node
 
-CMD ["node", "dist/server.js"]
+CMD ["node", "ogcio/index.js"]
