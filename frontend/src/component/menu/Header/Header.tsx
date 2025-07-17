@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
-import { Link } from 'react-router-dom';
 import {
     AppBar,
     Box,
@@ -14,33 +13,19 @@ import MenuIcon from '@mui/icons-material/Menu';
 import UserProfile from 'component/user/UserProfile';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import { ReactComponent as UnleashLogo } from 'assets/img/logoDarkWithText.svg';
-import { ReactComponent as UnleashLogoWhite } from 'assets/img/logoWithWhiteText.svg';
-import { ReactComponent as CelebatoryUnleashLogo } from 'assets/img/unleashHoliday.svg';
-import { ReactComponent as CelebatoryUnleashLogoWhite } from 'assets/img/unleashHolidayDark.svg';
 
-import { DrawerMenu } from './DrawerMenu/DrawerMenu';
-import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
-import { flexRow, focusable } from 'themes/themeStyles';
-import { getCondensedRoutes, getRoutes } from 'component/menu/routes';
+import { DrawerMenu } from './DrawerMenu/DrawerMenu.tsx';
 import DarkModeOutlined from '@mui/icons-material/DarkModeOutlined';
 import LightModeOutlined from '@mui/icons-material/LightModeOutlined';
-import { filterByConfig, mapRouteLink } from 'component/common/util';
-import { ThemeMode } from 'component/common/ThemeMode/ThemeMode';
 import { useThemeMode } from 'hooks/useThemeMode';
-import { Notifications } from 'component/common/Notifications/Notifications';
-import { useAdminRoutes } from 'component/admin/useAdminRoutes';
-import InviteLinkButton from './InviteLink/InviteLinkButton/InviteLinkButton';
-import { useUiFlag } from 'hooks/useUiFlag';
+import InviteLinkButton from './InviteLink/InviteLinkButton/InviteLinkButton.tsx';
 import { CommandBar } from 'component/commandBar/CommandBar';
-import { HeaderEventTimelineButton } from './HeaderEventTimelineButton';
 
 const HeaderComponent = styled(AppBar)(({ theme }) => ({
-    backgroundColor: theme.palette.background.paper,
+    backgroundColor: theme.palette.background.application,
     padding: theme.spacing(1),
     boxShadow: 'none',
     position: 'relative',
-    zIndex: 300,
     paddingRight: theme.spacing(9),
     [theme.breakpoints.down('lg')]: {
         paddingLeft: theme.spacing(1),
@@ -75,14 +60,6 @@ const StyledNav = styled('nav')({
     flexGrow: 1,
 });
 
-const StyledUnleashLogoWhite = styled(UnleashLogoWhite)({ width: '150px' });
-
-const StyledUnleashLogo = styled(UnleashLogo)({ width: '150px' });
-
-const StyledCelebatoryLogo = styled(CelebatoryUnleashLogo)({ width: '150px' });
-
-const StyledLink = styled(Link)(({ theme }) => focusable(theme));
-
 const StyledIconButton = styled(IconButton)<{
     component?: 'a' | 'button';
     href?: string;
@@ -101,25 +78,9 @@ const Header = () => {
     const { onSetThemeMode, themeMode } = useThemeMode();
     const theme = useTheme();
 
-    const disableNotifications = useUiFlag('disableNotifications');
-    const { uiConfig, isOss } = useUiConfig();
     const smallScreen = useMediaQuery(theme.breakpoints.down('lg'));
     const [openDrawer, setOpenDrawer] = useState(false);
     const toggleDrawer = () => setOpenDrawer((prev) => !prev);
-    const celebatoryUnleash = useUiFlag('celebrateUnleash');
-
-    const routes = getRoutes();
-    const adminRoutes = useAdminRoutes();
-
-    const filteredMainRoutes = {
-        mainNavRoutes: getCondensedRoutes(routes.mainNavRoutes)
-            .filter(filterByConfig(uiConfig))
-            .map(mapRouteLink),
-        mobileRoutes: getCondensedRoutes(routes.mobileRoutes)
-            .filter(filterByConfig(uiConfig))
-            .map(mapRouteLink),
-        adminRoutes,
-    };
 
     if (smallScreen) {
         return (
@@ -138,12 +99,7 @@ const Header = () => {
                             <MenuIcon />
                         </IconButton>
                     </Tooltip>
-                    <DrawerMenu
-                        links={uiConfig.links}
-                        open={openDrawer}
-                        toggleDrawer={toggleDrawer}
-                        routes={filteredMainRoutes}
-                    />
+                    <DrawerMenu open={openDrawer} toggleDrawer={toggleDrawer} />
                     <StyledUserContainer>
                         <UserProfile />
                     </StyledUserContainer>
@@ -155,33 +111,18 @@ const Header = () => {
     return (
         <HeaderComponent position='static'>
             <ContainerComponent>
-                <StyledLink to='/' sx={flexRow} aria-label='Home'>
-                    <ThemeMode
-                        darkmode={
-                            <ConditionallyRender
-                                condition={celebatoryUnleash}
-                                show={<CelebatoryUnleashLogoWhite />}
-                                elseShow={
-                                    <StyledUnleashLogoWhite aria-label='Unleash logo' />
-                                }
-                            />
-                        }
-                        lightmode={
-                            <ConditionallyRender
-                                condition={celebatoryUnleash}
-                                show={<StyledCelebatoryLogo />}
-                                elseShow={
-                                    <StyledUnleashLogo aria-label='Unleash logo' />
-                                }
-                            />
-                        }
-                    />
-                </StyledLink>
-
                 <StyledNav>
                     <StyledUserContainer>
                         <CommandBar />
-                        <HeaderEventTimelineButton />
+                        <Divider
+                            orientation='vertical'
+                            variant='middle'
+                            flexItem
+                            sx={(theme) => ({
+                                marginLeft: theme.spacing(1),
+                                border: 'transparent',
+                            })}
+                        />
                         <InviteLinkButton />
                         <Tooltip
                             title={
@@ -202,10 +143,6 @@ const Header = () => {
                                 />
                             </StyledIconButton>
                         </Tooltip>
-                        <ConditionallyRender
-                            condition={!isOss() && !disableNotifications}
-                            show={<Notifications />}
-                        />
                         <Tooltip title='Documentation' arrow>
                             <StyledIconButton
                                 component='a'
@@ -213,7 +150,9 @@ const Header = () => {
                                 target='_blank'
                                 rel='noopener noreferrer'
                                 size='large'
-                                sx={{ mr: 1 }}
+                                sx={(theme) => ({
+                                    marginRight: theme.spacing(1),
+                                })}
                             >
                                 <MenuBookIcon />
                             </StyledIconButton>

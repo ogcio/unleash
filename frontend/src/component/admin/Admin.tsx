@@ -1,30 +1,30 @@
 import { Routes, Route } from 'react-router-dom';
-import { ApiTokenPage } from './apiToken/ApiTokenPage/ApiTokenPage';
-import { CreateApiToken } from './apiToken/CreateApiToken/CreateApiToken';
-import { AuthSettings } from './auth/AuthSettings';
-import { Billing } from './billing/Billing';
-import FlaggedBillingRedirect from './billing/FlaggedBillingRedirect/FlaggedBillingRedirect';
-import { CorsAdmin } from './cors';
-import { GroupsAdmin } from './groups/GroupsAdmin';
-import { InstanceAdmin } from './instance-admin/InstanceAdmin';
-import { InstancePrivacy } from './instance-privacy/InstancePrivacy';
-import { MaintenanceAdmin } from './maintenance';
-import { Network } from './network/Network';
-import { Roles } from './roles/Roles';
-import { ServiceAccounts } from './serviceAccounts/ServiceAccounts';
-import CreateUser from './users/CreateUser/CreateUser';
-import { InviteLink } from './users/InviteLink/InviteLink';
-import UsersAdmin from './users/UsersAdmin';
+import { ApiTokenPage } from './apiToken/ApiTokenPage/ApiTokenPage.tsx';
+import { CreateApiToken } from './apiToken/CreateApiToken/CreateApiToken.tsx';
+import { AuthSettings } from './auth/AuthSettings.tsx';
+import { Billing } from './billing/Billing.tsx';
+import FlaggedBillingRedirect from './billing/FlaggedBillingRedirect/FlaggedBillingRedirect.tsx';
+import { CorsAdmin } from './cors/index.js';
+import { GroupsAdmin } from './groups/GroupsAdmin.tsx';
+import { InstanceAdmin } from './instance-admin/InstanceAdmin.tsx';
+import { InstancePrivacy } from './instance-privacy/InstancePrivacy.tsx';
+import { MaintenanceAdmin } from './maintenance/index.js';
+import { Network } from './network/Network.tsx';
+import { Roles } from './roles/Roles.tsx';
+import { ServiceAccounts } from './serviceAccounts/ServiceAccounts.tsx';
+import CreateUser from './users/CreateUser/CreateUser.tsx';
+import { InviteLink } from './users/InviteLink/InviteLink.tsx';
+import UsersAdmin from './users/UsersAdmin.tsx';
 import NotFound from 'component/common/NotFound/NotFound';
-import { AdminIndex } from './AdminIndex';
-import { Banners } from './banners/Banners';
-import { License } from './license/License';
+import { Banners } from './banners/Banners.tsx';
+import { License } from './license/License.tsx';
+import { AdminHome } from './AdminHome.tsx';
 
 export const Admin = () => {
     return (
         <>
             <Routes>
-                <Route index element={<AdminIndex />} />
+                <Route index element={<AdminHome />} />
                 <Route path='users/*' element={<UsersAdmin />} />
                 <Route path='api' element={<ApiTokenPage />} />
                 <Route path='api/create-token' element={<CreateApiToken />} />
@@ -39,7 +39,7 @@ export const Admin = () => {
                 <Route path='banners' element={<Banners />} />
                 <Route path='license' element={<License />} />
                 <Route path='cors' element={<CorsAdmin />} />
-                <Route path='auth' element={<AuthSettings />} />
+                <Route path='auth/*' element={<AuthSettings />} />
                 <Route
                     path='admin-invoices'
                     element={<FlaggedBillingRedirect />}

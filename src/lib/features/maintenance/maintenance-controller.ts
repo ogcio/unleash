@@ -1,21 +1,25 @@
-import { ADMIN, type IUnleashConfig, type IUnleashServices } from '../../types';
+import {
+    ADMIN,
+    UPDATE_MAINTENANCE_MODE,
+    type IUnleashConfig,
+} from '../../types/index.js';
 import type { Request, Response } from 'express';
-import Controller from '../../routes/controller';
-import type { Logger } from '../../logger';
+import Controller from '../../routes/controller.js';
+import type { Logger } from '../../logger.js';
 import {
     createRequestSchema,
     createResponseSchema,
     emptyResponse,
     getStandardResponses,
-} from '../../openapi';
-import type { OpenApiService } from '../../services';
-import type { IAuthRequest } from '../../routes/unleash-types';
+} from '../../openapi/index.js';
+import type { IUnleashServices, OpenApiService } from '../../services/index.js';
+import type { IAuthRequest } from '../../routes/unleash-types.js';
 import {
     type MaintenanceSchema,
     maintenanceSchema,
-} from '../../openapi/spec/maintenance-schema';
-import type MaintenanceService from '../../features/maintenance/maintenance-service';
-import type { ToggleMaintenanceSchema } from '../../openapi/spec/toggle-maintenance-schema';
+} from '../../openapi/spec/maintenance-schema.js';
+import type MaintenanceService from '../../features/maintenance/maintenance-service.js';
+import type { ToggleMaintenanceSchema } from '../../openapi/spec/toggle-maintenance-schema.js';
 
 export default class MaintenanceController extends Controller {
     private maintenanceService: MaintenanceService;
@@ -38,7 +42,7 @@ export default class MaintenanceController extends Controller {
         this.route({
             method: 'post',
             path: '',
-            permission: ADMIN,
+            permission: [ADMIN, UPDATE_MAINTENANCE_MODE],
             handler: this.toggleMaintenance,
             middleware: [
                 this.openApiService.validPath({
@@ -58,7 +62,7 @@ export default class MaintenanceController extends Controller {
         this.route({
             method: 'get',
             path: '',
-            permission: ADMIN,
+            permission: [ADMIN, UPDATE_MAINTENANCE_MODE],
             handler: this.getMaintenance,
             middleware: [
                 this.openApiService.validPath({
@@ -97,4 +101,3 @@ export default class MaintenanceController extends Controller {
         );
     }
 }
-module.exports = MaintenanceController;

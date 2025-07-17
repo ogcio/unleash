@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 import useToast from 'hooks/useToast';
 import { formatUnknownError } from 'utils/formatUnknownError';
-import type { IFeatureStrategyPayload } from '../interfaces/strategy';
-import { useChangeRequestApi } from './api/actions/useChangeRequestApi/useChangeRequestApi';
-import { usePendingChangeRequests } from './api/getters/usePendingChangeRequests/usePendingChangeRequests';
+import type { IFeatureStrategyPayload } from '../interfaces/strategy.js';
+import { useChangeRequestApi } from './api/actions/useChangeRequestApi/useChangeRequestApi.js';
+import { usePendingChangeRequests } from './api/getters/usePendingChangeRequests/usePendingChangeRequests.js';
 
 export type ChangeRequestStrategyAction =
     | 'addStrategy'
@@ -78,7 +78,7 @@ export const useChangeRequestAddStrategy = (
             setChangeRequestDialogDetails({ isOpen: false });
             setToastData({
                 type: 'success',
-                title: 'Changes added to the draft!',
+                text: 'Changes added to draft',
             });
         } catch (error) {
             setToastApiError(formatUnknownError(error));
@@ -105,7 +105,7 @@ export const useChangeRequestAddStrategy = (
             setChangeRequestDialogDetails({ isOpen: false });
             setToastData({
                 type: 'success',
-                title: 'Changes added to the draft!',
+                text: 'Changes added to draft',
             });
         } catch (error) {
             setToastApiError(formatUnknownError(error));

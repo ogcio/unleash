@@ -30,7 +30,7 @@ import {
     useFlexLayout,
 } from 'react-table';
 import { sortTypes } from 'utils/sortTypes';
-import { ServiceAccountCreateTokenDialog } from './ServiceAccountCreateTokenDialog/ServiceAccountCreateTokenDialog';
+import { ServiceAccountCreateTokenDialog } from './ServiceAccountCreateTokenDialog/ServiceAccountCreateTokenDialog.tsx';
 import { ServiceAccountTokenDialog } from 'component/admin/serviceAccounts/ServiceAccountsTable/ServiceAccountTokenDialog/ServiceAccountTokenDialog';
 import { TimeAgoCell } from 'component/common/Table/cells/TimeAgoCell/TimeAgoCell';
 import { useConditionallyHiddenColumns } from 'hooks/useConditionallyHiddenColumns';
@@ -127,7 +127,7 @@ export const ServiceAccountTokens = ({
             setNewToken(token);
             setTokenOpen(true);
             setToastData({
-                title: 'Token created successfully',
+                text: 'Token created successfully',
                 type: 'success',
             });
         } catch (error: unknown) {
@@ -146,7 +146,7 @@ export const ServiceAccountTokens = ({
                 refetchTokens();
                 setDeleteOpen(false);
                 setToastData({
-                    title: 'Token deleted successfully',
+                    text: 'Token deleted successfully',
                     type: 'success',
                 });
             } catch (error: unknown) {

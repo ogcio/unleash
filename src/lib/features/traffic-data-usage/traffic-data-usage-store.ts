@@ -1,10 +1,12 @@
-import type { Db } from '../../db/db';
-import type { Logger, LogProvider } from '../../logger';
+import { endOfDay, endOfMonth, startOfDay, startOfMonth } from 'date-fns';
+import type { Db } from '../../db/db.js';
+import type { Logger, LogProvider } from '../../logger.js';
 import type {
+    IStatMonthlyTrafficUsage,
     IStatTrafficUsage,
     IStatTrafficUsageKey,
     ITrafficDataUsageStore,
-} from './traffic-data-usage-store-type';
+} from './traffic-data-usage-store-type.js';
 
 const TABLE = 'stat_traffic_usage';
 const COLUMNS = ['day', 'traffic_group', 'status_code_series', 'count'];
@@ -55,7 +57,7 @@ export class TrafficDataUsageStore implements ITrafficDataUsageStore {
     }
     async exists(key: IStatTrafficUsageKey): Promise<boolean> {
         const result = await this.db.raw(
-            `SELECT EXISTS (SELECT 1 FROM ${TABLE} WHERE 
+            `SELECT EXISTS (SELECT 1 FROM ${TABLE} WHERE
                 day = ? AND
                 traffic_group = ? AND
                 status_code_series ?) AS present`,
@@ -88,13 +90,56 @@ export class TrafficDataUsageStore implements ITrafficDataUsageStore {
             });
     }
 
+    async getDailyTrafficDataUsageForPeriod(
+        from: Date,
+        to: Date,
+    ): Promise<IStatTrafficUsage[]> {
+        const rows = await this.db<IStatTrafficUsage>(TABLE)
+            .where('day', '>=', startOfDay(from))
+            .andWhere('day', '<=', endOfDay(to));
+
+        return rows.map(mapRow);
+    }
+
+    async getMonthlyTrafficDataUsageForPeriod(
+        from: Date,
+        to: Date,
+    ): Promise<IStatMonthlyTrafficUsage[]> {
+        const rows = await this.db(TABLE)
+            .select(
+                'traffic_group',
+                'status_code_series',
+                this.db.raw(`to_char(day, 'YYYY-MM') AS month`),
+                this.db.raw(`SUM(count) AS count`),
+            )
+            .where('day', '>=', startOfDay(from))
+            .andWhere('day', '<=', endOfDay(to))
+            .groupBy([
+                'traffic_group',
+                this.db.raw(`to_char(day, 'YYYY-MM')`),
+                'status_code_series',
+            ])
+            .orderBy([
+                { column: 'month', order: 'desc' },
+                { column: 'traffic_group', order: 'asc' },
+            ]);
+        return rows.map(
+            ({ traffic_group, status_code_series, month, count }) => ({
+                trafficGroup: traffic_group,
+                statusCodeSeries: status_code_series,
+                month,
+                count: Number.parseInt(count),
+            }),
+        );
+    }
+
     async getTrafficDataUsageForPeriod(
         period: string,
     ): Promise<IStatTrafficUsage[]> {
-        const rows = await this.db<IStatTrafficUsage>(TABLE).whereRaw(
-            `to_char(day, 'YYYY-MM') = ?`,
-            [period],
+        const month = new Date(period);
+        return this.getDailyTrafficDataUsageForPeriod(
+            startOfMonth(month),
+            endOfMonth(month),
         );
-        return rows.map(mapRow);
     }
 }

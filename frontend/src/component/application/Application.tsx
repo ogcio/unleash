@@ -15,7 +15,7 @@ import Delete from '@mui/icons-material/Delete';
 import LinkIcon from '@mui/icons-material/Link';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 import { UPDATE_APPLICATION } from 'component/providers/AccessProvider/permissions';
-import { ConnectedInstances } from './ConnectedInstances/ConnectedInstances';
+import { ConnectedInstances } from './ConnectedInstances/ConnectedInstances.tsx';
 import { Dialogue } from 'component/common/Dialogue/Dialogue';
 import { PageContent } from 'component/common/PageContent/PageContent';
 import { PageHeader } from 'component/common/PageHeader/PageHeader';
@@ -28,7 +28,7 @@ import useToast from 'hooks/useToast';
 import { formatDateYMD } from 'utils/formatDate';
 import { formatUnknownError } from 'utils/formatUnknownError';
 import { useRequiredPathParam } from 'hooks/useRequiredPathParam';
-import ApplicationOverview from './ApplicationOverview';
+import ApplicationOverview from './ApplicationOverview.tsx';
 import PermissionIconButton from 'component/common/PermissionIconButton/PermissionIconButton';
 
 type Tab = {
@@ -93,8 +93,7 @@ export const Application = () => {
         try {
             await deleteApplication(appName);
             setToastData({
-                title: 'Deleted Successfully',
-                text: 'Application deleted successfully',
+                text: 'Deleted Successfully',
                 type: 'success',
             });
             navigate('/applications');
@@ -130,7 +129,7 @@ export const Application = () => {
             name: 'overview',
         },
         {
-            title: 'Connected instances',
+            title: 'Last seen instances (24h)',
             path: `${basePath}/instances`,
             name: 'instances',
         },

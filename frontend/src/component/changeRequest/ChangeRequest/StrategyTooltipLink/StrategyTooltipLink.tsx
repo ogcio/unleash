@@ -1,3 +1,4 @@
+// deprecated: remove with flag crDiffView
 import type {
     IChangeRequestAddStrategy,
     IChangeRequestDeleteStrategy,
@@ -9,13 +10,13 @@ import {
     formatStrategyName,
     GetFeatureStrategyIcon,
 } from 'utils/strategyNames';
-import EventDiff from 'component/events/EventDiff/EventDiff';
+import { EventDiff } from 'component/events/EventDiff/EventDiff';
 import omit from 'lodash.omit';
 import { TooltipLink } from 'component/common/TooltipLink/TooltipLink';
 import { Typography, styled } from '@mui/material';
 import type { IFeatureStrategy } from 'interfaces/strategy';
 import { textTruncated } from 'themes/themeStyles';
-import { NameWithChangeInfo } from '../NameWithChangeInfo/NameWithChangeInfo';
+import { NameWithChangeInfo } from '../Changes/Change/NameWithChangeInfo/NameWithChangeInfo.tsx';
 
 const StyledCodeSection = styled('div')(({ theme }) => ({
     overflowX: 'auto',
@@ -28,6 +29,18 @@ const StyledCodeSection = styled('div')(({ theme }) => ({
     },
 }));
 
+const sortSegments = <T extends { segments?: number[] }>(
+    item?: T,
+): T | undefined => {
+    if (!item || !item.segments) {
+        return item;
+    }
+    return {
+        ...item,
+        segments: [...item.segments].sort((a, b) => a - b),
+    };
+};
+
 export const StrategyDiff: FC<{
     change:
         | IChangeRequestAddStrategy
@@ -38,12 +51,15 @@ export const StrategyDiff: FC<{
     const changeRequestStrategy =
         change.action === 'deleteStrategy' ? undefined : change.payload;
 
+    const sortedCurrentStrategy = sortSegments(currentStrategy);
+    const sortedChangeRequestStrategy = sortSegments(changeRequestStrategy);
+
     return (
         <StyledCodeSection>
             <EventDiff
                 entry={{
-                    preData: omit(currentStrategy, 'sortOrder'),
-                    data: omit(changeRequestStrategy, 'snapshot'),
+                    preData: omit(sortedCurrentStrategy, 'sortOrder'),
+                    data: omit(sortedChangeRequestStrategy, 'snapshot'),
                 }}
             />
         </StyledCodeSection>
@@ -51,10 +67,8 @@ export const StrategyDiff: FC<{
 };
 
 interface IStrategyTooltipLinkProps {
-    change:
-        | IChangeRequestAddStrategy
-        | IChangeRequestUpdateStrategy
-        | IChangeRequestDeleteStrategy;
+    name: string;
+    title?: string;
     previousTitle?: string;
     children?: React.ReactNode;
 }
@@ -69,34 +83,43 @@ const StyledContainer: FC<{ children?: React.ReactNode }> = styled('div')(
     }),
 );
 
+const ViewDiff = styled('span')(({ theme }) => ({
+    color: theme.palette.primary.main,
+    marginLeft: theme.spacing(1),
+}));
+
 const Truncated = styled('div')(() => ({
     ...textTruncated,
     maxWidth: 500,
 }));
 
 export const StrategyTooltipLink: FC<IStrategyTooltipLinkProps> = ({
-    change,
+    name,
+    title,
     previousTitle,
     children,
-}) => (
-    <StyledContainer>
-        <GetFeatureStrategyIcon strategyName={change.payload.name} />
-        <Truncated>
-            <TooltipLink
-                tooltip={children}
-                tooltipProps={{
-                    maxWidth: 500,
-                    maxHeight: 600,
-                }}
-            >
+}) => {
+    return (
+        <StyledContainer>
+            <GetFeatureStrategyIcon strategyName={name} />
+            <Truncated>
                 <Typography component='span'>
-                    {formatStrategyName(change.payload.name)}
+                    {formatStrategyName(name)}
                 </Typography>
-            </TooltipLink>
-            <NameWithChangeInfo
-                newName={change.payload.title}
-                previousName={previousTitle}
-            />
-        </Truncated>
-    </StyledContainer>
-);
+                <TooltipLink
+                    tooltip={children}
+                    tooltipProps={{
+                        maxWidth: 500,
+                        maxHeight: 600,
+                    }}
+                >
+                    <ViewDiff>View Diff</ViewDiff>
+                </TooltipLink>
+                <NameWithChangeInfo
+                    newName={title}
+                    previousName={previousTitle}
+                />
+            </Truncated>
+        </StyledContainer>
+    );
+};

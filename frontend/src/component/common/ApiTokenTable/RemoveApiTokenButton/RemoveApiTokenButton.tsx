@@ -34,7 +34,7 @@ export const RemoveApiTokenButton = ({
 
             setToastData({
                 type: 'success',
-                title: 'API token removed',
+                text: 'API token removed',
             });
         } catch (error: unknown) {
             setToastApiError(formatUnknownError(error));
@@ -63,8 +63,8 @@ export const RemoveApiTokenButton = ({
                     <br />
                     <StyledUl>
                         <li>
-                            <strong>username</strong>:{' '}
-                            <code>{token.username}</code>
+                            <strong>name</strong>:{' '}
+                            <code>{token.tokenName}</code>
                         </li>
                         <li>
                             <strong>type</strong>: <code>{token.type}</code>

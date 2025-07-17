@@ -1,5 +1,5 @@
 import type { FromSchema } from 'json-schema-to-ts';
-import { dateSchema } from './date-schema';
+import { dateSchema } from './date-schema.js';
 
 export const bulkRegistrationSchema = {
     $id: '#/components/schemas/bulkRegistrationSchema',
@@ -64,11 +64,26 @@ export const bulkRegistrationSchema = {
                 type: 'string',
             },
         },
+        projects: {
+            description: 'The list of projects used in the application',
+            type: 'array',
+            example: ['projectA', 'projectB'],
+            items: {
+                type: 'string',
+            },
+        },
         sdkVersion: {
             description:
                 'The version the sdk is running. Typically <client>:<version>',
             example: 'unleash-client-java:8.0.0',
             type: 'string',
+        },
+        sdkType: {
+            description: 'The sdk type',
+            example: 'backend',
+            type: 'string',
+            enum: ['frontend', 'backend', null],
+            nullable: true,
         },
     },
     components: {

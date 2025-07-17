@@ -1,10 +1,13 @@
 import {
     type IUnleashTest,
     setupAppWithCustomConfig,
-} from '../../../test/e2e/helpers/test-helper';
-import dbInit, { type ITestDb } from '../../../test/e2e/helpers/database-init';
-import getLogger from '../../../test/fixtures/no-logger';
-import type { AdvancedPlaygroundResponseSchema } from '../../openapi';
+} from '../../../test/e2e/helpers/test-helper.js';
+import dbInit, {
+    type ITestDb,
+} from '../../../test/e2e/helpers/database-init.js';
+import getLogger from '../../../test/fixtures/no-logger.js';
+import type { AdvancedPlaygroundResponseSchema } from '../../openapi/index.js';
+import { DEFAULT_ENV } from '../../server-impl.js';
 
 let app: IUnleashTest;
 let db: ITestDb;
@@ -46,7 +49,7 @@ const createFeatureToggleWithStrategy = async (
     await createFeatureToggle(featureName);
     return app.request
         .post(
-            `/api/admin/projects/default/features/${featureName}/environments/default/strategies`,
+            `/api/admin/projects/default/features/${featureName}/environments/${DEFAULT_ENV}/strategies`,
         )
         .send(strategy)
         .expect(200);
@@ -55,14 +58,14 @@ const createFeatureToggleWithStrategy = async (
 const enableToggle = (featureName: string) =>
     app.request
         .post(
-            `/api/admin/projects/default/features/${featureName}/environments/default/on`,
+            `/api/admin/projects/default/features/${featureName}/environments/${DEFAULT_ENV}/on`,
         )
         .send({})
         .expect(200);
 const disableToggle = (featureName: string) =>
     app.request
         .post(
-            `/api/admin/projects/default/features/${featureName}/environments/default/off`,
+            `/api/admin/projects/default/features/${featureName}/environments/${DEFAULT_ENV}/off`,
         )
         .send({})
         .expect(200);
@@ -81,7 +84,7 @@ test('advanced playground evaluation with no toggles', async () => {
     const { body: result } = await app.request
         .post('/api/admin/playground/advanced')
         .send({
-            environments: ['default'],
+            environments: [DEFAULT_ENV],
             projects: ['default'],
             context: { appName: 'test', userId: '1,2', channel: 'web,mobile' },
         })
@@ -90,7 +93,7 @@ test('advanced playground evaluation with no toggles', async () => {
 
     expect(result).toMatchObject({
         input: {
-            environments: ['default'],
+            environments: [DEFAULT_ENV],
             projects: ['default'],
             context: {
                 appName: 'test',
@@ -113,15 +116,15 @@ test('advanced playground evaluation with unsatisfied parent dependency', async 
     const { body: result } = await app.request
         .post('/api/admin/playground/advanced')
         .send({
-            environments: ['default'],
+            environments: [DEFAULT_ENV],
             projects: ['default'],
             context: { appName: 'test' },
         })
         .set('Content-Type', 'application/json')
         .expect(200);
 
-    const child = result.features[0].environments.default[0];
-    const parent = result.features[1].environments.default[0];
+    const child = result.features[0].environments[DEFAULT_ENV][0];
+    const parent = result.features[1].environments[DEFAULT_ENV][0];
     // child is disabled because of the parent
     expect(child.hasUnsatisfiedDependency).toBe(true);
     expect(child.isEnabled).toBe(false);
@@ -150,15 +153,15 @@ test('advanced playground evaluation with satisfied disabled parent dependency',
     const { body: result } = await app.request
         .post('/api/admin/playground/advanced')
         .send({
-            environments: ['default'],
+            environments: [DEFAULT_ENV],
             projects: ['default'],
             context: { appName: 'test' },
         })
         .set('Content-Type', 'application/json')
         .expect(200);
 
-    const child = result.features[0].environments.default[0];
-    const parent = result.features[1].environments.default[0];
+    const child = result.features[0].environments[DEFAULT_ENV][0];
+    const parent = result.features[1].environments[DEFAULT_ENV][0];
 
     expect(child.hasUnsatisfiedDependency).toBe(false);
     expect(child.isEnabled).toBe(true);
@@ -173,7 +176,7 @@ test('advanced playground evaluation happy path', async () => {
     const { body: result } = await app.request
         .post('/api/admin/playground/advanced')
         .send({
-            environments: ['default'],
+            environments: [DEFAULT_ENV],
             projects: ['default'],
             context: { appName: 'test', userId: '1,2', channel: 'web,mobile' },
         })
@@ -182,7 +185,7 @@ test('advanced playground evaluation happy path', async () => {
 
     expect(result).toMatchObject({
         input: {
-            environments: ['default'],
+            environments: [DEFAULT_ENV],
             projects: ['default'],
             context: {
                 appName: 'test',
@@ -195,7 +198,7 @@ test('advanced playground evaluation happy path', async () => {
                 name: 'test-playground-feature',
                 projectId: 'default',
                 environments: {
-                    default: [
+                    [DEFAULT_ENV]: [
                         {
                             isEnabled: true,
                             isEnabledInCurrentEnvironment: true,
@@ -222,7 +225,7 @@ test('advanced playground evaluation happy path', async () => {
                                 enabled: false,
                             },
                             name: 'test-playground-feature',
-                            environment: 'default',
+                            environment: DEFAULT_ENV,
                             context: {
                                 appName: 'test',
                                 userId: '1',
@@ -256,7 +259,7 @@ test('advanced playground evaluation happy path', async () => {
                                 enabled: false,
                             },
                             name: 'test-playground-feature',
-                            environment: 'default',
+                            environment: DEFAULT_ENV,
                             context: {
                                 appName: 'test',
                                 userId: '1',
@@ -290,7 +293,7 @@ test('advanced playground evaluation happy path', async () => {
                                 enabled: false,
                             },
                             name: 'test-playground-feature',
-                            environment: 'default',
+                            environment: DEFAULT_ENV,
                             context: {
                                 appName: 'test',
                                 userId: '2',
@@ -324,7 +327,7 @@ test('advanced playground evaluation happy path', async () => {
                                 enabled: false,
                             },
                             name: 'test-playground-feature',
-                            environment: 'default',
+                            environment: DEFAULT_ENV,
                             context: {
                                 appName: 'test',
                                 userId: '2',
@@ -369,7 +372,7 @@ test('show matching variant from variants selection only for enabled toggles', a
     const { body: result } = await app.request
         .post('/api/admin/playground/advanced')
         .send({
-            environments: ['default'],
+            environments: [DEFAULT_ENV],
             projects: ['default'],
             context: { appName: 'playground', someProperty: '1,2,3,4,5' }, // generate 5 combinations
         })
@@ -377,13 +380,12 @@ test('show matching variant from variants selection only for enabled toggles', a
         .expect(200);
 
     const typedResult: AdvancedPlaygroundResponseSchema = result;
-    const enabledFeatures = typedResult.features[0].environments.default.filter(
-        (item) => item.isEnabled,
-    );
-    const disabledFeatures =
-        typedResult.features[0].environments.default.filter(
-            (item) => !item.isEnabled,
-        );
+    const enabledFeatures = typedResult.features[0].environments[
+        DEFAULT_ENV
+    ].filter((item) => item.isEnabled);
+    const disabledFeatures = typedResult.features[0].environments[
+        DEFAULT_ENV
+    ].filter((item) => !item.isEnabled);
 
     enabledFeatures.forEach((feature) => {
         expect(feature.variant?.name).toBe('a');
@@ -413,7 +415,7 @@ test('should return disabled strategies with unevaluated result', async () => {
     const { body: result } = await app.request
         .post('/api/admin/playground/advanced')
         .send({
-            environments: ['default'],
+            environments: [DEFAULT_ENV],
             projects: ['default'],
             context: { appName: 'playground' },
         })
@@ -428,7 +430,7 @@ test('should return disabled strategies with unevaluated result', async () => {
     );
 
     expect(
-        feature?.environments.default[0].strategies.data[0].result
+        feature?.environments[DEFAULT_ENV][0].strategies.data[0].result
             .evaluationStatus,
     ).toBe('unevaluated');
 });

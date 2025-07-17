@@ -8,14 +8,14 @@ import type {
     ApplicationOverviewSchema,
 } from 'openapi';
 import { useRequiredPathParam } from 'hooks/useRequiredPathParam';
-import { HelpIcon } from '../common/HelpIcon/HelpIcon';
+import { HelpIcon } from '../common/HelpIcon/HelpIcon.tsx';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 import CloudCircle from '@mui/icons-material/CloudCircle';
 import Flag from '@mui/icons-material/Flag';
 import WarningAmberRounded from '@mui/icons-material/WarningAmberRounded';
 import { TimeAgo } from 'component/common/TimeAgo/TimeAgo';
 import { usePlausibleTracker } from 'hooks/usePlausibleTracker';
-import { getApplicationIssues } from './ApplicationIssues/ApplicationIssues';
+import { getApplicationIssues } from './ApplicationIssues/ApplicationIssues.tsx';
 
 const StyledTable = styled('table')(({ theme }) => ({
     fontSize: theme.fontSizes.smallerBody,
@@ -287,21 +287,48 @@ export const ApplicationChart = ({ data }: IApplicationChartProps) => {
                                                         theme.fontSizes
                                                             .smallBody
                                                     }
-                                                    tooltip='Active instances in the last 2 days'
+                                                    tooltip='Active instances in the last 24 hours'
                                                 />
                                             </StyledCell>
                                             <StyledCell>
                                                 {environment.instanceCount}
                                             </StyledCell>
                                         </tr>
-                                        <tr>
-                                            <StyledCell>SDK:</StyledCell>
-                                            <StyledCell>
-                                                {environment.sdks.map((sdk) => (
-                                                    <div key={sdk}>{sdk}</div>
-                                                ))}
-                                            </StyledCell>
-                                        </tr>
+
+                                        {environment.backendSdks.length > 0 ? (
+                                            <tr>
+                                                <StyledCell>
+                                                    Backend SDK:
+                                                </StyledCell>
+                                                <StyledCell>
+                                                    {environment.backendSdks.map(
+                                                        (sdk) => (
+                                                            <div key={sdk}>
+                                                                {sdk}
+                                                            </div>
+                                                        ),
+                                                    )}
+                                                </StyledCell>
+                                            </tr>
+                                        ) : null}
+
+                                        {environment.frontendSdks.length > 0 ? (
+                                            <tr>
+                                                <StyledCell>
+                                                    Frontend SDK:
+                                                </StyledCell>
+                                                <StyledCell>
+                                                    {environment.frontendSdks.map(
+                                                        (sdk) => (
+                                                            <div key={sdk}>
+                                                                {sdk}
+                                                            </div>
+                                                        ),
+                                                    )}
+                                                </StyledCell>
+                                            </tr>
+                                        ) : null}
+
                                         <tr>
                                             <StyledCell>Last seen:</StyledCell>
                                             <StyledCell>

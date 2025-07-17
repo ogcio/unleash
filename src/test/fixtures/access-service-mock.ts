@@ -3,19 +3,23 @@
 import {
     AccessService,
     type AccessWithRoles,
-} from '../../lib/services/access-service';
-import type User from '../../lib/types/user';
-import noLoggerProvider from './no-logger';
-import type { IRole } from '../../lib/types/stores/access-store';
-import { type IAvailablePermissions, RoleName } from '../../lib/types/model';
+} from '../../lib/services/access-service.js';
+import type User from '../../lib/types/user.js';
+import noLoggerProvider from './no-logger.js';
+import type { IRole } from '../../lib/types/stores/access-store.js';
+import { type IAvailablePermissions, RoleName } from '../../lib/types/model.js';
 
 class AccessServiceMock extends AccessService {
     constructor() {
         super(
             {
+                // @ts-expect-error - We're mocking the service so we don't need the store
                 accessStore: undefined,
+                // @ts-expect-error - We're mocking the service so we don't need the store
                 accountStore: undefined,
+                // @ts-expect-error - We're mocking the service so we don't need the store
                 roleStore: undefined,
+                // @ts-expect-error - We're mocking the service so we don't need the store
                 environmentStore: undefined,
             },
             { getLogger: noLoggerProvider },

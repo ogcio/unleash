@@ -1,5 +1,5 @@
-import { createConfig } from './create-config';
-import { ApiTokenType } from './types/models/api-token';
+import { createConfig, resolveIsOss } from './create-config.js';
+import { ApiTokenType } from './types/model.js';
 
 test('should create default config', async () => {
     const config = createConfig({
@@ -27,7 +27,7 @@ test('should create default config', async () => {
 test('should add initApiToken for admin token from options', async () => {
     const token = {
         environment: '*',
-        project: '*',
+        projects: ['*'],
         secret: '*:*.some-random-string',
         type: ApiTokenType.ADMIN,
         tokenName: 'admin',
@@ -52,7 +52,9 @@ test('should add initApiToken for admin token from options', async () => {
     expect(config.authentication.initApiTokens[0].environment).toBe(
         token.environment,
     );
-    expect(config.authentication.initApiTokens[0].project).toBe(token.project);
+    expect(config.authentication.initApiTokens[0].projects).toMatchObject(
+        token.projects,
+    );
     expect(config.authentication.initApiTokens[0].type).toBe(
         ApiTokenType.ADMIN,
     );
@@ -61,7 +63,7 @@ test('should add initApiToken for admin token from options', async () => {
 test('should add initApiToken for client token from options', async () => {
     const token = {
         environment: 'development',
-        project: 'default',
+        projects: ['default'],
         secret: 'default:development.some-random-string',
         type: ApiTokenType.CLIENT,
         tokenName: 'admin',
@@ -86,7 +88,9 @@ test('should add initApiToken for client token from options', async () => {
     expect(config.authentication.initApiTokens[0].environment).toBe(
         token.environment,
     );
-    expect(config.authentication.initApiTokens[0].project).toBe(token.project);
+    expect(config.authentication.initApiTokens[0].projects).toMatchObject(
+        token.projects,
+    );
     expect(config.authentication.initApiTokens[0].type).toBe(
         ApiTokenType.CLIENT,
     );
@@ -110,7 +114,9 @@ test('should add initApiToken for admin token from env var', async () => {
 
     expect(config.authentication.initApiTokens).toHaveLength(2);
     expect(config.authentication.initApiTokens[0].environment).toBe('*');
-    expect(config.authentication.initApiTokens[0].project).toBe('*');
+    expect(config.authentication.initApiTokens[0].projects).toMatchObject([
+        '*',
+    ]);
     expect(config.authentication.initApiTokens[0].type).toBe(
         ApiTokenType.ADMIN,
     );
@@ -146,7 +152,7 @@ test('should merge initApiToken from options and env vars', async () => {
     process.env.INIT_CLIENT_API_TOKENS = 'default:development.some-token1';
     const token = {
         environment: '*',
-        project: '*',
+        projects: ['*'],
         secret: '*:*.some-random-string',
         type: ApiTokenType.ADMIN,
         tokenName: 'admin',
@@ -193,7 +199,9 @@ test('should add initApiToken for client token from env var', async () => {
     expect(config.authentication.initApiTokens[0].environment).toBe(
         'development',
     );
-    expect(config.authentication.initApiTokens[0].project).toBe('default');
+    expect(config.authentication.initApiTokens[0].projects).toMatchObject([
+        'default',
+    ]);
     expect(config.authentication.initApiTokens[0].type).toBe(
         ApiTokenType.CLIENT,
     );
@@ -207,7 +215,7 @@ test('should add initApiToken for client token from env var', async () => {
 test('should handle cases where no env var specified for tokens', async () => {
     const token = {
         environment: '*',
-        project: '*',
+        projects: ['*'],
         secret: '*:*.some-random-string',
         type: ApiTokenType.ADMIN,
         tokenName: 'admin',
@@ -497,4 +505,73 @@ test('Config with enterpriseVersion set and not pro environment should set isEnt
         ui: { environment: 'Enterprise' },
     });
     expect(config.isEnterprise).toBe(true);
+});
+
+test('create config should be idempotent in terms of tokens', async () => {
+    // two admin tokens
+    process.env.INIT_ADMIN_API_TOKENS = '*:*.some-token1, *:*.some-token2';
+    process.env.INIT_CLIENT_API_TOKENS = 'default:development.some-token1';
+    process.env.INIT_FRONTEND_API_TOKENS = 'frontend:development.some-token1';
+    const token = {
+        environment: '*',
+        projects: ['*'],
+        secret: '*:*.some-random-string',
+        type: ApiTokenType.ADMIN,
+        tokenName: 'admin',
+    };
+    const config = createConfig({
+        db: {
+            host: 'localhost',
+            port: 4242,
+            user: 'unleash',
+            password: 'password',
+            database: 'unleash_db',
+        },
+        server: {
+            port: 4242,
+        },
+        authentication: {
+            initApiTokens: [token],
+        },
+    });
+    expect(config.authentication.initApiTokens.length).toStrictEqual(
+        createConfig(config).authentication.initApiTokens.length,
+    );
+    expect(config.authentication.initApiTokens).toHaveLength(5);
+    delete process.env.INIT_ADMIN_API_TOKENS;
+    delete process.env.INIT_CLIENT_API_TOKENS;
+    delete process.env.INIT_FRONTEND_API_TOKENS;
+});
+
+describe('isOSS', () => {
+    test('Config with pro environment should set isOss to false regardless of pro casing', async () => {
+        const isOss = resolveIsOss(false, false, 'Pro');
+        expect(isOss).toBe(false);
+        const lowerCase = resolveIsOss(false, false, 'pro');
+        expect(lowerCase).toBe(false);
+        const strangeCase = resolveIsOss(false, false, 'PrO');
+        expect(strangeCase).toBe(false);
+    });
+    test('Config with enterpriseVersion set should set isOss to false', async () => {
+        const isOss = resolveIsOss(true, false, 'Enterprise');
+        expect(isOss).toBe(false);
+    });
+    test('Config with no enterprise version and any other environment than pro should have isOss as true', async () => {
+        const isOss = resolveIsOss(false, false, 'my oss environment');
+        expect(isOss).toBe(true);
+    });
+    test('Config with enterprise false and isOss option set to false should return false in test mode', async () => {
+        const isOss = resolveIsOss(false, false, 'my environment', true);
+        expect(isOss).toBe(false);
+    });
+    test('Config with isOss option set to true should return true when test environment is active', async () => {
+        let isOss = resolveIsOss(false, true, 'Pro', true);
+        expect(isOss).toBe(true);
+
+        isOss = resolveIsOss(true, true, 'Pro', true);
+        expect(isOss).toBe(true);
+
+        isOss = resolveIsOss(false, true, 'some environment', true);
+        expect(isOss).toBe(true);
+    });
 });

@@ -1,15 +1,21 @@
-import type { Logger, LogProvider } from '../../../logger';
+import type { Logger, LogProvider } from '../../../logger.js';
 import type {
     IClientMetricsEnv,
     IClientMetricsEnvKey,
     IClientMetricsEnvVariant,
     IClientMetricsStoreV2,
-} from './client-metrics-store-v2-type';
-import NotFoundError from '../../../error/notfound-error';
+} from './client-metrics-store-v2-type.js';
+import NotFoundError from '../../../error/notfound-error.js';
 import { endOfDay, startOfHour } from 'date-fns';
-import { collapseHourlyMetrics, spreadVariants } from './collapseHourlyMetrics';
-import type { Db } from '../../../db/db';
-import type { IFlagResolver } from '../../../types';
+import {
+    collapseHourlyMetrics,
+    spreadVariants,
+} from './collapseHourlyMetrics.js';
+import type { Db } from '../../../db/db.js';
+import type { IFlagResolver } from '../../../types/index.js';
+import metricsHelper from '../../../util/metrics-helper.js';
+import { DB_TIME } from '../../../metric-events.js';
+import type EventEmitter from 'events';
 
 interface ClientMetricsBaseTable {
     feature_name: string;
@@ -32,6 +38,8 @@ const HOURLY_TABLE = 'client_metrics_env';
 const DAILY_TABLE = 'client_metrics_env_daily';
 const HOURLY_TABLE_VARIANTS = 'client_metrics_env_variants';
 const DAILY_TABLE_VARIANTS = 'client_metrics_env_variants_daily';
+
+const FEATURES_TABLE = 'features';
 
 const fromRow = (row: ClientMetricsEnvTable) => ({
     featureName: row.feature_name,
@@ -132,10 +140,22 @@ export class ClientMetricsStoreV2 implements IClientMetricsStoreV2 {
 
     private flagResolver: IFlagResolver;
 
-    constructor(db: Db, getLogger: LogProvider, flagResolver: IFlagResolver) {
+    private metricTimer: Function;
+
+    constructor(
+        db: Db,
+        eventBus: EventEmitter,
+        getLogger: LogProvider,
+        flagResolver: IFlagResolver,
+    ) {
         this.db = db;
         this.logger = getLogger('client-metrics-store-v2.js');
         this.flagResolver = flagResolver;
+        this.metricTimer = (action) =>
+            metricsHelper.wrapTimer(eventBus, DB_TIME, {
+                store: 'client-metrics',
+                action,
+            });
     }
 
     async get(key: IClientMetricsEnvKey): Promise<IClientMetricsEnv> {
@@ -151,6 +171,11 @@ export class ClientMetricsStoreV2 implements IClientMetricsStoreV2 {
             return fromRow(row);
         }
         throw new NotFoundError(`Could not find metric`);
+    }
+
+    //TODO: Consider moving this to a specific feature store
+    async getFeatureFlagNames(): Promise<string[]> {
+        return this.db(FEATURES_TABLE).distinct('name').pluck('name');
     }
 
     async getAll(query: Object = {}): Promise<IClientMetricsEnv[]> {
@@ -386,6 +411,7 @@ export class ClientMetricsStoreV2 implements IClientMetricsStoreV2 {
 
     // aggregates all hourly metrics from a previous day into daily metrics
     async aggregateDailyMetrics(): Promise<void> {
+        const stopTimer = this.metricTimer('aggregateDailyMetrics');
         const rawQuery: string = `
           INSERT INTO ${DAILY_TABLE} (feature_name, app_name, environment, date, yes, no)
           SELECT
@@ -428,5 +454,6 @@ export class ClientMetricsStoreV2 implements IClientMetricsStoreV2 {
         // have to be run serially since variants table has FK on yes/no metrics
         await this.db.raw(rawQuery);
         await this.db.raw(rawVariantsQuery);
+        stopTimer();
     }
 }

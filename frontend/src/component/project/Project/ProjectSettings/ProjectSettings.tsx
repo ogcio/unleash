@@ -11,15 +11,15 @@ import {
 } from 'component/common/VerticalTabs/VerticalTabs';
 import { ProjectAccess } from 'component/project/ProjectAccess/ProjectAccess';
 import ProjectEnvironmentList from 'component/project/ProjectEnvironment/ProjectEnvironment';
-import { ChangeRequestConfiguration } from './ChangeRequestConfiguration/ChangeRequestConfiguration';
+import { ChangeRequestConfiguration } from './ChangeRequestConfiguration/ChangeRequestConfiguration.tsx';
 import { ProjectApiAccess } from 'component/project/Project/ProjectSettings/ProjectApiAccess/ProjectApiAccess';
-import { ProjectSegments } from './ProjectSegments/ProjectSegments';
-import { ProjectDefaultStrategySettings } from './ProjectDefaultStrategySettings/ProjectDefaultStrategySettings';
-import { Settings } from './Settings/Settings';
+import { ProjectSegments } from './ProjectSegments/ProjectSegments.tsx';
+import { ProjectDefaultStrategySettings } from './ProjectDefaultStrategySettings/ProjectDefaultStrategySettings.tsx';
+import { Settings } from './Settings/Settings.tsx';
 import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
 import { EnterpriseBadge } from 'component/common/EnterpriseBadge/EnterpriseBadge';
 import { Box, styled } from '@mui/material';
-import { ProjectActions } from './ProjectActions/ProjectActions';
+import { ProjectActions } from './ProjectActions/ProjectActions.tsx';
 import { useUiFlag } from 'hooks/useUiFlag';
 
 const StyledBadgeContainer = styled(Box)({
@@ -35,51 +35,52 @@ export const ProjectSettings = () => {
 
     const actionsEnabled = useUiFlag('automatedActions');
 
+    const paidTabs = (...tabs: ITab[]) =>
+        isPro() || isEnterprise() ? tabs : [];
+
     const tabs: ITab[] = [
-        ...(isPro() || isEnterprise()
-            ? [
-                  {
-                      id: '',
-                      label: 'Settings',
-                  },
-                  {
-                      id: 'access',
-                      label: 'Access',
-                  },
-                  {
-                      id: 'segments',
-                      label: 'Segments',
-                  },
-                  {
-                      id: 'change-requests',
-                      label: 'Change request configuration',
-                      icon: isPro() ? (
-                          <StyledBadgeContainer>
-                              <EnterpriseBadge />
-                          </StyledBadgeContainer>
-                      ) : undefined,
-                  },
-              ]
-            : []),
-        {
-            id: 'environments',
-            label: 'Environments',
-        },
+        ...paidTabs(
+            {
+                id: '',
+                label: 'Project settings',
+            },
+            {
+                id: 'access',
+                label: 'User access',
+            },
+        ),
         {
             id: 'api-access',
             label: 'API access',
         },
         {
+            id: 'segments',
+            label: 'Segments',
+        },
+        {
+            id: 'environments',
+            label: 'Environments',
+        },
+        {
             id: 'default-strategy',
             label: 'Default strategy',
         },
+        ...paidTabs({
+            id: 'change-requests',
+            label: 'Change request configuration',
+            endIcon: isPro() ? (
+                <StyledBadgeContainer>
+                    <EnterpriseBadge />
+                </StyledBadgeContainer>
+            ) : undefined,
+        }),
     ];
 
     if (actionsEnabled) {
         tabs.push({
             id: 'actions',
             label: 'Actions',
-            icon: isPro() ? (
+            endIcon: isPro() ? (
                 <StyledBadgeContainer>
                     <EnterpriseBadge />
                 </StyledBadgeContainer>

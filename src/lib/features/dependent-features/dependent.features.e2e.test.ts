@@ -1,18 +1,20 @@
 import { v4 as uuidv4 } from 'uuid';
-import dbInit, { type ITestDb } from '../../../test/e2e/helpers/database-init';
+import dbInit, {
+    type ITestDb,
+} from '../../../test/e2e/helpers/database-init.js';
 import {
     type IUnleashTest,
     setupAppWithCustomConfig,
-} from '../../../test/e2e/helpers/test-helper';
-import getLogger from '../../../test/fixtures/no-logger';
-import type { CreateDependentFeatureSchema } from '../../openapi';
+} from '../../../test/e2e/helpers/test-helper.js';
+import getLogger from '../../../test/fixtures/no-logger.js';
+import type { CreateDependentFeatureSchema } from '../../openapi/index.js';
 import {
     FEATURE_DEPENDENCIES_REMOVED,
     FEATURE_DEPENDENCY_ADDED,
     FEATURE_DEPENDENCY_REMOVED,
-    type IEventStore,
-} from '../../types';
-import { DEFAULT_ENV } from '../../util';
+} from '../../events/index.js';
+import { DEFAULT_ENV } from '../../util/index.js';
+import type { IEventStore } from '../../server-impl.js';
 
 let app: IUnleashTest;
 let db: ITestDb;
@@ -58,6 +60,7 @@ beforeEach(async () => {
     await db.stores.dependentFeaturesStore.deleteAll();
     await db.stores.featureToggleStore.deleteAll();
     await db.stores.featureEnvironmentStore.deleteAll();
+    await db.stores.eventStore.deleteAll();
 });
 
 const addFeatureDependency = async (
@@ -168,11 +171,13 @@ const checkDependenciesExist = async (expectedCode = 200) => {
 test('should add and delete feature dependencies', async () => {
     const parent = uuidv4();
     const child = uuidv4();
+    const child2 = uuidv4();
     await app.createFeature(parent);
     await app.createFeature(child);
+    await app.createFeature(child2);
 
     const { body: options } = await getPossibleParentFeatures(child);
-    expect(options).toStrictEqual([parent]);
+    expect(options).toMatchObject([parent, child2].sort());
 
     // save explicit enabled and variants
     await addFeatureDependency(child, {
@@ -185,12 +190,19 @@ test('should add and delete feature dependencies', async () => {
         variants: ['variantB'],
     });
 
-    await deleteFeatureDependency(child, parent); // single
-    await deleteFeatureDependencies(child); // all
+    await addFeatureDependency(child2, {
+        feature: parent,
+        enabled: false,
+    });
 
-    expect(await getRecordedEventTypesForDependencies()).toStrictEqual([
+    await deleteFeatureDependency(child, parent); // single
+    await deleteFeatureDependencies(child2); // all
+
+    const eventTypes = await getRecordedEventTypesForDependencies();
+    expect(eventTypes).toStrictEqual([
         FEATURE_DEPENDENCIES_REMOVED,
         FEATURE_DEPENDENCY_REMOVED,
+        FEATURE_DEPENDENCY_ADDED,
         FEATURE_DEPENDENCY_ADDED,
         FEATURE_DEPENDENCY_ADDED,
     ]);
@@ -336,5 +348,37 @@ test('should not allow to add dependency to feature from another project', async
             feature: parent,
         },
         403,
+    );
+});
+test('should create feature-dependency-removed when archiving and has dependency', async () => {
+    const child = uuidv4();
+    const parent = uuidv4();
+    await app.createFeature(parent);
+    await app.createFeature(child);
+
+    await addFeatureDependency(child, {
+        feature: parent,
+    });
+    await app.archiveFeature(child);
+    const events = await eventStore.getEvents();
+    expect(events).toEqual(
+        expect.arrayContaining([
+            expect.objectContaining({ type: 'feature-dependencies-removed' }),
+        ]),
+    );
+});
+
+test('should not create feature-dependency-removed when archiving and no dependency', async () => {
+    const child = uuidv4();
+    const parent = uuidv4();
+    await app.createFeature(parent);
+    await app.createFeature(child);
+
+    await app.archiveFeature(child);
+    const events = await eventStore.getEvents();
+    expect(events).not.toEqual(
+        expect.arrayContaining([
+            expect.objectContaining({ type: 'feature-dependencies-removed' }),
+        ]),
     );
 });

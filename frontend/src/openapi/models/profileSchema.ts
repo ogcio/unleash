@@ -3,8 +3,8 @@
  * Do not edit manually.
  * See `gen:api` script in package.json
  */
-import type { FeatureSchema } from './featureSchema';
-import type { RoleSchema } from './roleSchema';
+import type { FeatureSchema } from './featureSchema.js';
+import type { RoleSchema } from './roleSchema.js';
 
 /**
  * User profile overview
@@ -15,4 +15,6 @@ export interface ProfileSchema {
     /** Which projects this user is a member of */
     projects: string[];
     rootRole: RoleSchema;
+    /** Which email subscriptions this user is subscribed to */
+    subscriptions: string[];
 }

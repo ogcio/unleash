@@ -1,8 +1,8 @@
 import type {
     IGroupStore,
     IStoreGroup,
-} from '../../lib/types/stores/group-store';
-import type Group from '../../lib/types/group';
+} from '../../lib/types/stores/group-store.js';
+import type Group from '../../lib/types/group.js';
 import type {
     ICreateGroupUserModel,
     IGroup,
@@ -10,8 +10,8 @@ import type {
     IGroupProject,
     IGroupRole,
     IGroupUser,
-} from '../../lib/types/group';
-import type { IGroupWithProjectRoles } from '../../lib/types/stores/access-store';
+} from '../../lib/types/group.js';
+import type { IGroupWithProjectRoles } from '../../lib/types/stores/access-store.js';
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export default class FakeGroupStore implements IGroupStore {
     count(): Promise<number> {
@@ -39,7 +39,7 @@ export default class FakeGroupStore implements IGroupStore {
         return this.data.some((u) => u.id === key);
     }
 
-    async get(key: number): Promise<IGroup> {
+    async get(key: number): Promise<IGroup | undefined> {
         return this.data.find((u) => u.id === key);
     }
 
@@ -123,6 +123,10 @@ export default class FakeGroupStore implements IGroupStore {
     }
 
     hasProjectRole(groupId: number): Promise<boolean> {
+        throw new Error('Method not implemented.');
+    }
+
+    deleteScimGroups(): Promise<void> {
         throw new Error('Method not implemented.');
     }
 }

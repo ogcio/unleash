@@ -11,18 +11,42 @@ export const LicenseBanner = () => {
     if (
         isEnterprise() &&
         licenseInfo &&
-        !licenseInfo.isValid &&
         !licenseInfo.loading &&
         !licenseInfo.error
     ) {
-        const banner = {
-            message:
-                licenseInfo.message || 'You have an invalid Unleash license.',
-            variant: 'error' as BannerVariant,
-            sticky: true,
-        };
+        if (!licenseInfo.isValid) {
+            const banner = {
+                message:
+                    licenseInfo.message ||
+                    'You have an invalid Unleash license.',
+                variant: 'error' as BannerVariant,
+                sticky: true,
+            };
 
-        return <Banner key={banner.message} banner={banner} />;
+            return <Banner key={banner.message} banner={banner} />;
+        } else {
+            if (licenseInfo.message) {
+                const banner = {
+                    message: licenseInfo.message,
+                    variant: mapToVariant(licenseInfo.messageType),
+                    sticky: true,
+                };
+                return <Banner key={banner.message} banner={banner} />;
+            }
+        }
     }
+
     return null;
 };
+function mapToVariant(
+    messageType: string | undefined,
+): BannerVariant | undefined {
+    if (messageType) {
+        switch (messageType) {
+            case 'warn':
+                return 'warning';
+            default:
+                return messageType as BannerVariant;
+        }
+    }
+}

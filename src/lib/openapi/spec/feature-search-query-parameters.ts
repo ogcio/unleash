@@ -1,4 +1,4 @@
-import type { FromQueryParams } from '../util/from-query-params';
+import type { FromQueryParams } from '../util/from-query-params.js';
 
 export const featureSearchQueryParameters = [
     {
@@ -32,6 +32,18 @@ export const featureSearchQueryParameters = [
         },
         description:
             'The state of the feature active/stale. The state can be specified with an operator. The supported operators are IS, IS_NOT, IS_ANY_OF, IS_NONE_OF.',
+        in: 'query',
+    },
+    {
+        name: 'lifecycle',
+        schema: {
+            type: 'string',
+            example: 'IS:initial',
+            pattern:
+                '^(IS|IS_NOT|IS_ANY_OF|IS_NONE_OF):(.*?)(,([a-zA-Z0-9_]+))*$',
+        },
+        description:
+            'The lifecycle stage of the feature. The stagee can be specified with an operator. The supported operators are IS, IS_NOT, IS_ANY_OF, IS_NONE_OF.',
         in: 'query',
     },
     {
@@ -144,6 +156,16 @@ export const featureSearchQueryParameters = [
         },
         description:
             'The flag to indicate if the favorite features should be returned first. By default it is set to false.',
+        in: 'query',
+    },
+    {
+        name: 'archived',
+        schema: {
+            type: 'string',
+            example: 'IS:true',
+        },
+        description:
+            'Whether to get results for archived feature flags or active feature flags. If `true`, Unleash will return only archived flags. If `false`, it will return only active flags.',
         in: 'query',
     },
     {

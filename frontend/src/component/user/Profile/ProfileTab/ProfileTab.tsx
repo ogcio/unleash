@@ -15,10 +15,12 @@ import { useProfile } from 'hooks/api/getters/useProfile/useProfile';
 import { useLocationSettings } from 'hooks/useLocationSettings';
 import type { IUser } from 'interfaces/user';
 import TopicOutlinedIcon from '@mui/icons-material/TopicOutlined';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { PageContent } from 'component/common/PageContent/PageContent';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 import { RoleBadge } from 'component/common/RoleBadge/RoleBadge';
+import { useUiFlag } from 'hooks/useUiFlag';
+import { ProductivityEmailSubscription } from './ProductivityEmailSubscription.tsx';
 
 const StyledHeader = styled('div')(({ theme }) => ({
     display: 'flex',
@@ -54,14 +56,19 @@ const StyledSectionLabel = styled(Typography)(({ theme }) => ({
 const StyledAccess = styled('div')(({ theme }) => ({
     display: 'flex',
     flexDirection: 'row',
+    gap: theme.spacing(2),
     '& > div > p': {
         marginBottom: theme.spacing(1.5),
     },
 }));
 
-const StyledBadge = styled(Badge)(({ theme }) => ({
-    cursor: 'pointer',
-    marginRight: theme.spacing(1),
+const StyledBadgeLink = styled(Link)(({ theme }) => ({
+    ':hover,:focus-visible': {
+        outline: 'none',
+        '> *': {
+            outline: `2px solid ${theme.palette.primary.main}`,
+        },
+    },
 }));
 
 const StyledDivider = styled('div')(({ theme }) => ({
@@ -84,8 +91,16 @@ interface IProfileTabProps {
     user: IUser;
 }
 
+const ProjectList = styled('ul')(({ theme }) => ({
+    listStyle: 'none',
+    padding: 0,
+    display: 'flex',
+    flexFlow: 'row wrap',
+    gap: theme.spacing(1),
+}));
+
 export const ProfileTab = ({ user }: IProfileTabProps) => {
-    const { profile } = useProfile();
+    const { profile, refetchProfile } = useProfile();
     const navigate = useNavigate();
     const { locationSettings, setLocationSettings } = useLocationSettings();
     const [currentLocale, setCurrentLocale] = useState<string>();
@@ -121,13 +136,15 @@ export const ProfileTab = ({ user }: IProfileTabProps) => {
         setLocationSettings({ locale });
     };
 
+    const productivityReportEmailEnabled = useUiFlag('productivityReportEmail');
+
     return (
         <>
             <StyledHeader>
                 <StyledAvatar user={user} />
                 <StyledInfo>
                     <StyledInfoName>
-                        {user.name || user.username}
+                        {user.name || user.email || user.username}
                     </StyledInfoName>
                     <Typography variant='body1'>{user.email}</Typography>
                 </StyledInfo>
@@ -154,40 +171,47 @@ export const ProfileTab = ({ user }: IProfileTabProps) => {
                         <Typography variant='body2'>Projects</Typography>
                         <ConditionallyRender
                             condition={Boolean(profile?.projects.length)}
-                            show={profile?.projects.map((project) => (
-                                <Tooltip
-                                    key={project}
-                                    title='View project'
-                                    arrow
-                                    placement='bottom-end'
-                                    describeChild
-                                >
-                                    <StyledBadge
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            navigate(`/projects/${project}`);
-                                        }}
-                                        color='secondary'
-                                        icon={<TopicOutlinedIcon />}
-                                    >
-                                        {project}
-                                    </StyledBadge>
-                                </Tooltip>
-                            ))}
+                            show={
+                                <ProjectList>
+                                    {profile?.projects.map((project) => (
+                                        <li key={project}>
+                                            <Tooltip
+                                                title='View project'
+                                                arrow
+                                                placement='bottom-end'
+                                                describeChild
+                                            >
+                                                <StyledBadgeLink
+                                                    to={`/projects/${project}`}
+                                                >
+                                                    <Badge
+                                                        color='secondary'
+                                                        icon={
+                                                            <TopicOutlinedIcon />
+                                                        }
+                                                    >
+                                                        {project}
+                                                    </Badge>
+                                                </StyledBadgeLink>
+                                            </Tooltip>
+                                        </li>
+                                    ))}
+                                </ProjectList>
+                            }
                             elseShow={
                                 <Tooltip
                                     title='You are not assigned to any projects'
                                     arrow
                                     describeChild
                                 >
-                                    <Badge>No projects</Badge>
+                                    <Badge tabIndex={0}>No projects</Badge>
                                 </Tooltip>
                             }
                         />
                     </Box>
                 </StyledAccess>
                 <StyledDivider />
-                <StyledSectionLabel>Settings</StyledSectionLabel>
+                <StyledSectionLabel>Date/Time Settings</StyledSectionLabel>
                 <Typography variant='body2'>
                     This is the format used across the system for time and date
                 </Typography>
@@ -215,6 +239,24 @@ export const ProfileTab = ({ user }: IProfileTabProps) => {
                         })}
                     </Select>
                 </StyledFormControl>
+                {productivityReportEmailEnabled ? (
+                    <>
+                        <StyledDivider />
+                        <StyledSectionLabel>Email Settings</StyledSectionLabel>
+                        {profile?.subscriptions && (
+                            <ProductivityEmailSubscription
+                                status={
+                                    profile.subscriptions.includes(
+                                        'productivity-report',
+                                    )
+                                        ? 'subscribed'
+                                        : 'unsubscribed'
+                                }
+                                onChange={refetchProfile}
+                            />
+                        )}
+                    </>
+                ) : null}
             </PageContent>
         </>
     );

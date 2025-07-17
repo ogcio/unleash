@@ -1,10 +1,10 @@
 import { Knex } from 'knex';
 import type EventEmitter from 'events';
 import { v4 as uuidv4 } from 'uuid';
-import metricsHelper from '../../util/metrics-helper';
-import { DB_TIME } from '../../metric-events';
-import type { Logger, LogProvider } from '../../logger';
-import NotFoundError from '../../error/notfound-error';
+import metricsHelper from '../../util/metrics-helper.js';
+import { DB_TIME } from '../../metric-events.js';
+import type { Logger, LogProvider } from '../../logger.js';
+import NotFoundError from '../../error/notfound-error.js';
 import type {
     FeatureToggleWithEnvironment,
     IConstraint,
@@ -16,17 +16,21 @@ import type {
     IFlagResolver,
     IStrategyConfig,
     IStrategyVariant,
-    ITag,
     PartialDeep,
     PartialSome,
-} from '../../types';
-import FeatureToggleStore from './feature-toggle-store';
-import { ensureStringValue, generateImageUrl, mapValues } from '../../util';
-import type { IFeatureProjectUserParams } from './feature-toggle-controller';
-import type { Db } from '../../db/db';
+} from '../../types/index.js';
+import FeatureToggleStore from './feature-toggle-store.js';
+import {
+    ensureStringValue,
+    generateImageUrl,
+    mapValues,
+} from '../../util/index.js';
+import type { IFeatureProjectUserParams } from './feature-toggle-controller.js';
+import type { Db } from '../../db/db.js';
 import { isAfter } from 'date-fns';
 import merge from 'deepmerge';
 import Raw = Knex.Raw;
+import type { ITag } from '../../tags/index.js';
 
 const COLUMNS = [
     'id',
@@ -62,6 +66,7 @@ interface IFeatureStrategiesTable {
     constraints: string;
     variants: string;
     sort_order: number;
+    milestone_id?: string;
     created_at?: Date;
     disabled?: boolean | null;
 }
@@ -86,6 +91,7 @@ function mapRow(row: IFeatureStrategiesTable): IFeatureStrategy {
         variants: (row.variants as unknown as IStrategyVariant[]) || [],
         createdAt: row.created_at,
         sortOrder: row.sort_order,
+        milestoneId: row.milestone_id,
         disabled: row.disabled,
     };
 }
@@ -326,6 +332,9 @@ class FeatureStrategiesStore implements IFeatureStrategiesStore {
                 feature_name: featureName,
                 environment,
             })
+            .orderByRaw(
+                'CASE WHEN milestone_id IS NOT NULL THEN 0 ELSE 1 END ASC',
+            )
             .orderBy([
                 {
                     column: 'sort_order',
@@ -538,9 +547,6 @@ class FeatureStrategiesStore implements IFeatureStrategiesStore {
                 e.strategies = e.strategies.sort(
                     (a, b) => a.sortOrder - b.sortOrder,
                 );
-                if (e.strategies && e.strategies.length === 0) {
-                    e.enabled = false;
-                }
                 return e;
             });
 
@@ -858,7 +864,7 @@ class FeatureStrategiesStore implements IFeatureStrategiesStore {
             segments: [],
             sortOrder: r.sort_order,
             id: r.strategy_id,
-            title: r.strategy_title || '',
+            title: r.strategy_title,
             disabled: r.strategy_disabled || false,
         };
         if (!includeId) {
@@ -919,6 +925,12 @@ class FeatureStrategiesStore implements IFeatureStrategiesStore {
         const rows = await this.db
             .select(this.prefixColumns())
             .from<IFeatureStrategiesTable>(T.featureStrategies)
+            .join(
+                T.features,
+                `${T.features}.name`,
+                `${T.featureStrategies}.feature_name`,
+            )
+            .where(`${T.features}.archived_at`, 'IS', null)
             .where(
                 this.db.raw(
                     "EXISTS (SELECT 1 FROM jsonb_array_elements(constraints) AS elem WHERE elem ->> 'contextName' = ?)",
@@ -954,6 +966,4 @@ class FeatureStrategiesStore implements IFeatureStrategiesStore {
         return rows.length;
     }
 }
-
-module.exports = FeatureStrategiesStore;
 export default FeatureStrategiesStore;

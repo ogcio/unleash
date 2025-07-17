@@ -3,7 +3,7 @@ import { Button, styled, TextField } from '@mui/material';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 import { useNavigate } from 'react-router';
 import useQueryParams from 'hooks/useQueryParams';
-import AuthOptions from './common/AuthOptions/AuthOptions';
+import AuthOptions from './common/AuthOptions/AuthOptions.tsx';
 import DividerText from 'component/common/DividerText/DividerText';
 import { Alert } from '@mui/material';
 import { LOGIN_BUTTON, LOGIN_EMAIL_ID, LOGIN_PASSWORD_ID } from 'utils/testIds';
@@ -17,6 +17,7 @@ import {
     NotFoundError,
 } from 'utils/apiUtils';
 import { contentSpacingY } from 'themes/themeStyles';
+import useToast from 'hooks/useToast';
 
 interface IPasswordAuthProps {
     authDetails: IAuthEndpointDetailsResponse;
@@ -46,6 +47,7 @@ const PasswordAuth: VFC<IPasswordAuthProps> = ({ authDetails, redirect }) => {
         passwordError?: string;
         apiError?: string;
     }>({});
+    const { setToastData } = useToast();
 
     const handleSubmit: FormEventHandler<HTMLFormElement> = async (evt) => {
         evt.preventDefault();
@@ -68,7 +70,18 @@ const PasswordAuth: VFC<IPasswordAuthProps> = ({ authDetails, redirect }) => {
         }
 
         try {
-            await passwordAuth(authDetails.path, username, password);
+            const data = await passwordAuth(
+                authDetails.path,
+                username,
+                password,
+            );
+            if (data.deletedSessions && data.activeSessions) {
+                setToastData({
+                    type: 'success',
+                    text: `Maximum session limit of ${data.activeSessions} reached`,
+                });
+            }
+
             refetchUser();
             navigate(redirect, { replace: true });
         } catch (error: any) {

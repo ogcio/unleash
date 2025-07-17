@@ -8,7 +8,7 @@ import {
     type ReactElement,
     type ReactNode,
 } from 'react';
-import { ConditionallyRender } from '../ConditionallyRender/ConditionallyRender';
+import { ConditionallyRender } from '../ConditionallyRender/ConditionallyRender.tsx';
 
 type Color =
     | 'info'
@@ -29,6 +29,7 @@ interface IBadgeProps {
     children?: ReactNode;
     title?: string;
     onClick?: (event: React.SyntheticEvent) => void;
+    tabIndex?: number;
 }
 
 interface IBadgeIconProps {
@@ -102,7 +103,6 @@ export const Badge: FC<IBadgeProps> = forwardRef(
     ) => (
         <StyledBadge
             as={as}
-            tabIndex={0}
             color={color}
             icon={icon}
             className={className}

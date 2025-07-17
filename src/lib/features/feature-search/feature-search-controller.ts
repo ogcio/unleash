@@ -1,28 +1,31 @@
 import type { Response } from 'express';
-import Controller from '../../routes/controller';
-import type { FeatureSearchService, OpenApiService } from '../../services';
+import Controller from '../../routes/controller.js';
+import type {
+    FeatureSearchService,
+    OpenApiService,
+    IUnleashServices,
+} from '../../services/index.js';
 import {
     type IFeatureSearchOverview,
     type IFlagResolver,
     type IUnleashConfig,
-    type IUnleashServices,
     NONE,
     serializeDates,
-} from '../../types';
-import type { Logger } from '../../logger';
+} from '../../types/index.js';
+import type { Logger } from '../../logger.js';
 import {
     createResponseSchema,
     getStandardResponses,
     type SearchFeaturesSchema,
     searchFeaturesSchema,
-} from '../../openapi';
-import type { IAuthRequest } from '../../routes/unleash-types';
+} from '../../openapi/index.js';
+import type { IAuthRequest } from '../../routes/unleash-types.js';
 import {
     type FeatureSearchQueryParameters,
     featureSearchQueryParameters,
-} from '../../openapi/spec/feature-search-query-parameters';
-import { normalizeQueryParams } from './search-utils';
-import { anonymise } from '../../util';
+} from '../../openapi/spec/feature-search-query-parameters.js';
+import { normalizeQueryParams } from './search-utils.js';
+import { anonymise } from '../../util/index.js';
 
 type FeatureSearchServices = Pick<
     IUnleashServices,
@@ -101,7 +104,9 @@ export default class FeatureSearchController extends Controller {
             createdBy,
             state,
             status,
+            lifecycle,
             favoritesFirst,
+            archived,
             sortBy,
         } = req.query;
         const userId = req.user.id;
@@ -131,6 +136,7 @@ export default class FeatureSearchController extends Controller {
                     ['enabled', 'disabled'].includes(tag[1]),
             );
         const normalizedFavoritesFirst = favoritesFirst === 'true';
+        const normalizedArchived = archived === 'IS:true';
         const { features, total } = await this.featureSearchService.search({
             searchParams: normalizedQuery,
             project,
@@ -142,11 +148,13 @@ export default class FeatureSearchController extends Controller {
             createdAt,
             createdBy,
             sortBy,
+            lifecycle,
             status: normalizedStatus,
             offset: normalizedOffset,
             limit: normalizedLimit,
             sortOrder: normalizedSortOrder,
             favoritesFirst: normalizedFavoritesFirst,
+            archived: normalizedArchived,
         });
 
         this.openApiService.respondWithValidation(

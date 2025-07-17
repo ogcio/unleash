@@ -1,9 +1,8 @@
-import { countCombinations } from './combinationCounter';
+import { countCombinations, getBucket } from './combinationCounter.js';
 import type {
     AdvancedPlaygroundEnvironmentFeatureSchema,
     AdvancedPlaygroundFeatureSchema,
 } from 'openapi';
-// @ts-expect-error no types available
 import cartesian from 'cartesian';
 
 const generateFeature = (
@@ -94,4 +93,13 @@ it('counts the correct number of combinations', () => {
         y: ['x', 'abc'],
     });
     assertCount(5, ['development'], { x: ['1', '2'] });
+});
+
+it('assigns bucket', () => {
+    expect(getBucket(-1)).toBe('invalid bucket');
+    expect(getBucket(0)).toBe('0-100');
+    expect(getBucket(100)).toBe('100-1000');
+    expect(getBucket(1000)).toBe('1000-10000');
+    expect(getBucket(10000)).toBe('10000-20000');
+    expect(getBucket(20000)).toBe('20000+');
 });

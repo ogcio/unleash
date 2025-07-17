@@ -1,6 +1,6 @@
-import type { Logger, LogProvider } from '../logger';
-import type { ISettingStore } from '../types/stores/settings-store';
-import type { Db } from './db';
+import type { Logger, LogProvider } from '../logger.js';
+import type { ISettingStore } from '../types/stores/settings-store.js';
+import type { Db } from './db.js';
 
 const TABLE = 'settings';
 
@@ -32,10 +32,6 @@ export default class SettingStore implements ISettingStore {
             });
     }
 
-    async insertNewRow(name: string, content: any) {
-        return this.db(TABLE).insert({ name, content });
-    }
-
     async exists(name: string): Promise<boolean> {
         const result = await this.db.raw(
             `SELECT EXISTS (SELECT 1 FROM ${TABLE} WHERE name = ?) AS present`,
@@ -58,13 +54,12 @@ export default class SettingStore implements ISettingStore {
         return undefined;
     }
 
+    // Is actually an upsert
     async insert(name: string, content: any): Promise<void> {
-        const exists = await this.exists(name);
-        if (exists) {
-            await this.updateRow(name, content);
-        } else {
-            await this.insertNewRow(name, content);
-        }
+        await this.db(TABLE)
+            .insert({ name, content })
+            .onConflict('name')
+            .merge();
     }
 
     async delete(name: string): Promise<void> {
@@ -82,5 +77,3 @@ export default class SettingStore implements ISettingStore {
         return rows.map((r) => r.content);
     }
 }
-
-module.exports = SettingStore;

@@ -1,4 +1,4 @@
-import type { IUnleashConfig } from '../../types/option';
+import type { IUnleashConfig } from '../../types/option.js';
 import {
     type IAuditUser,
     type IFlagResolver,
@@ -7,26 +7,29 @@ import {
     SegmentDeletedEvent,
     SegmentUpdatedEvent,
     SKIP_CHANGE_REQUEST,
-} from '../../types';
-import type { Logger } from '../../logger';
-import NameExistsError from '../../error/name-exists-error';
-import type { ISegmentStore } from './segment-store-type';
-import type { ISegment } from '../../types/model';
-import { segmentSchema } from '../../services/segment-schema';
-import type User from '../../types/user';
-import type { IFeatureStrategiesStore } from '../feature-toggle/types/feature-toggle-strategies-store-type';
-import BadDataError from '../../error/bad-data-error';
+} from '../../types/index.js';
+import type { Logger } from '../../logger.js';
+import NameExistsError from '../../error/name-exists-error.js';
+import type { ISegmentStore } from './segment-store-type.js';
+import type { ISegment } from '../../types/model.js';
+import { segmentSchema } from '../../services/segment-schema.js';
+import type User from '../../types/user.js';
+import type { IFeatureStrategiesStore } from '../feature-toggle/types/feature-toggle-strategies-store-type.js';
+import BadDataError from '../../error/bad-data-error.js';
 import type {
     ISegmentService,
     StrategiesUsingSegment,
-} from './segment-service-interface';
-import { PermissionError } from '../../error';
-import type { IChangeRequestAccessReadModel } from '../change-request-access-service/change-request-access-read-model';
-import type { IPrivateProjectChecker } from '../private-project/privateProjectCheckerType';
-import type EventService from '../events/event-service';
-import type { IChangeRequestSegmentUsageReadModel } from '../change-request-segment-usage-service/change-request-segment-usage-read-model';
-import type { ResourceLimitsSchema } from '../../openapi';
-import { throwExceedsLimitError } from '../../error/exceeds-limit-error';
+} from './segment-service-interface.js';
+import { NotFoundError, PermissionError } from '../../error/index.js';
+import type { IChangeRequestAccessReadModel } from '../change-request-access-service/change-request-access-read-model.js';
+import type { IPrivateProjectChecker } from '../private-project/privateProjectCheckerType.js';
+import type EventService from '../events/event-service.js';
+import type { IChangeRequestSegmentUsageReadModel } from '../change-request-segment-usage-service/change-request-segment-usage-read-model.js';
+import type {
+    ResourceLimitsSchema,
+    UpsertSegmentSchema,
+} from '../../openapi/index.js';
+import { throwExceedsLimitError } from '../../error/exceeds-limit-error.js';
 
 export class SegmentService implements ISegmentService {
     private logger: Logger;
@@ -74,7 +77,11 @@ export class SegmentService implements ISegmentService {
     }
 
     async get(id: number): Promise<ISegment> {
-        return this.segmentStore.get(id);
+        const segment = await this.segmentStore.get(id);
+        if (segment === undefined) {
+            throw new NotFoundError(`Could find segment with id ${id}`);
+        }
+        return segment;
     }
 
     async getAll(): Promise<ISegment[]> {
@@ -162,7 +169,7 @@ export class SegmentService implements ISegmentService {
 
     async update(
         id: number,
-        data: unknown,
+        data: UpsertSegmentSchema,
         user: User,
         auditUser: IAuditUser,
     ): Promise<void> {
@@ -173,13 +180,17 @@ export class SegmentService implements ISegmentService {
 
     async unprotectedUpdate(
         id: number,
-        data: unknown,
+        data: UpsertSegmentSchema,
         auditUser: IAuditUser,
     ): Promise<void> {
         const input = await segmentSchema.validateAsync(data);
         this.validateSegmentValuesLimit(input);
         const preData = await this.segmentStore.get(id);
-
+        if (preData === undefined) {
+            throw new NotFoundError(
+                `Could not find segment with id ${id} to update`,
+            );
+        }
         if (preData.name !== input.name) {
             await this.validateName(input.name);
         }
@@ -200,6 +211,10 @@ export class SegmentService implements ISegmentService {
 
     async delete(id: number, user: User, auditUser: IAuditUser): Promise<void> {
         const segment = await this.segmentStore.get(id);
+        if (segment === undefined) {
+            /// Already deleted
+            return;
+        }
         await this.stopWhenChangeRequestsEnabled(segment.project, user);
         await this.segmentStore.delete(id);
         await this.eventService.storeEvent(

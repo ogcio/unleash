@@ -9,10 +9,10 @@ import theme from 'themes/theme';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 import { styled } from '@mui/system';
 import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
-import { EventLogFilters } from './EventLogFilters';
-import { useEventLogSearch } from './useEventLogSearch';
+import { EventLogFilters } from './EventLogFilters.tsx';
+import { useEventLogSearch } from './useEventLogSearch.ts';
 import { StickyPaginationBar } from 'component/common/Table/StickyPaginationBar/StickyPaginationBar';
-import { EventActions } from './EventActions';
+import { EventActions } from './EventActions.tsx';
 import useLoading from 'hooks/useLoading';
 
 interface IEventLogProps {
@@ -99,7 +99,7 @@ export const EventLog = ({ title, project, feature }: IEventLogProps) => {
         />
     );
 
-    const resultComponent = () => {
+    const ResultComponent = () => {
         if (loading) {
             return (
                 <StyledEventsList>
@@ -165,7 +165,7 @@ export const EventLog = ({ title, project, feature }: IEventLogProps) => {
                             />
                         }
                     />
-                    {resultComponent()}
+                    <ResultComponent />
                 </EventResultWrapper>
                 <ConditionallyRender
                     condition={total > 25}

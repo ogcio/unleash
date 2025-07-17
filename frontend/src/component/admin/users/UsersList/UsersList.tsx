@@ -1,11 +1,10 @@
-import type React from 'react';
 import { useMemo, useState } from 'react';
 import { TablePlaceholder, VirtualizedTable } from 'component/common/Table';
-import ChangePassword from './ChangePassword/ChangePassword';
-import ResetPassword from './ResetPassword/ResetPassword';
-import DeleteUser from './DeleteUser/DeleteUser';
+import ChangePassword from './ChangePassword/ChangePassword.tsx';
+import ResetPassword from './ResetPassword/ResetPassword.tsx';
+import DeleteUser from './DeleteUser/DeleteUser.tsx';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
-import ConfirmUserAdded from '../ConfirmUserAdded/ConfirmUserAdded';
+import ConfirmUserAdded from '../ConfirmUserAdded/ConfirmUserAdded.tsx';
 import { useUsers } from 'hooks/api/getters/useUsers/useUsers';
 import useAdminUsersApi from 'hooks/api/actions/useAdminUsersApi/useAdminUsersApi';
 import { useAccessOverviewApi } from 'hooks/api/actions/useAccessOverviewApi/useAccessOverviewApi';
@@ -18,7 +17,7 @@ import { PageContent } from 'component/common/PageContent/PageContent';
 import { PageHeader } from 'component/common/PageHeader/PageHeader';
 import { Button, IconButton, Tooltip, useMediaQuery } from '@mui/material';
 import { SearchHighlightProvider } from 'component/common/Table/SearchHighlightContext/SearchHighlightContext';
-import { UserTypeCell } from './UserTypeCell/UserTypeCell';
+import { UserTypeCell } from './UserTypeCell/UserTypeCell.tsx';
 import { useFlexLayout, useSortBy, useTable } from 'react-table';
 import { sortTypes } from 'utils/sortTypes';
 import { HighlightCell } from 'component/common/Table/cells/HighlightCell/HighlightCell';
@@ -27,22 +26,25 @@ import { Link, useNavigate } from 'react-router-dom';
 import { DateCell } from 'component/common/Table/cells/DateCell/DateCell';
 import theme from 'themes/theme';
 import { TimeAgoCell } from 'component/common/Table/cells/TimeAgoCell/TimeAgoCell';
-import { UsersActionsCell } from './UsersActionsCell/UsersActionsCell';
+import { UsersActionsCell } from './UsersActionsCell/UsersActionsCell.tsx';
 import { Search } from 'component/common/Search/Search';
 import { UserAvatar } from 'component/common/UserAvatar/UserAvatar';
 import { useConditionallyHiddenColumns } from 'hooks/useConditionallyHiddenColumns';
-import { UserLimitWarning } from './UserLimitWarning/UserLimitWarning';
+import { UserLimitWarning } from './UserLimitWarning/UserLimitWarning.tsx';
 import { RoleCell } from 'component/common/Table/cells/RoleCell/RoleCell';
 import { useSearch } from 'hooks/useSearch';
 import Download from '@mui/icons-material/Download';
 import { StyledUsersLinkDiv } from '../Users.styles';
 import { useUiFlag } from 'hooks/useUiFlag';
-import useUiConfig from '../../../../hooks/api/getters/useUiConfig/useUiConfig';
+import useUiConfig from '../../../../hooks/api/getters/useUiConfig/useUiConfig.ts';
 import { useScimSettings } from 'hooks/api/getters/useScimSettings/useScimSettings';
+import { UserSessionsCell } from './UserSessionsCell/UserSessionsCell.tsx';
+import { UsersHeader } from '../UsersHeader/UsersHeader.tsx';
+import { UpgradeSSO } from './UpgradeSSO.tsx';
 
 const UsersList = () => {
     const navigate = useNavigate();
-    const { isEnterprise } = useUiConfig();
+    const { isEnterprise, isOss } = useUiConfig();
     const { users, roles, refetch, loading } = useUsers();
     const { setToastData, setToastApiError } = useToast();
     const { removeUser, userLoading, userApiErrors } = useAdminUsersApi();
@@ -56,7 +58,9 @@ const UsersList = () => {
     }>({
         open: false,
     });
-    const userAccessUIEnabled = useUiFlag('userAccessUIEnabled');
+    const showUserDeviceCount = useUiFlag('showUserDeviceCount');
+    const showSSOUpgrade = isOss() && users.length > 3;
+
     const {
         settings: { enabled: scimEnabled },
     } = useScimSettings();
@@ -76,23 +80,17 @@ const UsersList = () => {
         setDelUser(undefined);
     };
 
-    const openDelDialog =
-        (user: IUser) => (e: React.SyntheticEvent<Element, Event>) => {
-            e.preventDefault();
-            setDelDialog(true);
-            setDelUser(user);
-        };
-    const openPwDialog =
-        (user: IUser) => (e: React.SyntheticEvent<Element, Event>) => {
-            e.preventDefault();
-            setPwDialog({ open: true, user });
-        };
+    const openDelDialog = (user: IUser) => () => {
+        setDelDialog(true);
+        setDelUser(user);
+    };
+    const openPwDialog = (user: IUser) => () => {
+        setPwDialog({ open: true, user });
+    };
 
-    const openResetPwDialog =
-        (user: IUser) => (e: React.SyntheticEvent<Element, Event>) => {
-            e.preventDefault();
-            setResetPwDialog({ open: true, user });
-        };
+    const openResetPwDialog = (user: IUser) => () => {
+        setResetPwDialog({ open: true, user });
+    };
 
     const closePwDialog = () => {
         setPwDialog({ open: false });
@@ -106,7 +104,7 @@ const UsersList = () => {
         try {
             await removeUser(user.id);
             setToastData({
-                title: `${user.name} has been deleted`,
+                text: `${user.name} has been deleted`,
                 type: 'success',
             });
             refetch();
@@ -139,7 +137,7 @@ const UsersList = () => {
                 id: 'name',
                 Header: 'Name',
                 accessor: (row: any) => row.name || '',
-                minWidth: 200,
+                minWidth: 180,
                 Cell: ({ row: { original: user } }: any) => (
                     <HighlightCell
                         value={user.name}
@@ -148,6 +146,21 @@ const UsersList = () => {
                 ),
                 searchable: true,
             },
+            ...(showUserDeviceCount
+                ? [
+                      {
+                          id: 'warning',
+                          Header: ' ',
+                          accessor: (row: any) => row.name || '',
+                          maxWidth: 40,
+                          Cell: ({ row: { original: user } }: any) => (
+                              <UserSessionsCell count={user.activeSessions} />
+                          ),
+                          searchable: false,
+                          disableSortBy: true,
+                      },
+                  ]
+                : []),
             {
                 id: 'role',
                 Header: 'Role',
@@ -194,7 +207,7 @@ const UsersList = () => {
                 sortType: 'boolean',
             },
             {
-                Header: 'Actions',
+                Header: '',
                 id: 'Actions',
                 align: 'center',
                 Cell: ({
@@ -204,22 +217,17 @@ const UsersList = () => {
                         onEdit={() => {
                             navigate(`/admin/users/${user.id}/edit`);
                         }}
-                        onViewAccess={
-                            userAccessUIEnabled
-                                ? () => {
-                                      navigate(
-                                          `/admin/users/${user.id}/access`,
-                                      );
-                                  }
-                                : undefined
-                        }
+                        onViewAccess={() => {
+                            navigate(`/admin/users/${user.id}/access`);
+                        }}
                         onChangePassword={openPwDialog(user)}
                         onResetPassword={openResetPwDialog(user)}
                         onDelete={openDelDialog(user)}
                         isScimUser={scimEnabled && Boolean(user.scimId)}
+                        userId={user.id}
                     />
                 ),
-                width: userAccessUIEnabled ? 240 : 200,
+                width: 80,
                 disableSortBy: true,
             },
             // Always hidden -- for search
@@ -235,7 +243,7 @@ const UsersList = () => {
                 searchable: true,
             },
         ],
-        [roles, navigate, isBillingUsers, userAccessUIEnabled],
+        [roles, navigate, isBillingUsers],
     );
 
     const initialState = useMemo(() => {
@@ -283,7 +291,7 @@ const UsersList = () => {
             },
             {
                 condition: isSmallScreen,
-                columns: ['createdAt', 'last-login'],
+                columns: ['createdAt', 'last-login', 'warning'],
             },
         ],
         setHiddenColumns,
@@ -335,6 +343,7 @@ const UsersList = () => {
                     </StyledUsersLinkDiv>
                 }
             />
+            <UsersHeader />
             <SearchHighlightProvider value={getSearchText(searchValue)}>
                 <VirtualizedTable
                     rows={rows}
@@ -342,6 +351,7 @@ const UsersList = () => {
                     prepareRow={prepareRow}
                 />
             </SearchHighlightProvider>
+
             <ConditionallyRender
                 condition={rows.length === 0}
                 show={
@@ -356,7 +366,10 @@ const UsersList = () => {
                         }
                         elseShow={
                             <TablePlaceholder>
-                                No users available. Get started by adding one.
+                                <span data-loading>
+                                    No users available. Get started by adding
+                                    one.
+                                </span>
                             </TablePlaceholder>
                         }
                     />
@@ -405,6 +418,8 @@ const UsersList = () => {
                     />
                 }
             />
+
+            {showSSOUpgrade ? <UpgradeSSO /> : null}
         </PageContent>
     );
 };

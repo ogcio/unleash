@@ -1,10 +1,10 @@
-import type User from '../../lib/types/user';
-import type { IUser } from '../../lib/types/user';
+import type User from '../../lib/types/user.js';
+import type { IUser } from '../../lib/types/user.js';
 import type {
     ICreateUser,
     IUserLookup,
     IUserStore,
-} from '../../lib/types/stores/user-store';
+} from '../../lib/types/stores/user-store.js';
 
 class UserStoreMock implements IUserStore {
     data: IUser[];
@@ -65,6 +65,10 @@ class UserStoreMock implements IUserStore {
 
     async count(): Promise<number> {
         return this.data.length;
+    }
+
+    async countRecentlyDeleted(): Promise<number> {
+        return Promise.resolve(0);
     }
 
     async get(key: number): Promise<IUser> {
@@ -155,6 +159,10 @@ class UserStoreMock implements IUserStore {
         return Promise.resolve(undefined);
     }
 
+    deleteScimUsers(): Promise<User[]> {
+        throw new Error('Method not implemented.');
+    }
+
     upsert(user: ICreateUser): Promise<IUser> {
         this.data.splice(this.data.findIndex((u) => u.email === user.email));
         const userToReturn = {
@@ -183,7 +191,5 @@ class UserStoreMock implements IUserStore {
         throw new Error('Not implemented');
     }
 }
-
-module.exports = UserStoreMock;
 
 export default UserStoreMock;

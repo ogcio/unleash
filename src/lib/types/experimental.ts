@@ -1,6 +1,8 @@
 import { PayloadType, type Variant } from 'unleash-client';
-import { parseEnvVarBoolean } from '../util';
-import { getDefaultVariant } from 'unleash-client/lib/variant';
+import { parseEnvVarBoolean } from '../util/index.js';
+import { getDefaultVariant } from 'unleash-client/lib/variant.js';
+import type { MetricFlagContext } from 'unleash-client/lib/impact-metrics/metric-types.js';
+import type { Context } from '../features/playground/feature-evaluator/index.js';
 
 export type IFlagKey =
     | 'accessLogs'
@@ -8,61 +10,61 @@ export type IFlagKey =
     | 'encryptEmails'
     | 'enableLicense'
     | 'enableLicenseChecker'
-    | 'embedProxy'
-    | 'embedProxyFrontend'
     | 'responseTimeWithAppNameKillSwitch'
     | 'maintenanceMode'
     | 'messageBanner'
-    | 'featuresExportImport'
-    | 'caseInsensitiveInOperators'
     | 'strictSchemaValidation'
     | 'personalAccessTokensKillSwitch'
     | 'migrationLock'
     | 'demo'
     | 'googleAuthEnabled'
-    | 'disableBulkToggle'
-    | 'disableNotifications'
     | 'advancedPlayground'
     | 'filterInvalidClientMetrics'
     | 'disableMetrics'
     | 'signals'
     | 'automatedActions'
     | 'celebrateUnleash'
-    | 'featureSearchFeedback'
-    | 'featureSearchFeedbackPosting'
+    | 'feedbackPosting'
     | 'extendedUsageMetrics'
-    | 'adminTokenKillSwitch'
     | 'feedbackComments'
     | 'showInactiveUsers'
     | 'killScheduledChangeRequestCache'
     | 'estimateTrafficDataCost'
     | 'useMemoizedActiveTokens'
     | 'queryMissingTokens'
-    | 'userAccessUIEnabled'
     | 'disableUpdateMaxRevisionId'
     | 'disablePublishUnannouncedEvents'
     | 'outdatedSdksBanner'
     | 'responseTimeMetricsFix'
     | 'disableShowContextFieldSelectionValues'
-    | 'projectOverviewRefactorFeedback'
     | 'manyStrategiesPagination'
     | 'enableLegacyVariants'
     | 'extendedMetrics'
     | 'removeUnsafeInlineStyleSrc'
-    | 'onboardingMetrics'
-    | 'onboardingUI'
     | 'projectRoleAssignment'
-    | 'eventTimeline'
-    | 'personalDashboardUI'
-    | 'trackLifecycleMetrics'
-    | 'purchaseAdditionalEnvironments'
     | 'originMiddlewareRequestLogging'
-    | 'unleashAI'
     | 'webhookDomainLogging'
-    | 'addonUsageMetrics'
     | 'releasePlans'
-    | 'navigationSidebar'
-    | 'productivityReportEmail';
+    | 'productivityReportEmail'
+    | 'productivityReportUnsubscribers'
+    | 'showUserDeviceCount'
+    | 'memorizeStats'
+    | 'streaming'
+    | 'etagVariant'
+    | 'deltaApi'
+    | 'uniqueSdkTracking'
+    | 'consumptionModel'
+    | 'edgeObservability'
+    | 'reportUnknownFlags'
+    | 'lifecycleMetrics'
+    | 'customMetrics'
+    | 'impactMetrics'
+    | 'createFlagDialogCache'
+    | 'improvedJsonDiff'
+    | 'crDiffView'
+    | 'changeRequestApproverEmails'
+    | 'paygTrialEvents'
+    | 'eventGrouping';
 
 export type IFlags = Partial<{ [key in IFlagKey]: boolean | Variant }>;
 
@@ -70,14 +72,6 @@ const flags: IFlags = {
     anonymiseEventLog: false,
     enableLicense: false,
     enableLicenseChecker: false,
-    embedProxy: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_EMBED_PROXY,
-        true,
-    ),
-    embedProxyFrontend: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_EMBED_PROXY_FRONTEND,
-        true,
-    ),
     responseTimeWithAppNameKillSwitch: parseEnvVarBoolean(
         process.env.UNLEASH_RESPONSE_TIME_WITH_APP_NAME_KILL_SWITCH,
         false,
@@ -98,14 +92,6 @@ const flags: IFlags = {
                 process.env.UNLEASH_EXPERIMENTAL_MESSAGE_BANNER_PAYLOAD ?? '',
         },
     },
-    featuresExportImport: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_FEATURES_EXPORT_IMPORT,
-        true,
-    ),
-    caseInsensitiveInOperators: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_CASE_INSENSITIVE_IN_OPERATORS,
-        false,
-    ),
     strictSchemaValidation: parseEnvVarBoolean(
         process.env.UNLEASH_STRICT_SCHEMA_VALIDTION,
         false,
@@ -118,14 +104,6 @@ const flags: IFlags = {
     demo: parseEnvVarBoolean(process.env.UNLEASH_DEMO, false),
     googleAuthEnabled: parseEnvVarBoolean(
         process.env.GOOGLE_AUTH_ENABLED,
-        false,
-    ),
-    disableBulkToggle: parseEnvVarBoolean(
-        process.env.DISABLE_BULK_TOGGLE,
-        false,
-    ),
-    disableNotifications: parseEnvVarBoolean(
-        process.env.DISABLE_NOTIFICATIONS,
         false,
     ),
     filterInvalidClientMetrics: parseEnvVarBoolean(
@@ -148,21 +126,8 @@ const flags: IFlags = {
         process.env.UNLEASH_EXPERIMENTAL_CELEBRATE_UNLEASH,
         false,
     ),
-    featureSearchFeedback: {
-        name: 'withText',
-        enabled: parseEnvVarBoolean(
-            process.env.UNLEASH_EXPERIMENTAL_FEATURE_SEARCH_FEEDBACK,
-            false,
-        ),
-        payload: {
-            type: PayloadType.JSON,
-            value:
-                process.env
-                    .UNLEASH_EXPERIMENTAL_FEATURE_SEARCH_FEEDBACK_PAYLOAD ?? '',
-        },
-    },
-    featureSearchFeedbackPosting: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_FEATURE_SEARCH_FEEDBACK_POSTING,
+    feedbackPosting: parseEnvVarBoolean(
+        process.env.UNLEASH_EXPERIMENTAL_FEEDBACK_POSTING,
         false,
     ),
     encryptEmails: parseEnvVarBoolean(
@@ -171,10 +136,6 @@ const flags: IFlags = {
     ),
     extendedUsageMetrics: parseEnvVarBoolean(
         process.env.UNLEASH_EXPERIMENTAL_EXTENDED_USAGE_METRICS,
-        false,
-    ),
-    adminTokenKillSwitch: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_ADMIN_TOKEN_KILL_SWITCH,
         false,
     ),
     outdatedSdksBanner: parseEnvVarBoolean(
@@ -210,10 +171,6 @@ const flags: IFlags = {
         process.env.UNLEASH_EXPERIMENTAL_ESTIMATE_TRAFFIC_DATA_COST,
         false,
     ),
-    userAccessUIEnabled: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_USER_ACCESS_UI_ENABLED,
-        false,
-    ),
     disableUpdateMaxRevisionId: parseEnvVarBoolean(
         process.env.UNLEASH_EXPERIMENTAL_DISABLE_SCHEDULED_CACHES,
         false,
@@ -235,10 +192,6 @@ const flags: IFlags = {
             .UNLEASH_EXPERIMENTAL_DISABLE_SHOW_CONTEXT_FIELD_SELECTION_VALUES,
         false,
     ),
-    projectOverviewRefactorFeedback: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_PROJECT_OVERVIEW_REFACTOR_FEEDBACK,
-        false,
-    ),
     manyStrategiesPagination: parseEnvVarBoolean(
         process.env.UNLEASH_EXPERIMENTAL_MANY_STRATEGIES_PAGINATION,
         false,
@@ -255,60 +208,93 @@ const flags: IFlags = {
         process.env.UNLEASH_EXPERIMENTAL_REMOVE_UNSAFE_INLINE_STYLE_SRC,
         false,
     ),
-    onboardingMetrics: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_ONBOARDING_METRICS,
-        false,
-    ),
-    onboardingUI: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_ONBOARDING_UI,
-        false,
-    ),
     projectRoleAssignment: parseEnvVarBoolean(
         process.env.UNLEASH_EXPERIMENTAL_PROJECT_ROLE_ASSIGNMENT,
-        false,
-    ),
-    eventTimeline: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_EVENT_TIMELINE,
-        false,
-    ),
-    personalDashboardUI: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_PERSONAL_DASHBOARD_UI,
-        false,
-    ),
-    trackLifecycleMetrics: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_TRACK_LIFECYCLE_METRICS,
-        false,
-    ),
-    purchaseAdditionalEnvironments: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_PURCHASE_ADDITIONAL_ENVIRONMENTS,
         false,
     ),
     originMiddlewareRequestLogging: parseEnvVarBoolean(
         process.env.UNLEASH_ORIGIN_MIDDLEWARE_REQUEST_LOGGING,
         false,
     ),
-    unleashAI: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_UNLEASH_AI,
-        false,
-    ),
     webhookDomainLogging: parseEnvVarBoolean(
         process.env.UNLEASH_EXPERIMENT_WEBHOOK_DOMAIN_LOGGING,
-        false,
-    ),
-    addonUsageMetrics: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_ADDON_USAGE_METRICS,
         false,
     ),
     releasePlans: parseEnvVarBoolean(
         process.env.UNLEASH_EXPERIMENTAL_RELEASE_PLANS,
         false,
     ),
-    navigationSidebar: parseEnvVarBoolean(
-        process.env.UNLEASH_EXPERIMENTAL_SIDEBAR_NAVIGATION,
-        true,
-    ),
     productivityReportEmail: parseEnvVarBoolean(
         process.env.UNLEASH_EXPERIMENTAL_PRODUCTIVITY_REPORT_EMAIL,
+        false,
+    ),
+    productivityReportUnsubscribers: parseEnvVarBoolean(
+        process.env.UNLEASH_EXPERIMENTAL_PRODUCTIVITY_REPORT_UNSUBSCRIBERS,
+        false,
+    ),
+    showUserDeviceCount: parseEnvVarBoolean(
+        process.env.UNLEASH_EXPERIMENTAL_SHOW_USER_DEVICE_COUNT,
+        false,
+    ),
+    streaming: parseEnvVarBoolean(
+        process.env.UNLEASH_EXPERIMENTAL_STREAMING,
+        false,
+    ),
+    etagVariant: {
+        name: 'disabled',
+        feature_enabled: false,
+        enabled: false,
+    },
+    deltaApi: parseEnvVarBoolean(
+        process.env.UNLEASH_EXPERIMENTAL_DELTA_API,
+        false,
+    ),
+    uniqueSdkTracking: parseEnvVarBoolean(
+        process.env.UNLEASH_EXPERIMENTAL_UNIQUE_SDK_TRACKING,
+        false,
+    ),
+    consumptionModel: parseEnvVarBoolean(
+        process.env.EXPERIMENTAL_CONSUMPTION_MODEL,
+        false,
+    ),
+    edgeObservability: parseEnvVarBoolean(
+        process.env.EXPERIMENTAL_EDGE_OBSERVABILITY,
+        false,
+    ),
+    reportUnknownFlags: parseEnvVarBoolean(
+        process.env.UNLEASH_EXPERIMENTAL_REPORT_UNKNOWN_FLAGS,
+        false,
+    ),
+    lifecycleMetrics: parseEnvVarBoolean(
+        process.env.UNLEASH_EXPERIMENTAL_LIFECYCLE_METRICS,
+        false,
+    ),
+    createFlagDialogCache: parseEnvVarBoolean(
+        process.env.UNLEASH_EXPERIMENTAL_CREATE_FLAG_DIALOG_CACHE,
+        false,
+    ),
+    changeRequestApproverEmails: parseEnvVarBoolean(
+        process.env.UNLEASH_EXPERIMENTAL_CHANGE_REQUEST_APPROVER_EMAILS,
+        false,
+    ),
+    improvedJsonDiff: parseEnvVarBoolean(
+        process.env.UNLEASH_EXPERIMENTAL_IMPROVED_JSON_DIFF,
+        false,
+    ),
+    crDiffView: parseEnvVarBoolean(
+        process.env.UNLEASH_EXPERIMENTAL_CR_DIFF_VIEW,
+        false,
+    ),
+    impactMetrics: parseEnvVarBoolean(
+        process.env.UNLEASH_EXPERIMENTAL_IMPACT_METRICS,
+        false,
+    ),
+    eventGrouping: parseEnvVarBoolean(
+        process.env.UNLEASH_EXPERIMENTAL_EVENT_GROUPING,
+        false,
+    ),
+    paygTrialEvents: parseEnvVarBoolean(
+        process.env.UNLEASH_EXPERIMENTAL_PAYG_TRIAL_EVENTS,
         false,
     ),
 };
@@ -318,6 +304,7 @@ export const defaultExperimentalOptions: IExperimentalOptions = {
     externalResolver: {
         isEnabled: (): boolean => false,
         getVariant: () => getDefaultVariant(),
+        getStaticContext: () => ({}),
     },
 };
 
@@ -326,17 +313,34 @@ export interface IExperimentalOptions {
     externalResolver: IExternalFlagResolver;
 }
 
-export interface IFlagContext {
-    [key: string]: string;
-}
+export interface IFlagContext extends Context {}
 
 export interface IFlagResolver {
     getAll: (context?: IFlagContext) => IFlags;
     isEnabled: (expName: IFlagKey, context?: IFlagContext) => boolean;
     getVariant: (expName: IFlagKey, context?: IFlagContext) => Variant;
+    getStaticContext: () => IFlagContext;
+    impactMetrics?: IImpactMetricsResolver;
 }
 
 export interface IExternalFlagResolver {
     isEnabled: (flagName: IFlagKey, context?: IFlagContext) => boolean;
     getVariant: (flagName: IFlagKey, context?: IFlagContext) => Variant;
+    getStaticContext: () => IFlagContext;
+    impactMetrics?: IImpactMetricsResolver;
+}
+
+export interface IImpactMetricsResolver {
+    defineCounter(name: string, help: string);
+    defineGauge(name: string, help: string);
+    incrementCounter(
+        name: string,
+        value?: number,
+        metricsFlagContext?: MetricFlagContext,
+    ): void;
+    updateGauge(
+        name: string,
+        value: number,
+        metricsFlagContext?: MetricFlagContext,
+    ): void;
 }

@@ -11,24 +11,25 @@ import {
 import { useCallback, useMemo } from 'react';
 import { SearchHighlightProvider } from 'component/common/Table/SearchHighlightContext/SearchHighlightContext';
 import { Alert, styled, TableBody } from '@mui/material';
-import type { MoveListItem } from 'hooks/useDragItem';
+import type { OnMoveItem } from 'hooks/useDragItem';
 import useToast from 'hooks/useToast';
 import useEnvironmentApi, {
     createSortOrderPayload,
 } from 'hooks/api/actions/useEnvironmentApi/useEnvironmentApi';
 import { formatUnknownError } from 'utils/formatUnknownError';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
-import { EnvironmentRow } from './EnvironmentRow/EnvironmentRow';
-import { EnvironmentNameCell } from './EnvironmentNameCell/EnvironmentNameCell';
-import { EnvironmentActionCell } from './EnvironmentActionCell/EnvironmentActionCell';
-import { EnvironmentIconCell } from './EnvironmentIconCell/EnvironmentIconCell';
+import { EnvironmentRow } from './EnvironmentRow/EnvironmentRow.tsx';
+import { EnvironmentNameCell } from './EnvironmentNameCell/EnvironmentNameCell.tsx';
+import { EnvironmentActionCell } from './EnvironmentActionCell/EnvironmentActionCell.tsx';
+import { EnvironmentIconCell } from './EnvironmentIconCell/EnvironmentIconCell.tsx';
 import { Search } from 'component/common/Search/Search';
 import { HighlightCell } from 'component/common/Table/cells/HighlightCell/HighlightCell';
 import { TextCell } from 'component/common/Table/cells/TextCell/TextCell';
 import type { IEnvironment } from 'interfaces/environments';
 import { useUiFlag } from 'hooks/useUiFlag';
 import { PremiumFeature } from 'component/common/PremiumFeature/PremiumFeature';
-import { OrderEnvironments } from './OrderEnvironments/OrderEnvironments';
+import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
+
 const StyledAlert = styled(Alert)(({ theme }) => ({
     marginBottom: theme.spacing(4),
 }));
@@ -38,21 +39,22 @@ export const EnvironmentTable = () => {
     const { setToastApiError } = useToast();
     const { environments, mutateEnvironments } = useEnvironments();
     const isFeatureEnabled = useUiFlag('EEA');
-    const isPurchaseAdditionalEnvironmentsEnabled = useUiFlag(
-        'purchaseAdditionalEnvironments',
-    );
+    const { isEnterprise } = useUiConfig();
 
-    const moveListItem: MoveListItem = useCallback(
-        async (dragIndex: number, dropIndex: number, save = false) => {
-            const copy = [...environments];
-            const tmp = copy[dragIndex];
-            copy.splice(dragIndex, 1);
-            copy.splice(dropIndex, 0, tmp);
-            await mutateEnvironments(copy);
+    const onMoveItem: OnMoveItem = useCallback(
+        async ({ dragIndex, dropIndex, save }) => {
+            const oldEnvironments = environments || [];
+            const newEnvironments = [...oldEnvironments];
+            const movedEnvironment = newEnvironments.splice(dragIndex, 1)[0];
+            newEnvironments.splice(dropIndex, 0, movedEnvironment);
+
+            await mutateEnvironments(newEnvironments);
 
             if (save) {
                 try {
-                    await changeSortOrder(createSortOrderPayload(copy));
+                    await changeSortOrder(
+                        createSortOrderPayload(newEnvironments),
+                    );
                 } catch (error: unknown) {
                     setToastApiError(formatUnknownError(error));
                 }
@@ -62,25 +64,35 @@ export const EnvironmentTable = () => {
     );
 
     const columnsWithActions = useMemo(() => {
-        if (isFeatureEnabled) {
-            return [
-                ...COLUMNS,
-                {
-                    Header: 'Actions',
-                    id: 'Actions',
-                    align: 'center',
-                    width: '1%',
-                    Cell: ({
-                        row: { original },
-                    }: { row: { original: IEnvironment } }) => (
-                        <EnvironmentActionCell environment={original} />
-                    ),
-                    disableGlobalFilter: true,
-                },
-            ];
+        const baseColumns = [
+            ...COLUMNS,
+            ...(isFeatureEnabled
+                ? [
+                      {
+                          Header: 'Actions',
+                          id: 'Actions',
+                          align: 'center',
+                          width: '1%',
+                          Cell: ({
+                              row: { original },
+                          }: { row: { original: IEnvironment } }) => (
+                              <EnvironmentActionCell environment={original} />
+                          ),
+                          disableGlobalFilter: true,
+                      },
+                  ]
+                : []),
+        ];
+        if (isEnterprise()) {
+            baseColumns.splice(2, 0, {
+                Header: 'Change request',
+                accessor: (row: IEnvironment) =>
+                    Number.isInteger(row.requiredApprovals) ? 'yes' : 'no',
+                Cell: TextCell,
+            });
         }
 
-        return COLUMNS;
+        return baseColumns;
     }, [isFeatureEnabled]);
 
     const {
@@ -116,7 +128,7 @@ export const EnvironmentTable = () => {
         <PageHeader title={`Environments (${count})`} actions={headerActions} />
     );
 
-    if (!isFeatureEnabled && !isPurchaseAdditionalEnvironmentsEnabled) {
+    if (!isFeatureEnabled) {
         return (
             <PageContent header={header}>
                 <PremiumFeature feature='environments' />
@@ -126,7 +138,6 @@ export const EnvironmentTable = () => {
 
     return (
         <PageContent header={header}>
-            <OrderEnvironments />
             <StyledAlert severity='info'>
                 This is the order of environments that you have today in each
                 feature flag. Rearranging them here will change also the order
@@ -141,7 +152,7 @@ export const EnvironmentTable = () => {
                             return (
                                 <EnvironmentRow
                                     row={row as any}
-                                    moveListItem={moveListItem}
+                                    onMoveItem={onMoveItem}
                                     key={row.original.name}
                                 />
                             );

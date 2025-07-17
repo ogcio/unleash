@@ -9,7 +9,7 @@ import type {
     TimelineEvent,
     TimelineEventGroup,
     TimelineEventType,
-} from '../EventTimeline';
+} from '../EventTimeline.tsx';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import type { HTMLAttributes } from 'react';
 import SensorsIcon from '@mui/icons-material/Sensors';
@@ -59,7 +59,11 @@ const getEventIcon = ({ icon, type }: Pick<TimelineEvent, 'icon' | 'type'>) => {
     if (type === 'feature-environment-disabled') {
         return <ToggleOffIcon />;
     }
-    if (type.startsWith('strategy-') || type.startsWith('feature-strategy-')) {
+    if (
+        type.startsWith('strategy-') ||
+        type.startsWith('feature-strategy-') ||
+        type.startsWith('release-plan-')
+    ) {
         return (
             <ExtensionOutlinedIcon
                 sx={{ marginTop: '-2px', marginRight: '-2px' }}

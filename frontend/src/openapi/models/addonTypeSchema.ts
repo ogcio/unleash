@@ -3,10 +3,10 @@
  * Do not edit manually.
  * See `gen:api` script in package.json
  */
-import type { AddonTypeSchemaAlertsItem } from './addonTypeSchemaAlertsItem';
-import type { AddonTypeSchemaInstallation } from './addonTypeSchemaInstallation';
-import type { AddonParameterSchema } from './addonParameterSchema';
-import type { TagTypeSchema } from './tagTypeSchema';
+import type { AddonTypeSchemaAlertsItem } from './addonTypeSchemaAlertsItem.js';
+import type { AddonTypeSchemaInstallation } from './addonTypeSchemaInstallation.js';
+import type { AddonParameterSchema } from './addonParameterSchema.js';
+import type { TagTypeSchema } from './tagTypeSchema.js';
 
 /**
  * An addon provider. Defines a specific addon type and what the end user must configure when creating a new addon of that type.
@@ -32,6 +32,6 @@ export interface AddonTypeSchema {
     name: string;
     /** The addon provider's parameters. Use these to configure an addon of this provider type. Items with `required: true` must be provided. */
     parameters?: AddonParameterSchema[];
-    /** A list of [Unleash tag types](https://docs.getunleash.io/reference/tags#tag-types) that this addon uses. These tags will be added to the Unleash instance when an addon of this type is created. */
+    /** A list of [Unleash tag types](https://docs.getunleash.io/reference/feature-toggles#tags) that this addon uses. These tags will be added to the Unleash instance when an addon of this type is created. */
     tagTypes?: TagTypeSchema[];
 }

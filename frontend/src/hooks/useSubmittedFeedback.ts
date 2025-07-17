@@ -1,11 +1,12 @@
-import { createLocalStorage } from '../utils/createLocalStorage';
+import { createLocalStorage } from '../utils/createLocalStorage.js';
 
 export type IFeedbackCategory =
     | 'search'
     | 'insights'
     | 'applicationOverview'
     | 'newProjectOverview'
-    | 'signals';
+    | 'signals'
+    | 'projectStatus';
 
 export const useUserSubmittedFeedback = (category: IFeedbackCategory) => {
     const key = `unleash-userSubmittedFeedback:${category}`;

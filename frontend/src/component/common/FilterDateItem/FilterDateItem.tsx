@@ -6,25 +6,33 @@ import { DateCalendar, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format } from 'date-fns';
 import { useLocationSettings } from 'hooks/useLocationSettings';
-import { getLocalizedDateString } from '../util';
+import { getLocalizedDateString } from '../util.ts';
 import type { FilterItemParams } from 'component/filter/FilterItem/FilterItem';
+import { DateRangePresets } from './DateRangePresets.tsx';
 
 export interface IFilterDateItemProps {
     name: string;
     label: ReactNode;
     onChange: (value: FilterItemParams) => void;
-    onChipClose: () => void;
+    onRangeChange?: (value: {
+        from: FilterItemParams;
+        to: FilterItemParams;
+    }) => void;
+    onChipClose?: () => void;
     state: FilterItemParams | null | undefined;
     operators: [string, ...string[]];
+    initMode?: 'auto-open' | 'manual';
 }
 
 export const FilterDateItem: FC<IFilterDateItemProps> = ({
     name,
     label,
     onChange,
+    onRangeChange,
     onChipClose,
     state,
     operators,
+    initMode = 'auto-open',
 }) => {
     const ref = useRef<HTMLDivElement>(null);
     const [anchorEl, setAnchorEl] = useState<HTMLDivElement | null>(null);
@@ -35,7 +43,7 @@ export const FilterDateItem: FC<IFilterDateItemProps> = ({
     };
 
     useEffect(() => {
-        if (!state) {
+        if (!state && initMode === 'auto-open') {
             open();
         }
     }, []);
@@ -54,11 +62,13 @@ export const FilterDateItem: FC<IFilterDateItemProps> = ({
         : [];
     const selectedDate = state ? new Date(state.values[0]) : null;
     const currentOperator = state ? state.operator : operators[0];
-    const onDelete = () => {
-        onChange({ operator: operators[0], values: [] });
-        onClose();
-        onChipClose();
-    };
+    const onDelete = onChipClose
+        ? () => {
+              onChange({ operator: operators[0], values: [] });
+              onClose();
+              onChipClose();
+          }
+        : undefined;
 
     useEffect(() => {
         if (state && !operators.includes(state.operator)) {
@@ -115,6 +125,9 @@ export const FilterDateItem: FC<IFilterDateItemProps> = ({
                             });
                         }}
                     />
+                    {onRangeChange && (
+                        <DateRangePresets onRangeChange={onRangeChange} />
+                    )}
                 </LocalizationProvider>
             </StyledPopover>
         </>

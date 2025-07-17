@@ -1,8 +1,9 @@
+import NotImplementedError from '../../lib/error/not-implemented-error.js';
 import type {
     IUserSplashKey,
     IUserSplash,
     IUserSplashStore,
-} from '../../lib/types/stores/user-splash-store';
+} from '../../lib/types/stores/user-splash-store.js';
 
 export default class FakeUserSplashStore implements IUserSplashStore {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -12,12 +13,12 @@ export default class FakeUserSplashStore implements IUserSplashStore {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     getSplash(userId: number, splashId: string): Promise<IUserSplash> {
-        return Promise.resolve(undefined);
+        throw new NotImplementedError('This is not implemented yet');
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     updateSplash(splash: IUserSplash): Promise<IUserSplash> {
-        return Promise.resolve(undefined);
+        throw new NotImplementedError('This is not implemented yet');
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -27,7 +28,7 @@ export default class FakeUserSplashStore implements IUserSplashStore {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     get(key: IUserSplashKey): Promise<IUserSplash> {
-        return Promise.resolve(undefined);
+        throw new NotImplementedError('This is not implemented yet');
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

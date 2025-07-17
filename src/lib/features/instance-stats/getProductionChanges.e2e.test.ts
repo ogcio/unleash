@@ -1,9 +1,11 @@
-import dbInit, { type ITestDb } from '../../../test/e2e/helpers/database-init';
-import getLogger from '../../../test/fixtures/no-logger';
+import dbInit, {
+    type ITestDb,
+} from '../../../test/e2e/helpers/database-init.js';
+import getLogger from '../../../test/fixtures/no-logger.js';
 import {
     createGetProductionChanges,
     type GetProductionChanges,
-} from './getProductionChanges';
+} from './getProductionChanges.js';
 import subDays from 'date-fns/subDays';
 let db: ITestDb;
 let getProductionChanges: GetProductionChanges;
@@ -44,12 +46,6 @@ const noEnvironmentEvent = (days: number) => {
 
 beforeAll(async () => {
     db = await dbInit('product_changes_serial', getLogger);
-    await db.rawDatabase('environments').insert({
-        name: 'production',
-        type: 'production',
-        enabled: true,
-        protected: false,
-    });
     getProductionChanges = createGetProductionChanges(db.rawDatabase);
 });
 
@@ -136,12 +132,6 @@ test('five events per day should be counted correctly', async () => {
 });
 
 test('Events posted to a non production environment should not be included in count', async () => {
-    await db.rawDatabase('environments').insert({
-        name: 'development',
-        type: 'development',
-        enabled: true,
-        protected: false,
-    });
     await db.rawDatabase
         .table('events')
         .insert(mockRawEventDaysAgo(1, 'development'));

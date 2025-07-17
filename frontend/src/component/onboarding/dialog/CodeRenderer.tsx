@@ -4,7 +4,7 @@ import copy from 'copy-to-clipboard';
 import useToast from 'hooks/useToast';
 import { IconButton, styled, Tooltip } from '@mui/material';
 import CopyIcon from '@mui/icons-material/FileCopy';
-import type { SdkName } from './sharedTypes';
+import type { SdkName } from './sharedTypes.ts';
 import android from './snippets/android.md?raw';
 import go from './snippets/go.md?raw';
 import javascript from './snippets/javascript.md?raw';
@@ -62,7 +62,7 @@ const CopyBlock: FC<{ title: string; code: string }> = ({ title, code }) => {
         copy(data);
         setToastData({
             type: 'success',
-            title: 'Copied to clipboard',
+            text: 'Copied to clipboard',
         });
     };
     const { setToastData } = useToast();

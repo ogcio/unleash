@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 import { useUserFeedbackApi } from 'hooks/api/actions/useUserFeedbackApi/useUserFeedbackApi';
 import useToast from 'hooks/useToast';
-import useUserType from '../feedbackNew/useUserType';
+import useUserType from '../feedbackNew/useUserType.ts';
 
 const StyledContainer = styled('div')(({ theme }) => ({
     display: 'flex',
@@ -44,7 +44,7 @@ export const CommandBarFeedback = ({ onSubmit }: ICommandBarFeedbackProps) => {
         });
         onSubmit();
         setToastData({
-            title: 'Feedback sent',
+            text: 'Feedback sent',
             type: 'success',
         });
     };

@@ -1,11 +1,11 @@
-import type { FC } from 'react';
-import { Markdown } from '../common/Markdown/Markdown';
-import type { PersonalDashboardProjectDetailsSchema } from '../../openapi';
-import { UserAvatar } from '../common/UserAvatar/UserAvatar';
+import type { FC, HTMLAttributes } from 'react';
+import { Markdown } from '../common/Markdown/Markdown.tsx';
+import type { PersonalDashboardProjectDetailsSchema } from 'openapi';
+import { UserAvatar } from '../common/UserAvatar/UserAvatar.tsx';
 import { Typography, styled } from '@mui/material';
 import { formatDateYMDHM } from 'utils/formatDate';
 import { useLocationSettings } from 'hooks/useLocationSettings';
-import { ActionBox } from './ActionBox';
+import { ActionBox } from './ActionBox.tsx';
 
 const Events = styled('ul')(({ theme }) => ({
     padding: 0,
@@ -48,6 +48,8 @@ const StyledMarkdown = styled(Markdown)({
     overflowWrap: 'anywhere',
 });
 
+const BoldToNormal = ({ children }: HTMLAttributes<HTMLElement>) => children;
+
 export const LatestProjectEvents: FC<{
     latestEvents: PersonalDashboardProjectDetailsSchema['latestEvents'];
 }> = ({ latestEvents }) => {
@@ -77,7 +79,9 @@ export const LatestProjectEvents: FC<{
                                         locationSettings.locale,
                                     )}
                                 </Timestamp>
-                                <StyledMarkdown>
+                                <StyledMarkdown
+                                    components={{ strong: BoldToNormal }}
+                                >
                                     {event.summary ||
                                         'No preview available for this event'}
                                 </StyledMarkdown>

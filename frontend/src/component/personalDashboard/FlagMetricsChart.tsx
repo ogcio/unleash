@@ -12,16 +12,16 @@ import { Bar } from 'react-chartjs-2';
 import useTheme from '@mui/material/styles/useTheme';
 import { type FC, useEffect, useMemo, useState } from 'react';
 import { Box, type Theme, styled, Typography } from '@mui/material';
-import { FeatureMetricsHours } from '../feature/FeatureView/FeatureMetrics/FeatureMetricsHours/FeatureMetricsHours';
-import GeneralSelect from '../common/GeneralSelect/GeneralSelect';
+import { FeatureMetricsHours } from '../feature/FeatureView/FeatureMetrics/FeatureMetricsHours/FeatureMetricsHours.tsx';
+import GeneralSelect from '../common/GeneralSelect/GeneralSelect.tsx';
 import { useFeatureMetricsRaw } from 'hooks/api/getters/useFeatureMetricsRaw/useFeatureMetricsRaw';
 import { useLocationSettings } from 'hooks/useLocationSettings';
-import { createChartData } from './createChartData';
-import { aggregateFeatureMetrics } from '../feature/FeatureView/FeatureMetrics/aggregateFeatureMetrics';
+import { createChartData } from './createChartData.ts';
+import { aggregateFeatureMetrics } from '../feature/FeatureView/FeatureMetrics/aggregateFeatureMetrics.ts';
 import {
     createBarChartOptions,
     createPlaceholderBarChartOptions,
-} from './createChartOptions';
+} from './createChartOptions.ts';
 import { useFeature } from 'hooks/api/getters/useFeature/useFeature';
 import { FlagExposure } from 'component/feature/FeatureView/FeatureOverview/FeatureLifecycle/FlagExposure';
 
@@ -97,7 +97,7 @@ const EmptyFlagMetricsChart = () => {
 const useMetricsEnvironments = (project: string, flagName: string) => {
     const [environment, setEnvironment] = useState<string | null>(null);
     const { feature } = useFeature(project, flagName);
-    const activeEnvironments = feature.environments.map((env) => ({
+    const activeEnvironments = (feature?.environments ?? []).map((env) => ({
         name: env.name,
         type: env.type,
     }));
@@ -215,7 +215,7 @@ export const PlaceholderFlagMetricsChartWithWrapper: React.FC<{
     );
 };
 
-export const FlagMetricsChart: FC<{
+const FlagMetricsChartInner: FC<{
     flag: { name: string; project: string };
     onArchive: () => void;
 }> = ({ flag, onArchive }) => {
@@ -235,7 +235,7 @@ export const FlagMetricsChart: FC<{
         return (
             <ChartContainer>
                 <PlaceholderFlagMetricsChart
-                    label={`Couldn't fetch metrics for the current flag. This may be a transient error, or your flag name ("${flag.name}") may be causing issues.`}
+                    label={`Couldn't fetch metrics for the current flag right now. Please try again. Report this if it doesn't resolve itself.`}
                 />
             </ChartContainer>
         );
@@ -281,6 +281,24 @@ export const FlagMetricsChart: FC<{
             )}
         </ChartContainer>
     );
+};
+
+export const FlagMetricsChart: FC<{
+    flag: { name: string; project: string };
+    onArchive: () => void;
+}> = (props) => {
+    const breakingNames = ['.', '..'];
+    if (breakingNames.includes(props.flag.name)) {
+        return (
+            <ChartContainer>
+                <PlaceholderFlagMetricsChart
+                    label={`The current flag name ('${props.flag.name}') is known to cause issues due how it affects URLs. We cannot show you a chart for it.`}
+                />
+            </ChartContainer>
+        );
+    }
+
+    return <FlagMetricsChartInner {...props} />;
 };
 
 ChartJS.register(

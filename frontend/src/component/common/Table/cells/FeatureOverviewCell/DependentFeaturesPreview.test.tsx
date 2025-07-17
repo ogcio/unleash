@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { render } from 'utils/testRenderer';
-import { PrimaryFeatureInfo } from './FeatureOverviewCell';
+import { PrimaryFeatureInfo } from './FeatureOverviewCell.tsx';
 import userEvent from '@testing-library/user-event';
 import { testServerRoute, testServerSetup } from 'utils/testServer';
 
@@ -17,6 +17,7 @@ test('Preview parent feature', async () => {
             feature='featureA'
             project='default'
             type='release'
+            archivedAt={null}
             searchQuery=''
             dependencyType='child'
             onTypeClick={() => {}}
@@ -44,6 +45,7 @@ test('Preview child features', async () => {
             feature='featureA'
             project='default'
             type='release'
+            archivedAt={null}
             searchQuery=''
             dependencyType='parent'
             onTypeClick={() => {}}

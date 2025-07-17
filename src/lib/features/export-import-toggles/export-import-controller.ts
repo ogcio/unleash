@@ -1,15 +1,17 @@
 import type { Response } from 'express';
-import Controller from '../../routes/controller';
-import type { Logger } from '../../logger';
-import type { IExportService, IImportService } from './export-import-service';
-import type { OpenApiService } from '../../services';
-import type { WithTransactional } from '../../db/transaction';
+import Controller from '../../routes/controller.js';
+import type { Logger } from '../../logger.js';
+import type {
+    IExportService,
+    IImportService,
+} from './export-import-service.js';
+import type { OpenApiService, IUnleashServices } from '../../services/index.js';
+import type { WithTransactional } from '../../db/transaction.js';
 import {
     type IUnleashConfig,
-    type IUnleashServices,
     NONE,
     serializeDates,
-} from '../../types';
+} from '../../types/index.js';
 import {
     createRequestSchema,
     createResponseSchema,
@@ -19,11 +21,11 @@ import {
     getStandardResponses,
     type ImportTogglesSchema,
     importTogglesValidateSchema,
-} from '../../openapi';
-import type { IAuthRequest } from '../../routes/unleash-types';
-import { extractUsername } from '../../util';
-import { BadDataError, InvalidOperationError } from '../../error';
-import ApiUser from '../../types/api-user';
+} from '../../openapi/index.js';
+import type { IAuthRequest } from '../../routes/unleash-types.js';
+import { extractUsername } from '../../util/index.js';
+import { BadDataError } from '../../error/index.js';
+import ApiUser from '../../types/api-user.js';
 
 class ExportImportController extends Controller {
     private logger: Logger;
@@ -116,7 +118,6 @@ class ExportImportController extends Controller {
         req: IAuthRequest<unknown, unknown, ExportQuerySchema, unknown>,
         res: Response,
     ): Promise<void> {
-        this.verifyExportImportEnabled();
         const query = req.body;
         const userName = extractUsername(req);
 
@@ -134,7 +135,6 @@ class ExportImportController extends Controller {
         req: IAuthRequest<unknown, unknown, ImportTogglesSchema, unknown>,
         res: Response,
     ): Promise<void> {
-        this.verifyExportImportEnabled();
         const dto = req.body;
         const { user } = req;
 
@@ -154,7 +154,6 @@ class ExportImportController extends Controller {
         req: IAuthRequest<unknown, unknown, ImportTogglesSchema, unknown>,
         res: Response,
     ): Promise<void> {
-        this.verifyExportImportEnabled();
         const { user, audit } = req;
 
         if (user instanceof ApiUser && user.type === 'admin') {
@@ -170,14 +169,6 @@ class ExportImportController extends Controller {
         );
 
         res.status(200).end();
-    }
-
-    private verifyExportImportEnabled() {
-        if (!this.config.flagResolver.isEnabled('featuresExportImport')) {
-            throw new InvalidOperationError(
-                'Feature export/import is not enabled',
-            );
-        }
     }
 }
 export default ExportImportController;

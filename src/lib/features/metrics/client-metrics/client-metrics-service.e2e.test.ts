@@ -1,16 +1,14 @@
-import ClientInstanceService from '../instance/instance-service';
-import type { IClientApp } from '../../../types/model';
+import ClientInstanceService from '../instance/instance-service.js';
+import type { IClientApp } from '../../../types/model.js';
 import { secondsToMilliseconds } from 'date-fns';
-import { createTestConfig } from '../../../../test/config/test-config';
-import type { IUnleashConfig, IUnleashStores } from '../../../types';
-import { FakePrivateProjectChecker } from '../../private-project/fakePrivateProjectChecker';
-import type { ITestDb } from '../../../../test/e2e/helpers/database-init';
-
-const faker = require('faker');
-const dbInit = require('../../../../test/e2e/helpers/database-init');
-const getLogger = require('../../../../test/fixtures/no-logger');
-const { APPLICATION_CREATED } = require('../../../types/events');
-
+import { createTestConfig } from '../../../../test/config/test-config.js';
+import type { IUnleashConfig, IUnleashStores } from '../../../types/index.js';
+import { APPLICATION_CREATED } from '../../../events/index.js';
+import { FakePrivateProjectChecker } from '../../private-project/fakePrivateProjectChecker.js';
+import type { ITestDb } from '../../../../test/e2e/helpers/database-init.js';
+import dbInit from '../../../../test/e2e/helpers/database-init.js';
+import { noLoggerProvider as getLogger } from '../../../../test/fixtures/no-logger.js';
+import faker from 'faker';
 let stores: IUnleashStores;
 let db: ITestDb;
 let clientInstanceService: ClientInstanceService;
@@ -54,12 +52,21 @@ test('Apps registered should be announced', async () => {
         description: faker.company.catchPhrase(),
         color: faker.internet.color(),
     };
-    await clientInstanceService.registerClient(clientRegistration, '127.0.0.1');
-    await clientInstanceService.registerClient(differentClient, '127.0.0.1');
+    await clientInstanceService.registerBackendClient(
+        clientRegistration,
+        '127.0.0.1',
+    );
+    await clientInstanceService.registerBackendClient(
+        differentClient,
+        '127.0.0.1',
+    );
     await clientInstanceService.bulkAdd(); // in prod called by a SchedulerService
     const first = await stores.clientApplicationsStore.getUnannounced();
     expect(first.length).toBe(2);
-    await clientInstanceService.registerClient(clientRegistration, '127.0.0.1');
+    await clientInstanceService.registerBackendClient(
+        clientRegistration,
+        '127.0.0.1',
+    );
     await clientInstanceService.announceUnannounced(); // in prod called by a SchedulerService
     const second = await stores.clientApplicationsStore.getUnannounced();
     expect(second.length).toBe(0);

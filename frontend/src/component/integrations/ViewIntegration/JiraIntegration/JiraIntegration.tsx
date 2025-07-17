@@ -4,7 +4,7 @@ import LaunchIcon from '@mui/icons-material/Launch';
 import cr from './assets/cr.png';
 import connect from './assets/connect.png';
 import manage from './assets/manage.png';
-import { JiraImageContainer } from './JiraImageContainer';
+import { JiraImageContainer } from './JiraImageContainer.tsx';
 import { IntegrationHowToSection } from 'component/integrations/IntegrationHowToSection/IntegrationHowToSection';
 
 const StyledContainer = styled('div')(({ theme }) => ({
@@ -34,7 +34,7 @@ export const JIRA_INFO = {
     name: 'jira',
     displayName: 'Jira',
     description:
-        'Create, connect, manage, and approve Unleash feature flags directly from Jira',
+        'Create, connect, manage, and approve Unleash feature flags directly from Jira.',
     documentationUrl:
         'https://docs.getunleash.io/reference/integrations/jira-cloud-plugin-installation',
     howTo: `  - Create a new feature flag directly within Jira, or connect existing flags to any Jira issue.

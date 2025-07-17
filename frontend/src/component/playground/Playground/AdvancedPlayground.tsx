@@ -8,17 +8,17 @@ import { formatUnknownError } from 'utils/formatUnknownError';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 import { usePlaygroundApi } from 'hooks/api/actions/usePlayground/usePlayground';
 import { useEnvironments } from 'hooks/api/getters/useEnvironments/useEnvironments';
-import { PlaygroundForm } from './PlaygroundForm/PlaygroundForm';
+import { PlaygroundForm } from './PlaygroundForm/PlaygroundForm.tsx';
 import {
     resolveDefaultEnvironment,
     resolveEnvironments,
     resolveProjects,
     resolveResultsWidth,
 } from './playground.utils';
-import { PlaygroundGuidance } from './PlaygroundGuidance/PlaygroundGuidance';
-import { PlaygroundGuidancePopper } from './PlaygroundGuidancePopper/PlaygroundGuidancePopper';
+import { PlaygroundGuidance } from './PlaygroundGuidance/PlaygroundGuidance.tsx';
+import { PlaygroundGuidancePopper } from './PlaygroundGuidancePopper/PlaygroundGuidancePopper.tsx';
 import Loader from 'component/common/Loader/Loader';
-import { AdvancedPlaygroundResultsTable } from './AdvancedPlaygroundResultsTable/AdvancedPlaygroundResultsTable';
+import { AdvancedPlaygroundResultsTable } from './AdvancedPlaygroundResultsTable/AdvancedPlaygroundResultsTable.tsx';
 import type { AdvancedPlaygroundResponseSchema } from 'openapi';
 import { createLocalStorage } from 'utils/createLocalStorage';
 import { BadRequestError } from 'utils/apiUtils';
@@ -150,7 +150,7 @@ export const AdvancedPlayground: FC<{
         } catch (error) {
             setToastData({
                 type: 'error',
-                title: `Failed to parse URL parameters: ${formatUnknownError(
+                text: `Failed to parse URL parameters: ${formatUnknownError(
                     error,
                 )}`,
             });
@@ -233,14 +233,12 @@ export const AdvancedPlayground: FC<{
             } else if (error instanceof SyntaxError) {
                 setToastData({
                     type: 'error',
-                    title: `Error parsing context: ${formatUnknownError(
-                        error,
-                    )}`,
+                    text: `Error parsing context: ${formatUnknownError(error)}`,
                 });
             } else {
                 setToastData({
                     type: 'error',
-                    title: formatUnknownError(error),
+                    text: formatUnknownError(error),
                 });
             }
         }

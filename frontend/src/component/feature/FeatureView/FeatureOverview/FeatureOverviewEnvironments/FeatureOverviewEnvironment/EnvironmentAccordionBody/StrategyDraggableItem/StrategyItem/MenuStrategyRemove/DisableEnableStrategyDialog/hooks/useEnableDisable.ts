@@ -2,7 +2,7 @@ import useFeatureStrategyApi from 'hooks/api/actions/useFeatureStrategyApi/useFe
 import { useFeature } from 'hooks/api/getters/useFeature/useFeature';
 import useToast from 'hooks/useToast';
 import { formatUnknownError } from 'utils/formatUnknownError';
-import type { IDisableEnableStrategyProps } from '../IDisableEnableStrategyProps';
+import type { IDisableEnableStrategyProps } from '../IDisableEnableStrategyProps.jsx';
 
 export const useEnableDisable = ({
     projectId,
@@ -24,7 +24,7 @@ export const useEnableDisable = ({
                 !enabled,
             );
             setToastData({
-                title: `Strategy ${enabled ? 'enabled' : 'disabled'}`,
+                text: `Strategy ${enabled ? 'enabled' : 'disabled'}`,
                 type: 'success',
             });
 

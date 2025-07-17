@@ -1,7 +1,7 @@
 import type {
     IFeatureEnvironment,
     IFeatureMetrics,
-} from '../interfaces/featureToggle';
+} from '../interfaces/featureToggle.js';
 
 const emptyMetric = (environment: string) => ({
     yes: 0,
@@ -13,11 +13,10 @@ const emptyMetric = (environment: string) => ({
 export const getFeatureMetrics = (
     environments: IFeatureEnvironment[],
     metrics: IFeatureMetrics,
-) => {
-    return environments.map((env) => {
+) =>
+    environments.map((env) => {
         const envMetric = metrics.lastHourUsage.find(
             (metric) => metric.environment === env.name,
         );
         return envMetric || emptyMetric(env.name);
     });
-};

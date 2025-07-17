@@ -7,12 +7,12 @@ import useEnvironmentApi from 'hooks/api/actions/useEnvironmentApi/useEnvironmen
 import usePermissions from 'hooks/api/getters/usePermissions/usePermissions';
 import { useEnvironments } from 'hooks/api/getters/useEnvironments/useEnvironments';
 import useToast from 'hooks/useToast';
-import { EnvironmentActionCellPopover } from './EnvironmentActionCellPopover/EnvironmentActionCellPopover';
-import { EnvironmentCloneModal } from './EnvironmentCloneModal/EnvironmentCloneModal';
+import { EnvironmentActionCellPopover } from './EnvironmentActionCellPopover/EnvironmentActionCellPopover.tsx';
+import { EnvironmentCloneModal } from './EnvironmentCloneModal/EnvironmentCloneModal.tsx';
 import type { IApiToken } from 'hooks/api/getters/useApiTokens/useApiTokens';
-import { EnvironmentTokenDialog } from './EnvironmentTokenDialog/EnvironmentTokenDialog';
-import { EnvironmentDeprecateToggleDialog } from './EnvironmentDeprecateToggleDialog/EnvironmentDeprecateToggleDialog';
-import { EnvironmentDeleteDialog } from './EnvironmentDeleteDialog/EnvironmentDeleteDialog';
+import { EnvironmentTokenDialog } from './EnvironmentTokenDialog/EnvironmentTokenDialog.tsx';
+import { EnvironmentDeprecateToggleDialog } from './EnvironmentDeprecateToggleDialog/EnvironmentDeprecateToggleDialog.tsx';
+import { EnvironmentDeleteDialog } from './EnvironmentDeleteDialog/EnvironmentDeleteDialog.tsx';
 import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
 
 interface IEnvironmentTableActionsProps {
@@ -43,8 +43,7 @@ export const EnvironmentActionCell = ({
             refetchPermissions();
             setToastData({
                 type: 'success',
-                title: 'Environment deleted',
-                text: `You have successfully deleted the ${environment.name} environment.`,
+                text: `Environment deleted`,
             });
         } catch (error: unknown) {
             setToastApiError(formatUnknownError(error));
@@ -60,13 +59,13 @@ export const EnvironmentActionCell = ({
                 await toggleEnvironmentOff(environment.name);
                 setToastData({
                     type: 'success',
-                    title: 'Environment deprecated successfully',
+                    text: 'Environment deprecated',
                 });
             } else {
                 await toggleEnvironmentOn(environment.name);
                 setToastData({
                     type: 'success',
-                    title: 'Environment undeprecated successfully',
+                    text: 'Environment undeprecated',
                 });
             }
         } catch (error: unknown) {
@@ -89,8 +88,7 @@ export const EnvironmentActionCell = ({
                     } else {
                         setToastData({
                             type: 'error',
-                            title: 'Environment limit reached',
-                            text: `You have reached the maximum number of environments (${environmentLimit}). Please reach out if you need more.`,
+                            text: `Environment limit (${environmentLimit}) reached`,
                         });
                     }
                 }}

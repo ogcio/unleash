@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import useTagTypeForm from '../TagTypeForm/useTagTypeForm';
-import TagTypeForm from '../TagTypeForm/TagTypeForm';
+import useTagTypeForm from '../TagTypeForm/useTagTypeForm.ts';
+import TagTypeForm from '../TagTypeForm/TagTypeForm.tsx';
 import { CreateButton } from 'component/common/CreateButton/CreateButton';
 import FormTemplate from 'component/common/FormTemplate/FormTemplate';
 import { CREATE_TAG_TYPE } from 'component/providers/AccessProvider/permissions';
@@ -17,8 +17,10 @@ const CreateTagType = () => {
     const {
         tagName,
         tagDesc,
+        color,
         setTagName,
         setTagDesc,
+        setColor,
         getTagPayload,
         validateNameUniqueness,
         errors,
@@ -36,8 +38,7 @@ const CreateTagType = () => {
                 await createTag(payload);
                 navigate('/tag-types');
                 setToastData({
-                    title: 'Tag type created',
-                    confetti: true,
+                    text: 'Tag type created',
                     type: 'success',
                 });
             } catch (error: unknown) {
@@ -62,7 +63,7 @@ const CreateTagType = () => {
             loading={loading}
             title='Create tag type'
             description='Tag types allow you to group tags together in the management UI'
-            documentationLink='https://docs.getunleash.io/reference/tags'
+            documentationLink='https://docs.getunleash.io/reference/feature-toggles#tags'
             documentationLinkLabel='Tags documentation'
             formatApiCode={formatApiCode}
         >
@@ -71,9 +72,11 @@ const CreateTagType = () => {
                 handleSubmit={handleSubmit}
                 handleCancel={handleCancel}
                 tagName={tagName}
-                setTagName={setTagName}
                 tagDesc={tagDesc}
+                color={color}
+                setTagName={setTagName}
                 setTagDesc={setTagDesc}
+                setColor={setColor}
                 mode='Create'
                 clearErrors={clearErrors}
                 validateNameUniqueness={validateNameUniqueness}

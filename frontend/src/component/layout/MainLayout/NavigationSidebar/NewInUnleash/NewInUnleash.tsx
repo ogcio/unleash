@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { useUiFlag } from 'hooks/useUiFlag';
 import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
 import { useLocalStorageState } from 'hooks/useLocalStorageState';
@@ -13,13 +12,18 @@ import {
 } from '@mui/material';
 import Signals from '@mui/icons-material/Sensors';
 import type { NavigationMode } from 'component/layout/MainLayout/NavigationSidebar/NavigationMode';
-import { NewInUnleashItem } from './NewInUnleashItem';
+import {
+    NewInUnleashItem,
+    type NewInUnleashItemDetails,
+} from './NewInUnleashItem.tsx';
 import { usePlausibleTracker } from 'hooks/usePlausibleTracker';
 import { ReactComponent as SignalsPreview } from 'assets/img/signals.svg';
-import LinearScaleIcon from '@mui/icons-material/LinearScale';
+import LifecycleStagesImage from 'assets/img/lifecycle-stages.png';
+import MonitorHeartIcon from '@mui/icons-material/MonitorHeartOutlined';
 import { useNavigate } from 'react-router-dom';
-import { useEventTimelineContext } from 'component/events/EventTimeline/EventTimelineContext';
-import { ReactComponent as EventTimelinePreview } from 'assets/img/eventTimeline.svg';
+import { formatAssetPath } from 'utils/formatPath';
+import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined';
+import ReleaseTemplatePreviewImage from 'assets/img/releaseTemplatePreview.png';
 
 const StyledNewInUnleash = styled('div')(({ theme }) => ({
     margin: theme.spacing(2, 0, 1, 0),
@@ -71,21 +75,15 @@ const StyledSignalsIcon = styled(Signals)(({ theme }) => ({
     color: theme.palette.primary.main,
 }));
 
-const StyledLinearScaleIcon = styled(LinearScaleIcon)(({ theme }) => ({
-    color: theme.palette.primary.main,
-}));
+const StyledReleaseManagementIcon = styled(FactCheckOutlinedIcon)(
+    ({ theme }) => ({
+        color: theme.palette.primary.main,
+    }),
+);
 
-type NewItem = {
-    label: string;
-    summary: string;
-    icon: ReactNode;
-    onCheckItOut: () => void;
-    docsLink: string;
-    show: boolean;
-    longDescription: ReactNode;
-    preview?: ReactNode;
-    beta?: boolean;
-};
+const StyledImg = styled('img')(() => ({
+    maxWidth: '100%',
+}));
 
 interface INewInUnleashProps {
     mode?: NavigationMode;
@@ -102,13 +100,33 @@ export const NewInUnleash = ({
         'new-in-unleash-seen:v1',
         new Set(),
     );
-    const { isOss, isEnterprise } = useUiConfig();
+    const { isEnterprise } = useUiConfig();
     const signalsEnabled = useUiFlag('signals');
-    const eventTimelineEnabled = useUiFlag('eventTimeline');
+    const releasePlansEnabled = useUiFlag('releasePlans');
 
-    const { setHighlighted } = useEventTimelineContext();
-
-    const items: NewItem[] = [
+    const items: NewInUnleashItemDetails[] = [
+        {
+            label: 'Lifecycle 2.0',
+            summary: 'Track progress of your feature flags',
+            icon: <MonitorHeartIcon color='primary' />,
+            preview: (
+                <StyledImg
+                    src={formatAssetPath(LifecycleStagesImage)}
+                    alt='Define → Develop → Production → Cleanup → Archived'
+                />
+            ),
+            docsLink:
+                'https://docs.getunleash.io/reference/feature-toggles#feature-flag-lifecycle',
+            show: true,
+            longDescription: (
+                <p>
+                    We have updated the names, icons, and colors for the
+                    different stages of a feature flag's lifecycle. The stages
+                    convey the same meanings as before but now have clearer
+                    names that better indicate where you are in the lifecycle.
+                </p>
+            ),
+        },
         {
             label: 'Signals & Actions',
             summary: 'Listen to signals via Webhooks',
@@ -146,35 +164,20 @@ export const NewInUnleash = ({
             ),
         },
         {
-            label: 'Event timeline',
-            summary: 'Keep track of recent events across all your projects',
-            icon: <StyledLinearScaleIcon />,
-            preview: <EventTimelinePreview />,
-            onCheckItOut: () => {
-                setHighlighted(true);
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth',
-                });
-            },
-            docsLink:
-                'https://docs.getunleash.io/reference/events#event-timeline',
-            show: !isOss() && eventTimelineEnabled,
-            longDescription: (
-                <>
-                    <p>
-                        Monitor recent events across all your projects in one
-                        unified timeline.
-                    </p>
-
-                    <p>
-                        You can access the event timeline from the top menu to
-                        get an overview of changes and quickly identify and
-                        debug any issues.
-                    </p>
-                </>
+            label: 'Release templates',
+            summary: 'Save time and optimize your process',
+            icon: <StyledReleaseManagementIcon />,
+            preview: (
+                <StyledImg
+                    src={formatAssetPath(ReleaseTemplatePreviewImage)}
+                    alt='Release templates preview'
+                />
             ),
-            beta: true,
+            onCheckItOut: () => navigate('/release-templates'),
+            docsLink: 'https://docs.getunleash.io/reference/release-templates',
+            show: isEnterprise() && releasePlansEnabled,
+            beta: false,
+            popout: true,
         },
     ];
 
@@ -220,6 +223,7 @@ export const NewInUnleash = ({
                         preview,
                         summary,
                         beta = false,
+                        popout = false,
                     }) => (
                         <NewInUnleashItem
                             key={label}
@@ -246,6 +250,7 @@ export const NewInUnleash = ({
                             docsLink={docsLink}
                             summary={summary}
                             beta={beta}
+                            popout={popout}
                         />
                     ),
                 )}

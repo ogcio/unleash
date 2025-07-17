@@ -2,7 +2,7 @@ import { collectDefaultMetrics } from 'prom-client';
 import memoizee from 'memoizee';
 import type EventEmitter from 'events';
 import type { Knex } from 'knex';
-import * as events from './metric-events';
+import * as events from './metric-events.js';
 import {
     DB_POOL_UPDATE,
     FEATURE_ARCHIVED,
@@ -23,21 +23,28 @@ import {
     PROJECT_ARCHIVED,
     PROJECT_REVIVED,
     PROJECT_DELETED,
-} from './types/events';
-import type { IUnleashConfig } from './types/option';
-import type { IUnleashStores } from './types/stores';
+    RELEASE_PLAN_ADDED,
+    RELEASE_PLAN_REMOVED,
+    RELEASE_PLAN_MILESTONE_STARTED,
+} from './events/index.js';
+import type { IUnleashConfig } from './types/option.js';
+import type { IUnleashStores } from './types/stores.js';
 import { hoursToMilliseconds, minutesToMilliseconds } from 'date-fns';
-import type { InstanceStatsService } from './features/instance-stats/instance-stats-service';
-import type { IEnvironment, ISdkHeartbeat } from './types';
+import type { InstanceStatsService } from './features/instance-stats/instance-stats-service.js';
+import type { IEnvironment, ISdkHeartbeat } from './types/index.js';
 import {
     createCounter,
     createGauge,
     createSummary,
     createHistogram,
-} from './util/metrics';
-import type { SchedulerService } from './services';
-import type { IClientMetricsEnv } from './features/metrics/client-metrics/client-metrics-store-v2-type';
-import { DbMetricsMonitor } from './metrics-gauge';
+} from './util/metrics/index.js';
+import type { SchedulerService } from './services/index.js';
+import type { IClientMetricsEnv } from './features/metrics/client-metrics/client-metrics-store-v2-type.js';
+import { DbMetricsMonitor } from './metrics-gauge.js';
+import {
+    HEAP_MEMORY_TOTAL,
+    REQUEST_COUNT,
+} from './features/metrics/impact/define-impact-metrics.js';
 
 export function registerPrometheusPostgresMetrics(
     db: Knex,
@@ -110,7 +117,7 @@ export function registerPrometheusMetrics(
     };
 
     const { eventStore, environmentStore } = stores;
-    const { flagResolver, db } = config;
+    const { flagResolver } = config;
     const dbMetrics = new DbMetricsMonitor(config);
 
     const cachedEnvironments: () => Promise<IEnvironment[]> = memoizee(
@@ -155,7 +162,7 @@ export function registerPrometheusMetrics(
     });
     const featureFlagUpdateTotal = createCounter({
         name: 'feature_toggle_update_total',
-        help: 'Number of times a toggle has been updated. Environment label would be "n/a" when it is not available, e.g. when a feature flag is created.',
+        help: 'Number of times a flag has been updated. Environment label would be "n/a" when it is not available, e.g. when a feature flag is created.',
         labelNames: [
             'toggle',
             'project',
@@ -168,6 +175,11 @@ export function registerPrometheusMetrics(
         name: 'feature_toggle_usage_total',
         help: 'Number of times a feature flag has been used',
         labelNames: ['toggle', 'active', 'appName'],
+    });
+    const clientRegistrationTotal = createCounter({
+        name: 'client_registration_total',
+        help: 'Number of times a an application have registered',
+        labelNames: ['appName', 'environment', 'interval'],
     });
 
     dbMetrics.registerGaugeDbMetric({
@@ -269,6 +281,42 @@ export function registerPrometheusMetrics(
         },
     });
 
+    dbMetrics.registerGaugeDbMetric({
+        name: 'unique_sdk_connections_total',
+        help: 'The number of unique SDK connections for the full previous hour across all instances. Available only for SDKs reporting `unleash-connection-id`',
+        query: () => {
+            if (flagResolver.isEnabled('uniqueSdkTracking')) {
+                return stores.uniqueConnectionReadModel.getStats();
+            }
+            return Promise.resolve({ previous: 0 });
+        },
+        map: (result) => ({ value: result.previous }),
+    });
+
+    dbMetrics.registerGaugeDbMetric({
+        name: 'unique_backend_sdk_connections_total',
+        help: 'The number of unique backend SDK connections for the full previous hour across all instances. Available only for SDKs reporting `unleash-connection-id`',
+        query: () => {
+            if (flagResolver.isEnabled('uniqueSdkTracking')) {
+                return stores.uniqueConnectionReadModel.getStats();
+            }
+            return Promise.resolve({ previousBackend: 0 });
+        },
+        map: (result) => ({ value: result.previousBackend }),
+    });
+
+    dbMetrics.registerGaugeDbMetric({
+        name: 'unique_frontend_sdk_connections_total',
+        help: 'The number of unique frontend SDK connections for the full previous hour across all instances. Available only for SDKs reporting `unleash-connection-id`',
+        query: () => {
+            if (flagResolver.isEnabled('uniqueSdkTracking')) {
+                return stores.uniqueConnectionReadModel.getStats();
+            }
+            return Promise.resolve({ previousFrontend: 0 });
+        },
+        map: (result) => ({ value: result.previousFrontend }),
+    });
+
     const featureTogglesArchivedTotal = createGauge({
         name: 'feature_toggles_archived_total',
         help: 'Number of archived feature flags',
@@ -276,6 +324,10 @@ export function registerPrometheusMetrics(
     const usersTotal = createGauge({
         name: 'users_total',
         help: 'Number of users',
+    });
+    const trafficTotal = createGauge({
+        name: 'traffic_total',
+        help: 'Traffic used current month',
     });
     const serviceAccounts = createGauge({
         name: 'service_accounts_total',
@@ -378,6 +430,20 @@ export function registerPrometheusMetrics(
     });
 
     dbMetrics.registerGaugeDbMetric({
+        name: 'custom_strategies_total',
+        help: 'Number of custom strategies',
+        query: () => instanceStatsService.customStrategiesCount(),
+        map: (result) => ({ value: result }),
+    });
+
+    dbMetrics.registerGaugeDbMetric({
+        name: 'custom_strategies_in_use_total',
+        help: 'Number of custom strategies in use',
+        query: () => instanceStatsService.customStrategiesInUseCount(),
+        map: (result) => ({ value: result }),
+    });
+
+    dbMetrics.registerGaugeDbMetric({
         name: 'client_apps_total',
         help: 'Number of registered client apps aggregated by range by last seen',
         labelNames: ['range'],
@@ -400,6 +466,20 @@ export function registerPrometheusMetrics(
         name: 'oidc_enabled',
         help: 'Whether OIDC is enabled',
         query: () => instanceStatsService.hasOIDC(),
+        map: (result) => ({ value: result ? 1 : 0 }),
+    });
+
+    dbMetrics.registerGaugeDbMetric({
+        name: 'password_auth_enabled',
+        help: 'Whether password auth is enabled',
+        query: () => instanceStatsService.hasPasswordAuth(),
+        map: (result) => ({ value: result ? 1 : 0 }),
+    });
+
+    dbMetrics.registerGaugeDbMetric({
+        name: 'scim_enabled',
+        help: 'Whether SCIM is enabled',
+        query: () => instanceStatsService.hasSCIM(),
         map: (result) => ({ value: result ? 1 : 0 }),
     });
 
@@ -486,6 +566,16 @@ export function registerPrometheusMetrics(
         })
         .set(config.rateLimiting.callSignalEndpointMaxPerSecond * 60);
 
+    const namePrefixUsed = createCounter({
+        name: 'nameprefix_count',
+        help: 'Count of nameprefix usage in client api',
+    });
+
+    const tagsUsed = createCounter({
+        name: 'tags_count',
+        help: 'Count of tags usage in client api',
+    });
+
     const featureCreatedByMigration = createCounter({
         name: 'feature_created_by_migration_count',
         help: 'Feature createdBy migration count',
@@ -526,10 +616,7 @@ export function registerPrometheusMetrics(
         name: 'onboarding_duration',
         labelNames: ['event'],
         help: 'firstLogin, secondLogin, firstFeatureFlag, firstPreLive, firstLive from first user creation',
-        query: () =>
-            flagResolver.isEnabled('onboardingMetrics')
-                ? stores.onboardingReadModel.getInstanceOnboardingMetrics()
-                : Promise.resolve({}),
+        query: () => stores.onboardingReadModel.getInstanceOnboardingMetrics(),
         map: (result) =>
             Object.keys(result)
                 .filter((key) => Number.isInteger(result[key]))
@@ -545,10 +632,7 @@ export function registerPrometheusMetrics(
         name: 'project_onboarding_duration',
         labelNames: ['event', 'project'],
         help: 'firstFeatureFlag, firstPreLive, firstLive from project creation',
-        query: () =>
-            flagResolver.isEnabled('onboardingMetrics')
-                ? stores.onboardingReadModel.getProjectsOnboardingMetrics()
-                : Promise.resolve([]),
+        query: () => stores.onboardingReadModel.getProjectsOnboardingMetrics(),
         map: (projectsOnboardingMetrics) =>
             projectsOnboardingMetrics.flatMap(
                 ({ project, ...projectMetrics }) =>
@@ -579,6 +663,22 @@ export function registerPrometheusMetrics(
             })),
     });
 
+    dbMetrics.registerGaugeDbMetric({
+        name: 'feature_link_by_domain',
+        help: 'Count most popular domains used in feature links',
+        labelNames: ['domain'],
+        query: () => {
+            return stores.featureLinkReadModel.getTopDomains();
+        },
+        map: (result) =>
+            result.map(({ domain, count }) => ({
+                value: count,
+                labels: {
+                    domain,
+                },
+            })),
+    });
+
     const featureLifecycleStageEnteredCounter = createCounter({
         name: 'feature_lifecycle_stage_entered',
         help: 'Count how many features entered a given stage',
@@ -600,6 +700,16 @@ export function registerPrometheusMetrics(
     const orphanedTokensTotal = createGauge({
         name: 'orphaned_api_tokens_total',
         help: 'Number of API tokens without a project',
+    });
+
+    const clientFeaturesMemory = createGauge({
+        name: 'client_features_memory',
+        help: 'The amount of memory client features endpoint is using for caching',
+    });
+
+    const clientDeltaMemory = createGauge({
+        name: 'client_delta_memory',
+        help: 'The amount of memory client features delta endpoint is using for caching',
     });
 
     const orphanedTokensActive = createGauge({
@@ -638,10 +748,20 @@ export function registerPrometheusMetrics(
         resourceLimit.labels({ resource }).set(limit);
     }
 
+    const licensedUsers = createGauge({
+        name: 'licensed_users',
+        help: 'The number of seats used.',
+    });
+
     const addonEventsHandledCounter = createCounter({
         name: 'addon_events_handled',
         help: 'Events handled by addons and the result.',
         labelNames: ['result', 'destination'],
+    });
+
+    const unknownFlagsGauge = createGauge({
+        name: 'unknown_flags',
+        help: 'Number of unknown flags reported in the last 24 hours, if any. Maximum of 10.',
     });
 
     // register event listeners
@@ -655,11 +775,6 @@ export function registerPrometheusMetrics(
     eventBus.on(
         events.STAGE_ENTERED,
         (entered: { stage: string; feature: string }) => {
-            if (flagResolver.isEnabled('trackLifecycleMetrics')) {
-                logger.info(
-                    `STAGE_ENTERED listened ${JSON.stringify(entered)}`,
-                );
-            }
             featureLifecycleStageEnteredCounter.increment({
                 stage: entered.stage,
             });
@@ -677,6 +792,7 @@ export function registerPrometheusMetrics(
                     appName,
                 })
                 .observe(time);
+            config.flagResolver.impactMetrics?.incrementCounter(REQUEST_COUNT);
         },
     );
 
@@ -722,11 +838,41 @@ export function registerPrometheusMetrics(
         mapFeaturesForClientDuration.observe(duration);
     });
 
+    eventBus.on(events.CLIENT_METRICS_NAMEPREFIX, () => {
+        namePrefixUsed.inc();
+    });
+
+    eventBus.on(events.CLIENT_METRICS_TAGS, () => {
+        tagsUsed.inc();
+    });
+
+    eventBus.on(events.CLIENT_FEATURES_MEMORY, (event: { memory: number }) => {
+        clientFeaturesMemory.reset();
+        clientFeaturesMemory.set(event.memory);
+    });
+
+    eventBus.on(events.CLIENT_DELTA_MEMORY, (event: { memory: number }) => {
+        clientDeltaMemory.reset();
+        clientDeltaMemory.set(event.memory);
+    });
+    eventBus.on(
+        events.CLIENT_REGISTERED,
+        ({ appName, environment, interval }) => {
+            clientRegistrationTotal
+                .labels({ appName, environment, interval })
+                .inc();
+        },
+    );
+
     events.onMetricEvent(
         eventBus,
         events.REQUEST_ORIGIN,
         ({ type, method, source }) => {
-            requestOriginCounter.increment({ type, method, source });
+            requestOriginCounter.increment({
+                type,
+                method,
+                source: source || 'unknown',
+            });
         },
     );
 
@@ -761,8 +907,8 @@ export function registerPrometheusMetrics(
         featureFlagUpdateTotal.increment({
             toggle: featureName,
             project,
-            environment: 'default',
-            environmentType: 'production',
+            environment: 'n/a',
+            environmentType: 'n/a',
             action: 'updated',
         });
     });
@@ -864,6 +1010,58 @@ export function registerPrometheusMetrics(
             action: 'revived',
         });
     });
+
+    eventStore.on(
+        RELEASE_PLAN_ADDED,
+        async ({ featureName, project, environment }) => {
+            const environmentType = await resolveEnvironmentType(
+                environment,
+                cachedEnvironments,
+            );
+            featureFlagUpdateTotal.increment({
+                toggle: featureName,
+                project,
+                environment,
+                environmentType,
+                action: 'updated',
+            });
+        },
+    );
+
+    eventStore.on(
+        RELEASE_PLAN_REMOVED,
+        async ({ featureName, project, environment }) => {
+            const environmentType = await resolveEnvironmentType(
+                environment,
+                cachedEnvironments,
+            );
+            featureFlagUpdateTotal.increment({
+                toggle: featureName,
+                project,
+                environment,
+                environmentType,
+                action: 'updated',
+            });
+        },
+    );
+
+    eventStore.on(
+        RELEASE_PLAN_MILESTONE_STARTED,
+        async ({ featureName, project, environment }) => {
+            const environmentType = await resolveEnvironmentType(
+                environment,
+                cachedEnvironments,
+            );
+            featureFlagUpdateTotal.increment({
+                toggle: featureName,
+                project,
+                environment,
+                environmentType,
+                action: 'updated',
+            });
+        },
+    );
+
     eventStore.on(PROJECT_CREATED, () => {
         projectActionsCounter.increment({ action: PROJECT_CREATED });
     });
@@ -944,6 +1142,10 @@ export function registerPrometheusMetrics(
         collectAggDbMetrics: dbMetrics.refreshMetrics,
         collectStaticCounters: async () => {
             try {
+                config.flagResolver.impactMetrics?.updateGauge(
+                    HEAP_MEMORY_TOTAL,
+                    process.memoryUsage().heapUsed,
+                );
                 featureTogglesArchivedTotal.reset();
                 featureTogglesArchivedTotal.set(
                     await instanceStatsService.getArchivedToggleCount(),
@@ -955,6 +1157,11 @@ export function registerPrometheusMetrics(
                 serviceAccounts.reset();
                 serviceAccounts.set(
                     await instanceStatsService.countServiceAccounts(),
+                );
+
+                trafficTotal.reset();
+                trafficTotal.set(
+                    await instanceStatsService.getCurrentTrafficData(),
                 );
 
                 apiTokens.reset();
@@ -1001,6 +1208,11 @@ export function registerPrometheusMetrics(
                 usersActive90days.reset();
                 usersActive90days.set(activeUsers.last90);
 
+                const licensedUsersStat =
+                    await instanceStatsService.getLicencedUsers();
+                licensedUsers.reset();
+                licensedUsers.set(licensedUsersStat);
+
                 const productionChanges =
                     await instanceStatsService.getProductionChanges();
                 productionChanges30.reset();
@@ -1009,6 +1221,10 @@ export function registerPrometheusMetrics(
                 productionChanges60.set(productionChanges.last60);
                 productionChanges90.reset();
                 productionChanges90.set(productionChanges.last90);
+
+                const unknownFlags = await stores.unknownFlagsStore.count();
+                unknownFlagsGauge.reset();
+                unknownFlagsGauge.set(unknownFlags);
             } catch (e) {}
         },
     };
@@ -1046,7 +1262,7 @@ export default class MetricsMonitor {
         await schedulerService.schedule(
             async () =>
                 Promise.all([collectStaticCounters(), collectAggDbMetrics()]),
-            hoursToMilliseconds(2),
+            hoursToMilliseconds(1),
             'collectStaticCounters',
         );
         await schedulerService.schedule(
