@@ -1,6 +1,6 @@
 {
-  "defaultEnv": "prd",
-  "prd": {
+  "defaultEnv": "prod",
+  "prod": {
     "driver": "pg",
     "user": { "ENV": "POSTGRES_USER" },
     "password": { "ENV": "POSTGRES_PASSWORD" },
