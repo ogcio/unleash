@@ -8,14 +8,14 @@ import {
     TextField,
 } from '@mui/material';
 import { Alert } from '@mui/material';
-import { AutoCreateForm } from '../AutoCreateForm/AutoCreateForm';
+import { AutoCreateForm } from '../AutoCreateForm/AutoCreateForm.tsx';
 import useToast from 'hooks/useToast';
 import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
 import useAuthSettings from 'hooks/api/getters/useAuthSettings/useAuthSettings';
 import useAuthSettingsApi from 'hooks/api/actions/useAuthSettingsApi/useAuthSettingsApi';
 import { formatUnknownError } from 'utils/formatUnknownError';
 import { removeEmptyStringFields } from 'utils/removeEmptyStringFields';
-import { SsoGroupSettings } from '../SsoGroupSettings';
+import { SsoGroupSettings } from '../SsoGroupSettings.tsx';
 import type { IRole } from 'interfaces/role';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 
@@ -88,7 +88,7 @@ export const SamlAuth = () => {
         try {
             await updateSettings(removeEmptyStringFields(data));
             setToastData({
-                title: 'Settings stored',
+                text: 'Settings stored',
                 type: 'success',
             });
         } catch (error: unknown) {
@@ -128,7 +128,8 @@ export const SamlAuth = () => {
                             documentation
                         </a>{' '}
                         to learn how to integrate with specific SAML 2.0
-                        providers (Okta, Keycloak, etc). <br />
+                        providers (such as Okta, Keycloak, and Microsoft Entra
+                        ID). <br />
                         Callback URL:{' '}
                         <code>{uiConfig.unleashUrl}/auth/saml/callback</code>
                     </Alert>

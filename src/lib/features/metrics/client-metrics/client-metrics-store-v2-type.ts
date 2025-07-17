@@ -1,4 +1,4 @@
-import type { Store } from '../../../types/stores/store';
+import type { Store } from '../../../types/stores/store.js';
 
 export interface IClientMetricsEnvKey {
     featureName: string;
@@ -20,7 +20,7 @@ export interface IClientMetricsEnvVariant extends IClientMetricsEnvKey {
 
 export interface IClientMetricsStoreV2
     extends Store<IClientMetricsEnv, IClientMetricsEnvKey> {
-    batchInsertMetrics(metrics: IClientMetricsEnv[]): Promise<void>;
+    batchInsertMetrics(metrics: IClientMetricsEnv[] | undefined): Promise<void>;
     getMetricsForFeatureToggle(
         featureName: string,
         hoursBack?: number,
@@ -48,4 +48,5 @@ export interface IClientMetricsStoreV2
         variantCount: number;
     }>;
     aggregateDailyMetrics(): Promise<void>;
+    getFeatureFlagNames(): Promise<string[]>;
 }

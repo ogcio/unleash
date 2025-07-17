@@ -2,22 +2,25 @@ import type {
     IEnvironment,
     IProject,
     IProjectApplications,
+    IProjectLinkTemplate,
     IProjectStore,
-} from '../../lib/types';
-import NotFoundError from '../../lib/error/notfound-error';
+} from '../../lib/types/index.js';
+import NotFoundError from '../../lib/error/notfound-error.js';
 import type {
     IEnvironmentProjectLink,
     ProjectModeCount,
-} from '../../lib/features/project/project-store';
-import type { CreateFeatureStrategySchema } from '../../lib/openapi';
+} from '../../lib/features/project/project-store.js';
+import type { CreateFeatureStrategySchema } from '../../lib/openapi/index.js';
 import type {
     IProjectApplicationsSearchParams,
     IProjectHealthUpdate,
     IProjectInsert,
     ProjectEnvironment,
-} from '../../lib/features/project/project-store-type';
+} from '../../lib/features/project/project-store-type.js';
 
-type ArchivableProject = IProject & { archivedAt: null | Date };
+type ArchivableProject = Omit<IProject, 'archivedAt'> & {
+    archivedAt: null | Date;
+};
 
 export default class FakeProjectStore implements IProjectStore {
     projects: ArchivableProject[] = [];
@@ -56,7 +59,7 @@ export default class FakeProjectStore implements IProjectStore {
             archivedAt: null,
         };
         this.projects.push(newProj);
-        return newProj;
+        return newProj as IProject;
     }
 
     async create(project: IProjectInsert): Promise<IProject> {
@@ -95,13 +98,15 @@ export default class FakeProjectStore implements IProjectStore {
     async get(key: string): Promise<IProject> {
         const project = this.projects.find((p) => p.id === key);
         if (project) {
-            return project;
+            return project as IProject;
         }
         throw new NotFoundError(`Could not find project with id: ${key}`);
     }
 
     async getAll(): Promise<IProject[]> {
-        return this.projects.filter((project) => project.archivedAt === null);
+        return this.projects
+            .filter((project) => project.archivedAt === null)
+            .map((p) => p as IProject);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -177,13 +182,17 @@ export default class FakeProjectStore implements IProjectStore {
         projectId: string,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         environment: string,
-    ): Promise<CreateFeatureStrategySchema | null> {
+    ): Promise<CreateFeatureStrategySchema | undefined> {
         throw new Error('Method not implemented.');
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     isFeatureLimitReached(id: string): Promise<boolean> {
         return Promise.resolve(false);
+    }
+
+    async getProjectLinkTemplates(id: string): Promise<IProjectLinkTemplate[]> {
+        return [] as IProjectLinkTemplate[];
     }
 
     getProjectModeCounts(): Promise<ProjectModeCount[]> {

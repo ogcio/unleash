@@ -1,10 +1,8 @@
 import { createTheme } from '@mui/material/styles';
-import { colors } from './colors';
-import { alpha } from '@mui/material';
+import { colors } from './colors.js';
 import { focusable } from 'themes/themeStyles';
 
-export const theme = {
-    mode: 'light',
+export const baseTheme = {
     breakpoints: {
         values: {
             xs: 0,
@@ -14,22 +12,15 @@ export const theme = {
             xl: 1536,
         },
     },
-    boxShadows: {
-        main: '0px 2px 4px rgba(129, 122, 254, 0.2)',
-        card: '0px 2px 10px rgba(28, 25, 78, 0.12)',
-        elevated: '0px 1px 20px rgba(45, 42, 89, 0.1)',
-        popup: '0px 2px 6px rgba(0, 0, 0, 0.25)',
-        primaryHeader: '0px 8px 24px rgba(97, 91, 194, 0.2)',
-        separator: '0px 2px 4px rgba(32, 32, 33, 0.12)', // Notifications header
-        accordionFooter: 'inset 0px 2px 4px rgba(32, 32, 33, 0.05)',
-        reverseFooter: 'inset 0px -2px 4px rgba(32, 32, 33, 0.05)',
-    },
     typography: {
         fontFamily: 'Sen, Roboto, sans-serif',
         fontWeightBold: '700',
         fontWeightMedium: '700',
         allVariants: { lineHeight: 1.4 },
-        button: { lineHeight: 1.75 },
+        button: {
+            fontSize: `${15 / 16}rem`,
+            lineHeight: 1.75,
+        },
         h1: {
             fontSize: '1.5rem',
             lineHeight: 1.875,
@@ -39,15 +30,21 @@ export const theme = {
             fontWeight: '700',
         },
         h3: {
-            fontSize: '1rem',
+            fontSize: `${15 / 16}rem`,
             fontWeight: '700',
         },
         h4: {
-            fontSize: '1rem',
+            fontSize: `${15 / 16}rem`,
             fontWeight: '400',
         },
         caption: {
             fontSize: `${12 / 16}rem`,
+        },
+        body1: {
+            fontSize: `${15 / 16}rem`,
+        },
+        body2: {
+            fontSize: `${14 / 16}rem`,
         },
     },
     fontSizes: {
@@ -55,7 +52,7 @@ export const theme = {
         largeHeader: '2rem',
         mediumHeader: '1.5rem',
         mainHeader: '1.25rem',
-        bodySize: '1rem',
+        bodySize: `${15 / 16}rem`,
         smallBody: `${14 / 16}rem`,
         smallerBody: `${12 / 16}rem`,
     },
@@ -77,7 +74,21 @@ export const theme = {
     zIndex: {
         sticky: 1400,
     },
+} as const;
 
+const theme = {
+    ...baseTheme,
+    mode: 'light',
+    boxShadows: {
+        main: '0px 2px 4px rgba(129, 122, 254, 0.2)',
+        card: '0px 2px 10px rgba(28, 25, 78, 0.12)',
+        elevated: '0px 1px 20px rgba(45, 42, 89, 0.1)',
+        popup: '0px 2px 6px rgba(0, 0, 0, 0.25)',
+        primaryHeader: '0px 8px 24px rgba(97, 91, 194, 0.2)',
+        separator: '0px 2px 4px rgba(32, 32, 33, 0.12)', // Notifications header
+        accordionFooter: 'inset 0px 2px 4px rgba(32, 32, 33, 0.05)',
+        reverseFooter: 'inset 0px -2px 4px rgba(32, 32, 33, 0.05)',
+    },
     palette: {
         common: {
             white: colors.grey[50], // Tooltips text color // Switch base (OFF) // Text color
@@ -240,14 +251,6 @@ export const theme = {
         },
 
         /**
-         * For Environment Accordion.
-         */
-        envAccordion: {
-            disabled: colors.grey[100],
-            expanded: colors.grey[200],
-        },
-
-        /**
          * MUI grey colors
          */
         grey: {
@@ -267,7 +270,7 @@ export const theme = {
             // A400: '#A6000E',
             // A700: '#A6000E',
         },
-        variants: colors.variants,
+        variants: colors.lightVariants,
 
         /**
          * Dashboard and charts
@@ -297,7 +300,7 @@ export const theme = {
     },
 } as const;
 
-export default createTheme({
+export const lightTheme = createTheme({
     ...theme,
     components: {
         // Skeleton
@@ -320,6 +323,16 @@ export default createTheme({
                 a: {
                     color: theme.palette.links,
                 },
+            },
+        },
+
+        // Buttons
+        MuiButton: {
+            styleOverrides: {
+                root: ({ theme }) => ({
+                    borderRadius: theme.shape.borderRadius,
+                    textTransform: 'none',
+                }),
             },
         },
 
@@ -465,7 +478,7 @@ export default createTheme({
             styleOverrides: {
                 root: ({ theme }) => ({
                     color: theme.palette.text.primary,
-                    fontSize: '1rem',
+                    fontSize: theme.typography.body1.fontSize,
                     textTransform: 'none',
                     fontWeight: 400,
                     lineHeight: '1',
@@ -487,22 +500,11 @@ export default createTheme({
             },
         },
 
-        // Environment accordion
         MuiAccordion: {
             styleOverrides: {
                 root: ({ theme }) => ({
                     '&:first-of-type, &:last-of-type': {
                         borderRadius: theme.shape.borderRadiusLarge,
-                    },
-                    '&.environment-accordion.Mui-expanded': {
-                        outline: `2px solid ${alpha(
-                            theme.palette.background.alternative,
-                            0.6,
-                        )}`,
-                        boxShadow: `0px 2px 8px ${alpha(
-                            theme.palette.primary.main,
-                            0.2,
-                        )}`,
                     },
                 }),
             },
@@ -569,3 +571,8 @@ export default createTheme({
         },
     },
 });
+
+/**
+ * @deprecated Do not import directly! Include using `useTheme` hook.
+ */
+export default lightTheme;

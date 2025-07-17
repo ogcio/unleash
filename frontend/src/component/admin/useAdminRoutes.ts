@@ -1,7 +1,7 @@
 import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
-import { adminRoutes } from './adminRoutes';
+import { adminRoutes } from './adminRoutes.js';
 import { useInstanceStatus } from 'hooks/api/getters/useInstanceStatus/useInstanceStatus';
-import { filterAdminRoutes } from './filterAdminRoutes';
+import { filterRoutesByPlanData } from './filterRoutesByPlanData.js';
 import { filterByConfig, mapRouteLink } from 'component/common/util';
 
 export const useAdminRoutes = () => {
@@ -10,7 +10,7 @@ export const useAdminRoutes = () => {
     const routes = [...adminRoutes];
 
     if (uiConfig.flags.UNLEASH_CLOUD) {
-        const adminBillingMenuItem = adminRoutes.findIndex(
+        const adminBillingMenuItem = routes.findIndex(
             (route) => route.title === 'Billing & invoices',
         );
         routes[adminBillingMenuItem] = {
@@ -22,7 +22,7 @@ export const useAdminRoutes = () => {
     return routes
         .filter(filterByConfig(uiConfig))
         .filter((route) =>
-            filterAdminRoutes(route?.menu, {
+            filterRoutesByPlanData(route?.menu, {
                 enterprise: isEnterprise(),
                 pro: isPro(),
                 billing: isBilling,

@@ -7,7 +7,7 @@ import {
     StyledCardTitle,
     StyledList,
     listItemStyle,
-} from './SharedComponents';
+} from './SharedComponents.tsx';
 import { usePlausibleTracker } from 'hooks/usePlausibleTracker';
 import { getFeatureTypeIcons } from 'utils/getFeatureTypeIcons';
 import {
@@ -40,9 +40,10 @@ const FlagListItem: FC<{
     useEffect(() => {
         if (activeFlagRef.current) {
             activeFlagRef.current.scrollIntoView({
-                block: 'nearest',
+                block: 'start',
                 inline: 'start',
             });
+            window.scrollTo({ top: 0 });
         }
     }, []);
     const IconComponent = getFeatureTypeIcons(flag.type);
@@ -168,12 +169,12 @@ export const MyFlags: FC<Props> = ({
 };
 
 const FlagMetricsChart = React.lazy(() =>
-    import('./FlagMetricsChart').then((module) => ({
+    import('./FlagMetricsChart.tsx').then((module) => ({
         default: module.FlagMetricsChart,
     })),
 );
 const PlaceholderFlagMetricsChart = React.lazy(() =>
-    import('./FlagMetricsChart').then((module) => ({
+    import('./FlagMetricsChart.tsx').then((module) => ({
         default: module.PlaceholderFlagMetricsChartWithWrapper,
     })),
 );

@@ -1,12 +1,8 @@
 import type React from 'react';
-import type { VFC, FC, ReactNode } from 'react';
+import type { FC, ReactNode } from 'react';
 import { Box, styled, Tooltip, Typography } from '@mui/material';
 import BlockIcon from '@mui/icons-material/Block';
 import TrackChangesIcon from '@mui/icons-material/TrackChanges';
-import {
-    StrategyDiff,
-    StrategyTooltipLink,
-} from '../../StrategyTooltipLink/StrategyTooltipLink';
 import { StrategyExecution } from 'component/feature/FeatureView/FeatureOverview/FeatureOverviewEnvironments/FeatureOverviewEnvironment/EnvironmentAccordionBody/StrategyDraggableItem/StrategyItem/StrategyExecution/StrategyExecution';
 import type {
     ChangeRequestState,
@@ -14,39 +10,23 @@ import type {
     IChangeRequestDeleteStrategy,
     IChangeRequestUpdateStrategy,
 } from 'component/changeRequest/changeRequest.types';
-import { useCurrentStrategy } from './hooks/useCurrentStrategy';
+import { useCurrentStrategy } from './hooks/useCurrentStrategy.ts';
 import { Badge } from 'component/common/Badge/Badge';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 import { flexRow } from 'themes/themeStyles';
 import { EnvironmentVariantsTable } from 'component/feature/FeatureView/FeatureVariants/FeatureEnvironmentVariants/EnvironmentVariantsCard/EnvironmentVariantsTable/EnvironmentVariantsTable';
-import { ChangeOverwriteWarning } from './ChangeOverwriteWarning/ChangeOverwriteWarning';
-
-export const ChangeItemWrapper = styled(Box)({
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-});
-
-const ChangeItemCreateEditDeleteWrapper = styled(Box)(({ theme }) => ({
-    display: 'grid',
-    gridTemplateColumns: 'auto auto',
-    justifyContent: 'space-between',
-    gap: theme.spacing(1),
-    alignItems: 'center',
-    marginBottom: theme.spacing(2),
-    width: '100%',
-}));
-
-const ChangeItemInfo: FC<{ children?: React.ReactNode }> = styled(Box)(
-    ({ theme }) => ({
-        display: 'grid',
-        gridTemplateColumns: '150px auto',
-        gridAutoFlow: 'column',
-        alignItems: 'center',
-        flexGrow: 1,
-        gap: theme.spacing(1),
-    }),
-);
+import { ChangeOverwriteWarning } from './ChangeOverwriteWarning/ChangeOverwriteWarning.tsx';
+import type { IFeatureStrategy } from 'interfaces/strategy';
+import { Tab, TabList, TabPanel, Tabs } from './ChangeTabComponents.tsx';
+import { StrategyDiff } from './StrategyDiff.tsx';
+import {
+    Action,
+    AddedStrategy,
+    ChangeItemInfo,
+    ChangeItemWrapper,
+    Deleted,
+} from './Change.styles.tsx';
+import { NameWithChangeInfo } from './NameWithChangeInfo/NameWithChangeInfo.tsx';
 
 const StyledBox: FC<{ children?: React.ReactNode }> = styled(Box)(
     ({ theme }) => ({
@@ -60,10 +40,7 @@ const StyledTypography: FC<{ children?: React.ReactNode }> = styled(Typography)(
     }),
 );
 
-const hasNameField = (payload: unknown): payload is { name: string } =>
-    typeof payload === 'object' && payload !== null && 'name' in payload;
-
-const DisabledEnabledState: VFC<{ show?: boolean; disabled: boolean }> = ({
+const DisabledEnabledState: FC<{ show?: boolean; disabled: boolean }> = ({
     show = true,
     disabled,
 }) => {
@@ -74,7 +51,7 @@ const DisabledEnabledState: VFC<{ show?: boolean; disabled: boolean }> = ({
     if (disabled) {
         return (
             <Tooltip
-                title='This strategy will not be taken into account when evaluating feature flag.'
+                title='This strategy will not be taken into account when evaluating the feature flag.'
                 arrow
                 sx={{ cursor: 'pointer' }}
             >
@@ -87,7 +64,7 @@ const DisabledEnabledState: VFC<{ show?: boolean; disabled: boolean }> = ({
 
     return (
         <Tooltip
-            title='This was disabled before and with this change it will be taken into account when evaluating feature flag.'
+            title='This strategy was disabled before. With this change, it will be taken into account when evaluating the feature flag.'
             arrow
             sx={{ cursor: 'pointer' }}
         >
@@ -98,28 +75,218 @@ const DisabledEnabledState: VFC<{ show?: boolean; disabled: boolean }> = ({
     );
 };
 
-const EditHeader: VFC<{
+const EditHeader: FC<{
     wasDisabled?: boolean;
     willBeDisabled?: boolean;
 }> = ({ wasDisabled = false, willBeDisabled = false }) => {
     if (wasDisabled && willBeDisabled) {
-        return (
-            <Typography color='action.disabled'>Editing strategy:</Typography>
-        );
+        return <Action color='text.secondary'>Editing strategy</Action>;
     }
 
     if (!wasDisabled && willBeDisabled) {
-        return <Typography color='error.dark'>Editing strategy:</Typography>;
+        return <Action color='error.dark'>Editing strategy</Action>;
     }
 
     if (wasDisabled && !willBeDisabled) {
-        return <Typography color='success.dark'>Editing strategy:</Typography>;
+        return <Action color='success.dark'>Editing strategy</Action>;
     }
 
-    return <Typography>Editing strategy:</Typography>;
+    return <Action>Editing strategy</Action>;
 };
 
-export const StrategyChange: VFC<{
+const hasDiff = (object: unknown, objectToCompare: unknown) =>
+    JSON.stringify(object) !== JSON.stringify(objectToCompare);
+
+const DeleteStrategy: FC<{
+    change: IChangeRequestDeleteStrategy;
+    changeRequestState: ChangeRequestState;
+    currentStrategy: IFeatureStrategy | undefined;
+    actions?: ReactNode;
+}> = ({ change, changeRequestState, currentStrategy, actions }) => {
+    const title =
+        changeRequestState === 'Applied'
+            ? change.payload?.snapshot?.title
+            : currentStrategy?.title;
+    const referenceStrategy =
+        changeRequestState === 'Applied'
+            ? change.payload.snapshot
+            : currentStrategy;
+
+    return (
+        <>
+            <ChangeItemWrapper>
+                <ChangeItemInfo>
+                    <Deleted>Deleting strategy</Deleted>
+                    <NameWithChangeInfo
+                        newName={title}
+                        previousName={referenceStrategy?.title}
+                    />
+                </ChangeItemInfo>
+                {actions}
+            </ChangeItemWrapper>
+            <TabPanel>
+                {referenceStrategy && (
+                    <StrategyExecution strategy={referenceStrategy} />
+                )}
+            </TabPanel>
+            <TabPanel variant='diff'>
+                <StrategyDiff
+                    change={change}
+                    currentStrategy={referenceStrategy}
+                />
+            </TabPanel>
+        </>
+    );
+};
+
+const UpdateStrategy: FC<{
+    change: IChangeRequestUpdateStrategy;
+    changeRequestState: ChangeRequestState;
+    currentStrategy: IFeatureStrategy | undefined;
+    actions?: ReactNode;
+}> = ({ change, changeRequestState, currentStrategy, actions }) => {
+    const previousTitle =
+        changeRequestState === 'Applied'
+            ? change.payload.snapshot?.title
+            : currentStrategy?.title;
+    const referenceStrategy =
+        changeRequestState === 'Applied'
+            ? change.payload.snapshot
+            : currentStrategy;
+    const hasVariantDiff = hasDiff(
+        referenceStrategy?.variants || [],
+        change.payload.variants || [],
+    );
+
+    return (
+        <>
+            <ChangeOverwriteWarning
+                data={{
+                    current: currentStrategy,
+                    change,
+                    changeType: 'strategy',
+                }}
+                changeRequestState={changeRequestState}
+            />
+            <ChangeItemWrapper>
+                <ChangeItemInfo>
+                    <EditHeader
+                        wasDisabled={currentStrategy?.disabled}
+                        willBeDisabled={change.payload?.disabled}
+                    />
+                    <NameWithChangeInfo
+                        newName={change.payload.title}
+                        previousName={previousTitle}
+                    />
+                </ChangeItemInfo>
+                {actions}
+            </ChangeItemWrapper>
+            <ConditionallyRender
+                condition={
+                    change.payload?.disabled !== currentStrategy?.disabled
+                }
+                show={
+                    <Typography
+                        sx={{
+                            marginTop: (theme) => theme.spacing(2),
+                            marginBottom: (theme) => theme.spacing(2),
+                            ...flexRow,
+                            gap: (theme) => theme.spacing(1),
+                        }}
+                    >
+                        This strategy will be{' '}
+                        <DisabledEnabledState
+                            disabled={change.payload?.disabled || false}
+                        />
+                    </Typography>
+                }
+            />
+
+            <TabPanel>
+                <StrategyExecution strategy={change.payload} />
+                {hasVariantDiff ? (
+                    <StyledBox>
+                        {change.payload.variants?.length ? (
+                            <>
+                                <StyledTypography>
+                                    {currentStrategy?.variants?.length
+                                        ? 'Updating strategy variants to:'
+                                        : 'Adding strategy variants:'}
+                                </StyledTypography>
+                                <EnvironmentVariantsTable
+                                    variants={change.payload.variants || []}
+                                />
+                            </>
+                        ) : (
+                            <StyledTypography>
+                                Removed all strategy variants.
+                            </StyledTypography>
+                        )}
+                    </StyledBox>
+                ) : null}
+            </TabPanel>
+            <TabPanel variant='diff'>
+                <StrategyDiff
+                    change={change}
+                    currentStrategy={referenceStrategy}
+                />
+            </TabPanel>
+        </>
+    );
+};
+
+const AddStrategy: FC<{
+    change: IChangeRequestAddStrategy;
+    isDefaultChange?: boolean;
+    actions?: ReactNode;
+}> = ({ change, isDefaultChange, actions }) => (
+    <>
+        <ChangeItemWrapper>
+            <ChangeItemInfo>
+                <AddedStrategy disabled={change.payload?.disabled}>
+                    Adding {isDefaultChange && 'default'} strategy
+                </AddedStrategy>
+                <NameWithChangeInfo newName={change.payload.title} />
+                <DisabledEnabledState
+                    disabled
+                    show={change.payload?.disabled === true}
+                />
+            </ChangeItemInfo>
+            {actions}
+        </ChangeItemWrapper>
+        <TabPanel>
+            <StrategyExecution strategy={change.payload} />
+            {change.payload.variants?.length ? (
+                <StyledBox>
+                    <StyledTypography>
+                        Adding strategy variants:
+                    </StyledTypography>
+                    <EnvironmentVariantsTable
+                        variants={change.payload.variants || []}
+                    />
+                </StyledBox>
+            ) : null}
+        </TabPanel>
+        <TabPanel variant='diff'>
+            <StrategyDiff change={change} currentStrategy={undefined} />
+        </TabPanel>
+    </>
+);
+
+const ActionsContainer = styled('div')(({ theme }) => ({
+    display: 'flex',
+    flexFlow: 'row wrap',
+    alignItems: 'center',
+    columnGap: theme.spacing(1),
+}));
+
+const StyledTabs = styled(Tabs)(({ theme }) => ({
+    display: 'flex',
+    flexFlow: 'column',
+    gap: theme.spacing(1),
+}));
+
+export const StrategyChange: FC<{
     actions?: ReactNode;
     change:
         | IChangeRequestAddStrategy
@@ -129,6 +296,7 @@ export const StrategyChange: VFC<{
     featureName: string;
     projectId: string;
     changeRequestState: ChangeRequestState;
+    isDefaultChange?: boolean;
 }> = ({
     actions,
     change,
@@ -136,6 +304,7 @@ export const StrategyChange: VFC<{
     environmentName,
     projectId,
     changeRequestState,
+    isDefaultChange,
 }) => {
     const currentStrategy = useCurrentStrategy(
         change,
@@ -144,165 +313,41 @@ export const StrategyChange: VFC<{
         environmentName,
     );
 
-    const hasDiff = (object: unknown, objectToCompare: unknown) =>
-        JSON.stringify(object) !== JSON.stringify(objectToCompare);
-
-    const isStrategyAction =
-        change.action === 'addStrategy' || change.action === 'updateStrategy';
-
-    const hasVariantDiff =
-        isStrategyAction &&
-        hasDiff(currentStrategy?.variants || [], change.payload.variants || []);
+    const actionsWithTabs = (
+        <ActionsContainer>
+            <TabList>
+                <Tab>View change</Tab>
+                <Tab>View diff</Tab>
+            </TabList>
+            {actions}
+        </ActionsContainer>
+    );
 
     return (
-        <>
+        <StyledTabs>
             {change.action === 'addStrategy' && (
-                <>
-                    <ChangeItemCreateEditDeleteWrapper>
-                        <ChangeItemInfo>
-                            <Typography
-                                color={
-                                    change.payload?.disabled
-                                        ? 'action.disabled'
-                                        : 'success.dark'
-                                }
-                            >
-                                + Adding strategy:
-                            </Typography>
-                            <StrategyTooltipLink change={change}>
-                                <StrategyDiff
-                                    change={change}
-                                    currentStrategy={currentStrategy}
-                                />
-                            </StrategyTooltipLink>
-                            <div>
-                                <DisabledEnabledState
-                                    disabled
-                                    show={change.payload?.disabled === true}
-                                />
-                            </div>
-                        </ChangeItemInfo>
-                        <div>{actions}</div>
-                    </ChangeItemCreateEditDeleteWrapper>
-                    <StrategyExecution strategy={change.payload} />
-                    <ConditionallyRender
-                        condition={hasVariantDiff}
-                        show={
-                            change.payload.variants && (
-                                <StyledBox>
-                                    <StyledTypography>
-                                        Updating feature variants to:
-                                    </StyledTypography>
-                                    <EnvironmentVariantsTable
-                                        variants={change.payload.variants}
-                                    />
-                                </StyledBox>
-                            )
-                        }
-                    />
-                </>
+                <AddStrategy
+                    change={change}
+                    actions={actionsWithTabs}
+                    isDefaultChange={isDefaultChange}
+                />
             )}
             {change.action === 'deleteStrategy' && (
-                <>
-                    <ChangeItemCreateEditDeleteWrapper className='delete-strategy-information-wrapper'>
-                        <ChangeItemInfo>
-                            <Typography
-                                sx={(theme) => ({
-                                    color: theme.palette.error.main,
-                                })}
-                            >
-                                - Deleting strategy:
-                            </Typography>
-                            {hasNameField(change.payload) && (
-                                <StrategyTooltipLink change={change}>
-                                    <StrategyDiff
-                                        change={change}
-                                        currentStrategy={currentStrategy}
-                                    />
-                                </StrategyTooltipLink>
-                            )}
-                        </ChangeItemInfo>
-                        <div>{actions}</div>
-                    </ChangeItemCreateEditDeleteWrapper>
-                    <ConditionallyRender
-                        condition={Boolean(currentStrategy)}
-                        show={
-                            <Typography>
-                                {
-                                    <StrategyExecution
-                                        strategy={currentStrategy!}
-                                    />
-                                }
-                            </Typography>
-                        }
-                    />
-                </>
+                <DeleteStrategy
+                    change={change}
+                    changeRequestState={changeRequestState}
+                    currentStrategy={currentStrategy}
+                    actions={actionsWithTabs}
+                />
             )}
             {change.action === 'updateStrategy' && (
-                <>
-                    <ChangeOverwriteWarning
-                        data={{
-                            current: currentStrategy,
-                            change,
-                            changeType: 'strategy',
-                        }}
-                        changeRequestState={changeRequestState}
-                    />
-                    <ChangeItemCreateEditDeleteWrapper>
-                        <ChangeItemInfo>
-                            <EditHeader
-                                wasDisabled={currentStrategy?.disabled}
-                                willBeDisabled={change.payload?.disabled}
-                            />
-                            <StrategyTooltipLink
-                                change={change}
-                                previousTitle={currentStrategy?.title}
-                            >
-                                <StrategyDiff
-                                    change={change}
-                                    currentStrategy={currentStrategy}
-                                />
-                            </StrategyTooltipLink>
-                        </ChangeItemInfo>
-                        <div>{actions}</div>
-                    </ChangeItemCreateEditDeleteWrapper>
-                    <ConditionallyRender
-                        condition={
-                            change.payload?.disabled !==
-                            currentStrategy?.disabled
-                        }
-                        show={
-                            <Typography
-                                sx={{
-                                    marginTop: (theme) => theme.spacing(2),
-                                    marginBottom: (theme) => theme.spacing(2),
-                                    ...flexRow,
-                                    gap: (theme) => theme.spacing(1),
-                                }}
-                            >
-                                This strategy will be{' '}
-                                <DisabledEnabledState
-                                    disabled={change.payload?.disabled || false}
-                                />
-                            </Typography>
-                        }
-                    />
-                    <StrategyExecution strategy={change.payload} />
-                    <ConditionallyRender
-                        condition={Boolean(hasVariantDiff)}
-                        show={
-                            <StyledBox>
-                                <StyledTypography>
-                                    Updating feature variants to:
-                                </StyledTypography>
-                                <EnvironmentVariantsTable
-                                    variants={change.payload.variants || []}
-                                />
-                            </StyledBox>
-                        }
-                    />
-                </>
+                <UpdateStrategy
+                    change={change}
+                    changeRequestState={changeRequestState}
+                    currentStrategy={currentStrategy}
+                    actions={actionsWithTabs}
+                />
             )}
-        </>
+        </StyledTabs>
     );
 };

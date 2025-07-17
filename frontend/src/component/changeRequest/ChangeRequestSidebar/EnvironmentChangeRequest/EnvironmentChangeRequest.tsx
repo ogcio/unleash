@@ -9,22 +9,24 @@ import {
     useTheme,
 } from '@mui/material';
 import type { ChangeRequestType } from '../../changeRequest.types';
-import { useNavigate } from 'react-router-dom';
-import { ChangeRequestStatusBadge } from '../../ChangeRequestStatusBadge/ChangeRequestStatusBadge';
+import { Link } from 'react-router-dom';
+import { ChangeRequestStatusBadge } from '../../ChangeRequestStatusBadge/ChangeRequestStatusBadge.tsx';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
-import { changesCount } from '../../changesCount';
+import { changesCount } from '../../changesCount.js';
 import {
     Separator,
     StyledFlexAlignCenterBox,
     StyledSuccessIcon,
-} from '../ChangeRequestSidebar';
-import CloudCircle from '@mui/icons-material/CloudCircle';
-import { AddCommentField } from '../../ChangeRequestOverview/ChangeRequestComments/AddCommentField';
+} from '../ChangeRequestSidebar.tsx';
+import { AddCommentField } from '../../ChangeRequestOverview/ChangeRequestComments/AddCommentField.tsx';
 import { useAuthUser } from 'hooks/api/getters/useAuth/useAuthUser';
 import Input from 'component/common/Input/Input';
-import { ChangeRequestTitle } from './ChangeRequestTitle';
+import { ChangeRequestTitle } from './ChangeRequestTitle.tsx';
 import { UpdateCount } from 'component/changeRequest/UpdateCount';
 import { useChangeRequestApi } from 'hooks/api/actions/useChangeRequestApi/useChangeRequestApi';
+import { useUiFlag } from 'hooks/useUiFlag';
+import { DraftChangeRequestActions } from '../DraftChangeRequestActions/DraftChangeRequestActions.tsx';
+import type { AvailableReviewerSchema } from 'hooks/api/getters/useAvailableChangeRequestReviewers/useAvailableChangeRequestReviewers.ts';
 
 const SubmitChangeRequestButton: FC<{
     onClick: () => void;
@@ -69,15 +71,25 @@ export const EnvironmentChangeRequest: FC<{
     children?: React.ReactNode;
 }> = ({ environmentChangeRequest, onClose, onReview, onDiscard, children }) => {
     const theme = useTheme();
-    const navigate = useNavigate();
     const [commentText, setCommentText] = useState('');
     const { user } = useAuthUser();
     const [title, setTitle] = useState(environmentChangeRequest.title);
-    const { changeState } = useChangeRequestApi();
+    const { changeState, updateRequestedApprovers } = useChangeRequestApi();
+    const [reviewers, setReviewers] = useState<AvailableReviewerSchema[]>([]);
+
     const [disabled, setDisabled] = useState(false);
+    const approversEnabled = useUiFlag('changeRequestApproverEmails');
     const sendToReview = async (project: string) => {
         setDisabled(true);
         try {
+            if (reviewers && reviewers.length > 0) {
+                await updateRequestedApprovers(
+                    project,
+                    environmentChangeRequest.id,
+                    reviewers.map((reviewer) => reviewer.id),
+                );
+            }
+
             await changeState(project, environmentChangeRequest.id, 'Draft', {
                 state: 'In review',
                 comment: commentText,
@@ -97,12 +109,6 @@ export const EnvironmentChangeRequest: FC<{
                             alignItems: 'center',
                         }}
                     >
-                        <CloudCircle
-                            sx={(theme) => ({
-                                color: theme.palette.primary.light,
-                                mr: 0.5,
-                            })}
-                        />
                         <Typography component='span' variant='h2'>
                             {environmentChangeRequest.environment}
                         </Typography>
@@ -161,27 +167,50 @@ export const EnvironmentChangeRequest: FC<{
                     <ConditionallyRender
                         condition={environmentChangeRequest?.state === 'Draft'}
                         show={
-                            <>
-                                <SubmitChangeRequestButton
-                                    onClick={() => onReview(sendToReview)}
-                                    count={changesCount(
-                                        environmentChangeRequest,
-                                    )}
-                                    disabled={disabled}
-                                />
+                            <ConditionallyRender
+                                condition={approversEnabled}
+                                show={
+                                    <DraftChangeRequestActions
+                                        environmentChangeRequest={
+                                            environmentChangeRequest
+                                        }
+                                        reviewers={reviewers}
+                                        setReviewers={setReviewers}
+                                        onReview={onReview}
+                                        onDiscard={onDiscard}
+                                        sendToReview={sendToReview}
+                                        disabled={disabled}
+                                        setDisabled={setDisabled}
+                                    />
+                                }
+                                elseShow={
+                                    <>
+                                        <SubmitChangeRequestButton
+                                            onClick={() =>
+                                                onReview(sendToReview)
+                                            }
+                                            count={changesCount(
+                                                environmentChangeRequest,
+                                            )}
+                                            disabled={disabled}
+                                        />
 
-                                <Button
-                                    sx={{ ml: 2 }}
-                                    variant='outlined'
-                                    disabled={disabled}
-                                    onClick={() => {
-                                        setDisabled(true);
-                                        onDiscard(environmentChangeRequest.id);
-                                    }}
-                                >
-                                    Discard changes
-                                </Button>
-                            </>
+                                        <Button
+                                            sx={{ ml: 2 }}
+                                            variant='outlined'
+                                            disabled={disabled}
+                                            onClick={() => {
+                                                setDisabled(true);
+                                                onDiscard(
+                                                    environmentChangeRequest.id,
+                                                );
+                                            }}
+                                        >
+                                            Discard changes
+                                        </Button>
+                                    </>
+                                }
+                            />
                         }
                     />
                     <ConditionallyRender
@@ -201,11 +230,10 @@ export const EnvironmentChangeRequest: FC<{
                                     <Button
                                         sx={{ marginLeft: 2 }}
                                         variant='outlined'
+                                        component={Link}
+                                        to={`/projects/${environmentChangeRequest.project}/change-requests/${environmentChangeRequest.id}`}
                                         onClick={() => {
                                             onClose();
-                                            navigate(
-                                                `/projects/${environmentChangeRequest.project}/change-requests/${environmentChangeRequest.id}`,
-                                            );
                                         }}
                                     >
                                         View change request page

@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`should create default config 1`] = `
 {
@@ -23,11 +23,12 @@ exports[`should create default config 1`] = `
     "initialAdminUser": undefined,
     "type": "open-source",
   },
+  "buildDate": undefined,
   "clientFeatureCaching": {
     "enabled": true,
     "maxAge": 3600000,
   },
-  "dailyMetricsStorageDays": 31,
+  "dailyMetricsStorageDays": 91,
   "db": {
     "acquireConnectionTimeout": 30000,
     "applicationName": "unleash",
@@ -53,6 +54,7 @@ exports[`should create default config 1`] = `
   "disableScheduler": undefined,
   "email": {
     "host": undefined,
+    "optionalHeaders": {},
     "port": 587,
     "secure": false,
     "sender": "Unleash <noreply@getunleash.io>",
@@ -84,6 +86,7 @@ exports[`should create default config 1`] = `
   },
   "inlineSegmentConstraints": true,
   "isEnterprise": false,
+  "isOss": false,
   "listen": {
     "host": undefined,
     "port": 4242,
@@ -98,6 +101,7 @@ exports[`should create default config 1`] = `
   "preHook": undefined,
   "preRouterHook": undefined,
   "prometheusApi": undefined,
+  "prometheusImpactMetricsApi": undefined,
   "publicFolder": undefined,
   "rateLimiting": {
     "callSignalEndpointMaxPerSecond": 1,
@@ -147,6 +151,7 @@ exports[`should create default config 1`] = `
     "clearSiteDataOnLogout": true,
     "cookieName": "unleash-session",
     "db": true,
+    "maxParallelSessions": 5,
     "ttlHours": 48,
   },
   "strategySegmentsLimit": 5,
@@ -154,6 +159,7 @@ exports[`should create default config 1`] = `
   "ui": {
     "environment": "Open Source",
   },
+  "unleashFrontendToken": undefined,
   "userInactivityThresholdInDays": 180,
   "versionCheck": {
     "enable": true,

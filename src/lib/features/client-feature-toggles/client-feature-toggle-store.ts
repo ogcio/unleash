@@ -1,37 +1,33 @@
 import { Knex } from 'knex';
-import metricsHelper from '../../util/metrics-helper';
-import { DB_TIME } from '../../metric-events';
-import type { Logger, LogProvider } from '../../logger';
+import metricsHelper from '../../util/metrics-helper.js';
+import { DB_TIME } from '../../metric-events.js';
+import type { Logger } from '../../logger.js';
 import type {
     IFeatureToggleClient,
     IFeatureToggleClientStore,
     IFeatureToggleQuery,
     IFlagResolver,
     IStrategyConfig,
-    ITag,
+    IUnleashConfig,
     PartialDeep,
-} from '../../types';
+} from '../../types/index.js';
 import {
     ALL_PROJECTS,
     DEFAULT_ENV,
     ensureStringValue,
     mapValues,
-} from '../../util';
+} from '../../util/index.js';
 import type EventEmitter from 'events';
-import FeatureToggleStore from '../feature-toggle/feature-toggle-store';
-import type { Db } from '../../db/db';
+import FeatureToggleStore from '../feature-toggle/feature-toggle-store.js';
+import type { Db } from '../../db/db.js';
 import Raw = Knex.Raw;
+import { sortStrategies } from '../../util/sortStrategies.js';
+import type { ITag } from '../../tags/index.js';
 
 export interface IGetAllFeatures {
     featureQuery?: IFeatureToggleQuery;
     archived: boolean;
     requestType: 'client' | 'admin' | 'playground' | 'frontend';
-    userId?: number;
-}
-
-export interface IGetAdminFeatures {
-    featureQuery?: IFeatureToggleQuery;
-    archived?: boolean;
     userId?: number;
 }
 
@@ -49,8 +45,10 @@ export default class FeatureToggleClientStore
     constructor(
         db: Db,
         eventBus: EventEmitter,
-        getLogger: LogProvider,
-        flagResolver: IFlagResolver,
+        {
+            getLogger,
+            flagResolver,
+        }: Pick<IUnleashConfig, 'getLogger' | 'flagResolver'>,
     ) {
         this.db = db;
         this.logger = getLogger('feature-toggle-client-store.ts');
@@ -72,7 +70,6 @@ export default class FeatureToggleClientStore
         const isPlayground = requestType === 'playground';
         const environment = featureQuery?.environment || DEFAULT_ENV;
         const stopTimer = this.timer(`getAllBy${requestType}`);
-
         let selectColumns = [
             'features.name as name',
             'features.description as description',
@@ -93,6 +90,7 @@ export default class FeatureToggleClientStore
             'fs.parameters as parameters',
             'fs.constraints as constraints',
             'fs.sort_order as sort_order',
+            'fs.milestone_id as milestone_id',
             'fs.variants as strategy_variants',
             'segments.id as segment_id',
             'segments.constraints as segment_constraints',
@@ -185,7 +183,6 @@ export default class FeatureToggleClientStore
                 );
             }
         }
-
         const rows = await query;
         stopTimer();
 
@@ -243,16 +240,8 @@ export default class FeatureToggleClientStore
         const cleanedFeatures = features.map(({ strategies, ...rest }) => ({
             ...rest,
             strategies: strategies
-                ?.sort((strategy1, strategy2) => {
-                    if (
-                        typeof strategy1.sortOrder === 'number' &&
-                        typeof strategy2.sortOrder === 'number'
-                    ) {
-                        return strategy1.sortOrder - strategy2.sortOrder;
-                    }
-                    return 0;
-                })
-                .map(({ id, title, sortOrder, ...strategy }) => ({
+                ?.sort(sortStrategies)
+                .map(({ id, title, sortOrder, milestoneId, ...strategy }) => ({
                     ...strategy,
 
                     ...(isPlayground && title ? { title } : {}),
@@ -274,6 +263,7 @@ export default class FeatureToggleClientStore
             constraints: row.constraints || [],
             parameters: mapValues(row.parameters || {}, ensureStringValue),
             sortOrder: row.sort_order,
+            milestoneId: row.milestone_id,
         };
         strategy.variants = row.strategy_variants || [];
         return strategy;
@@ -373,19 +363,4 @@ export default class FeatureToggleClientStore
             requestType: 'playground',
         });
     }
-
-    async getAdmin({
-        featureQuery,
-        userId,
-        archived,
-    }: IGetAdminFeatures): Promise<IFeatureToggleClient[]> {
-        return this.getAll({
-            featureQuery,
-            archived: Boolean(archived),
-            requestType: 'admin',
-            userId,
-        });
-    }
 }
-
-module.exports = FeatureToggleClientStore;

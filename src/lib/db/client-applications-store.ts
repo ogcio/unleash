@@ -1,18 +1,18 @@
 import type EventEmitter from 'events';
-import NotFoundError from '../error/notfound-error';
+import NotFoundError from '../error/notfound-error.js';
 import type {
     IClientApplication,
     IClientApplications,
     IClientApplicationsSearchParams,
     IClientApplicationsStore,
-} from '../types/stores/client-applications-store';
-import type { Logger, LogProvider } from '../logger';
-import type { Db } from './db';
-import type { IApplicationOverview } from '../features/metrics/instance/models';
-import { applySearchFilters } from '../features/feature-search/search-utils';
-import type { IFlagResolver } from '../types';
-import metricsHelper from '../util/metrics-helper';
-import { DB_TIME } from '../metric-events';
+} from '../types/stores/client-applications-store.js';
+import type { Logger, LogProvider } from '../logger.js';
+import type { Db } from './db.js';
+import type { IApplicationOverview } from '../features/metrics/instance/models.js';
+import { applySearchFilters } from '../features/feature-search/search-utils.js';
+import type { IFlagResolver } from '../types/index.js';
+import metricsHelper from '../util/metrics-helper.js';
+import { DB_TIME } from '../metric-events.js';
 
 const COLUMNS = [
     'app_name',
@@ -91,7 +91,7 @@ const reduceRows = (rows: any[]): IClientApplication[] => {
     return Object.values(appsObj);
 };
 
-const remapRow = (input) => {
+const remapRow = (input: Partial<IClientApplication>) => {
     const temp = {
         app_name: input.appName,
         updated_at: input.updatedAt || new Date(),
@@ -152,10 +152,28 @@ export default class ClientApplicationsStore
 
     async bulkUpsert(apps: Partial<IClientApplication>[]): Promise<void> {
         const rows = apps.map(remapRow);
+        const uniqueRows = Object.values(
+            rows.reduce((acc, row) => {
+                if (row.app_name) {
+                    acc[row.app_name] = row;
+                }
+                return acc;
+            }, {}),
+        );
         const usageRows = apps.flatMap(this.remapUsageRow);
-        await this.db(TABLE).insert(rows).onConflict('app_name').merge();
+        const uniqueUsageRows = Object.values(
+            usageRows.reduce((acc, row) => {
+                if (row.app_name) {
+                    acc[`${row.app_name} ${row.project} ${row.environment}`] =
+                        row;
+                }
+                return acc;
+            }, {}),
+        );
+
+        await this.db(TABLE).insert(uniqueRows).onConflict('app_name').merge();
         await this.db(TABLE_USAGE)
-            .insert(usageRows)
+            .insert(uniqueUsageRows)
             .onConflict(['app_name', 'project', 'environment'])
             .merge();
     }
@@ -325,12 +343,19 @@ export default class ClientApplicationsStore
                         'COUNT(DISTINCT ci.instance_id) as unique_instance_count',
                     ),
                     this.db.raw(
-                        'ARRAY_AGG(DISTINCT ci.sdk_version) as sdk_versions',
+                        'ARRAY_AGG(DISTINCT ci.sdk_version) FILTER (WHERE ci.sdk_version IS NOT NULL) as sdk_versions',
                     ),
                     this.db.raw('MAX(ci.last_seen) as latest_last_seen'),
+                    this.db.raw(
+                        "ARRAY_AGG(DISTINCT ci.sdk_version) FILTER (WHERE ci.sdk_type = 'frontend' AND ci.sdk_version IS NOT NULL) as frontend_sdks",
+                    ),
+                    this.db.raw(
+                        "ARRAY_AGG(DISTINCT ci.sdk_version) FILTER (WHERE ci.sdk_type = 'backend' AND ci.sdk_version IS NOT NULL) as backend_sdks",
+                    ),
                 ])
                     .from('client_instances as ci')
                     .where('ci.app_name', appName)
+                    .whereRaw("ci.last_seen >= NOW() - INTERVAL '24 hours'")
                     .groupBy('ci.app_name', 'ci.environment');
             })
             .select([
@@ -339,6 +364,8 @@ export default class ClientApplicationsStore
                 'm.features',
                 'i.unique_instance_count',
                 'i.sdk_versions',
+                'i.backend_sdks',
+                'i.frontend_sdks',
                 'i.latest_last_seen',
                 'ca.strategies',
             ])
@@ -370,6 +397,8 @@ export default class ClientApplicationsStore
                 environment,
                 unique_instance_count,
                 sdk_versions,
+                frontend_sdks,
+                backend_sdks,
                 latest_last_seen,
                 project,
                 features,
@@ -378,7 +407,7 @@ export default class ClientApplicationsStore
 
             if (!environment) return acc;
 
-            strategies.forEach((strategy) => {
+            strategies?.forEach((strategy) => {
                 if (
                     !DEPRECATED_STRATEGIES.includes(strategy) &&
                     !existingStrategies.includes(strategy)
@@ -394,7 +423,9 @@ export default class ClientApplicationsStore
                 env = {
                     name: environment,
                     instanceCount: Number(unique_instance_count),
-                    sdks: sdk_versions,
+                    sdks: sdk_versions || [],
+                    frontendSdks: frontend_sdks || [],
+                    backendSdks: backend_sdks || [],
                     lastSeen: latest_last_seen,
                     issues: {
                         missingFeatures: featuresNotMappedToProject
@@ -431,7 +462,7 @@ export default class ClientApplicationsStore
         };
     }
 
-    private remapUsageRow = (input) => {
+    private remapUsageRow = (input: Partial<IClientApplication>) => {
         if (!input.projects || input.projects.length === 0) {
             return [
                 {
@@ -448,4 +479,16 @@ export default class ClientApplicationsStore
             }));
         }
     };
+
+    async removeInactiveApplications(): Promise<number> {
+        const rows = await this.db(TABLE)
+            .whereRaw("seen_at < now() - interval '30 days'")
+            .del();
+
+        if (rows > 0) {
+            this.logger.debug(`Deleted ${rows} applications`);
+        }
+
+        return rows;
+    }
 }

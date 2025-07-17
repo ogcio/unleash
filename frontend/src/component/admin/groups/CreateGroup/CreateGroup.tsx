@@ -1,7 +1,7 @@
 import FormTemplate from 'component/common/FormTemplate/FormTemplate';
 import { useNavigate } from 'react-router-dom';
-import { GroupForm } from '../GroupForm/GroupForm';
-import { useGroupForm } from '../hooks/useGroupForm';
+import { GroupForm } from '../GroupForm/GroupForm.tsx';
+import { useGroupForm } from '../hooks/useGroupForm.ts';
 import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
 import useToast from 'hooks/useToast';
 import { useGroupApi } from 'hooks/api/actions/useGroupApi/useGroupApi';
@@ -48,9 +48,7 @@ export const CreateGroup = () => {
             const group = await createGroup(payload);
             navigate(`/admin/groups/${group.id}`);
             setToastData({
-                title: 'Group created successfully',
-                text: 'Now you can start using your group.',
-                confetti: true,
+                text: 'Group created successfully',
                 type: 'success',
             });
         } catch (error: unknown) {

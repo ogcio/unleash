@@ -1,17 +1,16 @@
-import dbInit, { type ITestDb } from '../../helpers/database-init';
+import dbInit, { type ITestDb } from '../../helpers/database-init.js';
 import {
     type IUnleashTest,
     setupAppWithCustomConfig,
-} from '../../helpers/test-helper';
-import getLogger from '../../../fixtures/no-logger';
-import {
-    ApiTokenType,
-    type IApiToken,
-} from '../../../../lib/types/models/api-token';
+} from '../../helpers/test-helper.js';
+import getLogger from '../../../fixtures/no-logger.js';
+import { ApiTokenType, type IApiToken } from '../../../../lib/types/model.js';
+import { DEFAULT_ENV } from '../../../../lib/server-impl.js';
 
 let app: IUnleashTest;
 let db: ITestDb;
 let defaultToken: IApiToken;
+let frontendToken: IApiToken;
 
 const metrics = {
     appName: 'appName',
@@ -66,16 +65,25 @@ beforeAll(async () => {
         await app.services.apiTokenService.createApiTokenWithProjects({
             type: ApiTokenType.CLIENT,
             projects: ['default'],
-            environment: 'default',
+            environment: DEFAULT_ENV,
+            tokenName: 'tester',
+        });
+
+    frontendToken =
+        await app.services.apiTokenService.createApiTokenWithProjects({
+            type: ApiTokenType.FRONTEND,
+            projects: ['default'],
+            environment: DEFAULT_ENV,
             tokenName: 'tester',
         });
 });
 
-afterEach(async () => {
+beforeEach(async () => {
     await Promise.all([
         db.stores.clientMetricsStoreV2.deleteAll(),
         db.stores.clientInstanceStore.deleteAll(),
         db.stores.featureToggleStore.deleteAll(),
+        db.stores.clientApplicationsStore.deleteAll(),
     ]);
 });
 
@@ -127,7 +135,12 @@ test('should show correct application metrics', async () => {
         environments: [
             {
                 instanceCount: 2,
-                name: 'default',
+                name: DEFAULT_ENV,
+                frontendSdks: [],
+                backendSdks: [
+                    'unleash-client-node:3.2.1',
+                    'unleash-client-node:3.2.2',
+                ],
                 sdks: [
                     'unleash-client-node:3.2.1',
                     'unleash-client-node:3.2.2',
@@ -141,7 +154,7 @@ test('should show correct application metrics', async () => {
 
     const { body: instancesBody } = await app.request
         .get(
-            `/api/admin/metrics/instances/${metrics.appName}/environment/default`,
+            `/api/admin/metrics/instances/${metrics.appName}/environment/${DEFAULT_ENV}`,
         )
         .expect(200);
 
@@ -170,6 +183,32 @@ test('should show correct application metrics', async () => {
             {
                 sdkVersion: 'unleash-client-node:3.2.2',
                 applications: ['appName'],
+            },
+        ],
+    });
+});
+
+test('should report frontend application instances', async () => {
+    await app.request
+        .post('/api/frontend/client/metrics')
+        .set('Authorization', frontendToken.secret)
+        .set('Unleash-Sdk', 'unleash-client-js:1.0.0')
+        .send(metrics)
+        .expect(200);
+    await app.services.clientInstanceService.bulkAdd();
+
+    const { body } = await app.request
+        .get(
+            `/api/admin/metrics/instances/${metrics.appName}/environment/${DEFAULT_ENV}`,
+        )
+        .expect(200);
+
+    expect(body).toMatchObject({
+        instances: [
+            {
+                instanceId: metrics.instanceId,
+                clientIp: null,
+                sdkVersion: 'unleash-client-js:1.0.0',
             },
         ],
     });
@@ -205,7 +244,7 @@ test('should show missing features and strategies', async () => {
         environments: [
             {
                 instanceCount: 1,
-                name: 'default',
+                name: DEFAULT_ENV,
                 sdks: ['unleash-client-node:1.0.0'],
                 issues: {
                     missingFeatures: ['toggle-name-2', 'toggle-name-3'],
@@ -220,4 +259,52 @@ test('should show missing features and strategies', async () => {
     };
 
     expect(body).toMatchObject(expected);
+});
+
+test('should not return instances older than 24h', async () => {
+    await app.request
+        .post('/api/client/metrics')
+        .set('Authorization', defaultToken.secret)
+        .send(metrics)
+        .expect(202);
+
+    await app.services.clientMetricsServiceV2.bulkAdd();
+    await app.services.clientInstanceService.bulkAdd();
+
+    await db.stores.clientApplicationsStore.upsert({
+        appName: metrics.appName,
+    });
+    await db.stores.clientInstanceStore.insert({
+        appName: metrics.appName,
+        clientIp: '127.0.0.1',
+        instanceId: 'old-instance',
+        lastSeen: new Date(Date.now() - 26 * 60 * 60 * 1000), // 26 hours ago
+    });
+
+    const { body } = await app.request
+        .get(`/api/admin/metrics/applications/${metrics.appName}/overview`)
+        .expect(200);
+
+    const expected = {
+        environments: [
+            {
+                instanceCount: 1,
+            },
+        ],
+    };
+
+    expect(body).toMatchObject(expected);
+
+    const { body: instancesBody } = await app.request
+        .get(
+            `/api/admin/metrics/instances/${metrics.appName}/environment/${DEFAULT_ENV}`,
+        )
+        .expect(200);
+
+    expect(instancesBody.instances).toHaveLength(1);
+    expect(instancesBody.instances).toMatchObject([
+        {
+            instanceId: metrics.instanceId,
+        },
+    ]);
 });

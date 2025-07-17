@@ -3,8 +3,9 @@
  * Do not edit manually.
  * See `gen:api` script in package.json
  */
-import type { BulkRegistrationSchemaConnectViaItem } from './bulkRegistrationSchemaConnectViaItem';
-import type { DateSchema } from './dateSchema';
+import type { BulkRegistrationSchemaConnectViaItem } from './bulkRegistrationSchemaConnectViaItem.js';
+import type { BulkRegistrationSchemaSdkType } from './bulkRegistrationSchemaSdkType.js';
+import type { DateSchema } from './dateSchema.js';
 
 /**
  * An application registration. Defines the format POSTed by our server-side SDKs when they're starting up
@@ -21,6 +22,13 @@ export interface BulkRegistrationSchema {
     instanceId: string;
     /** How often (in seconds) the application refreshes its features */
     interval?: number;
+    /** The list of projects used in the application */
+    projects?: string[];
+    /**
+     * The sdk type
+     * @nullable
+     */
+    sdkType?: BulkRegistrationSchemaSdkType;
     /** The version the sdk is running. Typically <client>:<version> */
     sdkVersion?: string;
     /** The application started at */

@@ -31,7 +31,7 @@ You should only initialize the Unleash SDK once during the lifespan of a serverl
 
 Why? AWS Lambda is designed to reuse the same instance for multiple invocations, enabling the expensive initialization process to occur only during the Lambda's "cold start." Subsequent "warm" invocations can then leverage the SDK, which has been pre-initialized, with all feature flag configurations cached in memory. This ensures efficient operation by minimizing initialization overhead and enhancing performance.
 
-You’ll also need to provide an [Unleash Server side API Token](/how-to/how-to-create-api-tokens) as an environment variable for the AWS Lambda. This authorizes the SDK to connect to the Unleash API.
+You’ll also need to provide an [Unleash Server side API Token](/reference/api-tokens-and-client-keys) as an environment variable for the AWS Lambda. This authorizes the SDK to connect to the Unleash API.
 
 ```javascript
 import {
@@ -164,7 +164,7 @@ curl https://z5w5lkzlsozutfhaixbjsj27cm0dhnfh.lambda-url.eu-north-1.on.aws
 
 Mastering feature flags in serverless? This guide demonstrated the surprisingly simple use of Unleash SDK. Remember, avoid initializing the SDK multiple times within your serverless function for smooth operation.
 
-Need to scale your AWS Lambda function to thousands of requests per second (RPS)? Consider [Unleash Edge](/understanding-unleash/proxy-hosting), which uses edge computing to scale your Unleash usage. You can scale in any matter you see fit - either hosted entirely in your infrastructure on your own edge services or fully managed by Unleash.
+Need to scale your AWS Lambda function to thousands of requests per second (RPS)? Consider [Unleash Edge](/understanding-unleash/hosting-options#unleash-edge-options), which uses edge computing to scale your Unleash usage. You can scale in any matter you see fit - either hosted entirely in your infrastructure on your own edge services or fully managed by Unleash.
 
 :::note Lambda Latency
 

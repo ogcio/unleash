@@ -3,16 +3,16 @@ import type {
     IProjectReadModel,
     IUnleashConfig,
     IUserStore,
-} from '../../types';
+} from '../../types/index.js';
 import type EventEmitter from 'events';
-import type { Logger } from '../../logger';
-import { STAGE_ENTERED, USER_LOGIN } from '../../metric-events';
-import type { NewStage } from '../feature-lifecycle/feature-lifecycle-store-type';
+import type { Logger } from '../../logger.js';
+import { STAGE_ENTERED, USER_LOGIN } from '../../metric-events.js';
+import type { NewStage } from '../feature-lifecycle/feature-lifecycle-store-type.js';
 import type {
     InstanceEvent,
     IOnboardingStore,
     ProjectEvent,
-} from './onboarding-store-type';
+} from './onboarding-store-type.js';
 import { isBefore, millisecondsToSeconds } from 'date-fns';
 
 const START_ONBOARDING_TRACKING_DATE = new Date(2024, 8, 3);
@@ -56,8 +56,6 @@ export class OnboardingService {
 
     listen() {
         this.eventBus.on(USER_LOGIN, async (event: { loginOrder: number }) => {
-            if (!this.flagResolver.isEnabled('onboardingMetrics')) return;
-
             if (event.loginOrder === 0) {
                 await this.insert({ type: 'first-user-login' });
             }
@@ -68,8 +66,6 @@ export class OnboardingService {
             }
         });
         this.eventBus.on(STAGE_ENTERED, async (stage: NewStage) => {
-            if (!this.flagResolver.isEnabled('onboardingMetrics')) return;
-
             if (stage.stage === 'initial') {
                 await this.insert({
                     type: 'flag-created',

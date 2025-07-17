@@ -49,7 +49,7 @@ exports[`renders an empty list correctly 1`] = `
                     />
                   </svg>
                   <div
-                    className="MuiInputBase-root MuiInputBase-colorPrimary css-tv3fxu-MuiInputBase-root"
+                    className="MuiInputBase-root MuiInputBase-colorPrimary css-1mvykop-MuiInputBase-root"
                     onClick={[Function]}
                   >
                     <input
@@ -73,35 +73,31 @@ exports[`renders an empty list correctly 1`] = `
               <hr
                 className="MuiDivider-root MuiDivider-middle MuiDivider-vertical css-1cqsk4j-MuiDivider-root"
               />
-              <span
-                id="useId-0"
+              <button
+                aria-labelledby="useId-0"
+                className="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium css-9qsbea-MuiButtonBase-root-MuiButton-root"
+                disabled={false}
+                onBlur={[Function]}
+                onClick={[Function]}
+                onContextMenu={[Function]}
+                onDragLeave={[Function]}
+                onFocus={[Function]}
+                onKeyDown={[Function]}
+                onKeyUp={[Function]}
+                onMouseDown={[Function]}
+                onMouseLeave={[Function]}
+                onMouseUp={[Function]}
+                onTouchEnd={[Function]}
+                onTouchMove={[Function]}
+                onTouchStart={[Function]}
+                tabIndex={0}
+                type="button"
               >
-                <button
-                  aria-labelledby="useId-0"
-                  className="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium css-om67xs-MuiButtonBase-root-MuiButton-root"
-                  disabled={false}
-                  onBlur={[Function]}
-                  onClick={[Function]}
-                  onContextMenu={[Function]}
-                  onDragLeave={[Function]}
-                  onFocus={[Function]}
-                  onKeyDown={[Function]}
-                  onKeyUp={[Function]}
-                  onMouseDown={[Function]}
-                  onMouseLeave={[Function]}
-                  onMouseUp={[Function]}
-                  onTouchEnd={[Function]}
-                  onTouchMove={[Function]}
-                  onTouchStart={[Function]}
-                  tabIndex={0}
-                  type="button"
-                >
-                  New tag type
-                  <span
-                    className="MuiTouchRipple-root css-8je8zh-MuiTouchRipple-root"
-                  />
-                </button>
-              </span>
+                New tag type
+                <span
+                  className="MuiTouchRipple-root css-8je8zh-MuiTouchRipple-root"
+                />
+              </button>
             </div>
           </div>
         </div>
@@ -110,7 +106,7 @@ exports[`renders an empty list correctly 1`] = `
         className="body mui-ccg7sp-bodyContainer"
       >
         <table
-          className="MuiTable-root css-1repbac-MuiTable-root"
+          className="MuiTable-root css-1h5dyuu-MuiTable-root"
           role="table"
         >
           <thead
@@ -123,7 +119,7 @@ exports[`renders an empty list correctly 1`] = `
               role="row"
             >
               <th
-                className="MuiTableCell-root MuiTableCell-head MuiTableCell-sizeMedium css-2e57lc-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-head MuiTableCell-sizeMedium css-1hlljex-MuiTableCell-root"
                 scope="col"
                 style={
                   {
@@ -139,7 +135,7 @@ exports[`renders an empty list correctly 1`] = `
               </th>
               <th
                 aria-sort="ascending"
-                className="MuiTableCell-root MuiTableCell-head MuiTableCell-sizeMedium css-ixv4xv-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-head MuiTableCell-sizeMedium css-qdv5ig-MuiTableCell-root"
                 scope="col"
                 style={
                   {
@@ -211,7 +207,7 @@ exports[`renders an empty list correctly 1`] = `
                 </button>
               </th>
               <th
-                className="MuiTableCell-root MuiTableCell-head MuiTableCell-sizeMedium css-2e57lc-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-head MuiTableCell-sizeMedium css-1hlljex-MuiTableCell-root"
                 scope="col"
                 style={
                   {
@@ -244,7 +240,7 @@ exports[`renders an empty list correctly 1`] = `
             >
               <td
                 aria-sort={null}
-                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-mu6r09-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-jvmadm-MuiTableCell-root"
                 role="cell"
               >
                 <div
@@ -266,39 +262,43 @@ exports[`renders an empty list correctly 1`] = `
               </td>
               <td
                 aria-sort={null}
-                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-mu6r09-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-jvmadm-MuiTableCell-root"
                 role="cell"
               >
                 <div
-                  className="css-1prhjm6"
+                  className="MuiBox-root css-70qvj9"
                 >
                   <div
-                    className="css-u8cmsa"
+                    className="css-1prhjm6"
                   >
-                    <span
-                      className="css-697v50"
-                      data-loading={true}
-                      style={
-                        {
-                          "WebkitLineClamp": 1,
-                          "lineClamp": 1,
+                    <div
+                      className="css-u8cmsa"
+                    >
+                      <span
+                        className="css-697v50"
+                        data-loading={true}
+                        style={
+                          {
+                            "WebkitLineClamp": 1,
+                            "lineClamp": 1,
+                          }
                         }
-                      }
-                    >
-                      Tag type name
-                    </span>
-                    <span
-                      className="css-1121jr7"
-                      data-loading={true}
-                    >
-                      Tag type description when loading
-                    </span>
+                      >
+                        Tag type name
+                      </span>
+                      <span
+                        className="css-1121jr7"
+                        data-loading={true}
+                      >
+                        Tag type description when loading
+                      </span>
+                    </div>
                   </div>
                 </div>
               </td>
               <td
                 aria-sort={null}
-                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-mu6r09-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-jvmadm-MuiTableCell-root"
                 role="cell"
               >
                 <div
@@ -414,7 +414,7 @@ exports[`renders an empty list correctly 1`] = `
             >
               <td
                 aria-sort={null}
-                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-mu6r09-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-jvmadm-MuiTableCell-root"
                 role="cell"
               >
                 <div
@@ -436,39 +436,43 @@ exports[`renders an empty list correctly 1`] = `
               </td>
               <td
                 aria-sort={null}
-                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-mu6r09-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-jvmadm-MuiTableCell-root"
                 role="cell"
               >
                 <div
-                  className="css-1prhjm6"
+                  className="MuiBox-root css-70qvj9"
                 >
                   <div
-                    className="css-u8cmsa"
+                    className="css-1prhjm6"
                   >
-                    <span
-                      className="css-697v50"
-                      data-loading={true}
-                      style={
-                        {
-                          "WebkitLineClamp": 1,
-                          "lineClamp": 1,
+                    <div
+                      className="css-u8cmsa"
+                    >
+                      <span
+                        className="css-697v50"
+                        data-loading={true}
+                        style={
+                          {
+                            "WebkitLineClamp": 1,
+                            "lineClamp": 1,
+                          }
                         }
-                      }
-                    >
-                      Tag type name
-                    </span>
-                    <span
-                      className="css-1121jr7"
-                      data-loading={true}
-                    >
-                      Tag type description when loading
-                    </span>
+                      >
+                        Tag type name
+                      </span>
+                      <span
+                        className="css-1121jr7"
+                        data-loading={true}
+                      >
+                        Tag type description when loading
+                      </span>
+                    </div>
                   </div>
                 </div>
               </td>
               <td
                 aria-sort={null}
-                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-mu6r09-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-jvmadm-MuiTableCell-root"
                 role="cell"
               >
                 <div
@@ -584,7 +588,7 @@ exports[`renders an empty list correctly 1`] = `
             >
               <td
                 aria-sort={null}
-                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-mu6r09-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-jvmadm-MuiTableCell-root"
                 role="cell"
               >
                 <div
@@ -606,39 +610,43 @@ exports[`renders an empty list correctly 1`] = `
               </td>
               <td
                 aria-sort={null}
-                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-mu6r09-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-jvmadm-MuiTableCell-root"
                 role="cell"
               >
                 <div
-                  className="css-1prhjm6"
+                  className="MuiBox-root css-70qvj9"
                 >
                   <div
-                    className="css-u8cmsa"
+                    className="css-1prhjm6"
                   >
-                    <span
-                      className="css-697v50"
-                      data-loading={true}
-                      style={
-                        {
-                          "WebkitLineClamp": 1,
-                          "lineClamp": 1,
+                    <div
+                      className="css-u8cmsa"
+                    >
+                      <span
+                        className="css-697v50"
+                        data-loading={true}
+                        style={
+                          {
+                            "WebkitLineClamp": 1,
+                            "lineClamp": 1,
+                          }
                         }
-                      }
-                    >
-                      Tag type name
-                    </span>
-                    <span
-                      className="css-1121jr7"
-                      data-loading={true}
-                    >
-                      Tag type description when loading
-                    </span>
+                      >
+                        Tag type name
+                      </span>
+                      <span
+                        className="css-1121jr7"
+                        data-loading={true}
+                      >
+                        Tag type description when loading
+                      </span>
+                    </div>
                   </div>
                 </div>
               </td>
               <td
                 aria-sort={null}
-                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-mu6r09-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-jvmadm-MuiTableCell-root"
                 role="cell"
               >
                 <div
@@ -754,7 +762,7 @@ exports[`renders an empty list correctly 1`] = `
             >
               <td
                 aria-sort={null}
-                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-mu6r09-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-jvmadm-MuiTableCell-root"
                 role="cell"
               >
                 <div
@@ -776,39 +784,43 @@ exports[`renders an empty list correctly 1`] = `
               </td>
               <td
                 aria-sort={null}
-                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-mu6r09-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-jvmadm-MuiTableCell-root"
                 role="cell"
               >
                 <div
-                  className="css-1prhjm6"
+                  className="MuiBox-root css-70qvj9"
                 >
                   <div
-                    className="css-u8cmsa"
+                    className="css-1prhjm6"
                   >
-                    <span
-                      className="css-697v50"
-                      data-loading={true}
-                      style={
-                        {
-                          "WebkitLineClamp": 1,
-                          "lineClamp": 1,
+                    <div
+                      className="css-u8cmsa"
+                    >
+                      <span
+                        className="css-697v50"
+                        data-loading={true}
+                        style={
+                          {
+                            "WebkitLineClamp": 1,
+                            "lineClamp": 1,
+                          }
                         }
-                      }
-                    >
-                      Tag type name
-                    </span>
-                    <span
-                      className="css-1121jr7"
-                      data-loading={true}
-                    >
-                      Tag type description when loading
-                    </span>
+                      >
+                        Tag type name
+                      </span>
+                      <span
+                        className="css-1121jr7"
+                        data-loading={true}
+                      >
+                        Tag type description when loading
+                      </span>
+                    </div>
                   </div>
                 </div>
               </td>
               <td
                 aria-sort={null}
-                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-mu6r09-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-jvmadm-MuiTableCell-root"
                 role="cell"
               >
                 <div
@@ -924,7 +936,7 @@ exports[`renders an empty list correctly 1`] = `
             >
               <td
                 aria-sort={null}
-                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-mu6r09-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-jvmadm-MuiTableCell-root"
                 role="cell"
               >
                 <div
@@ -946,39 +958,43 @@ exports[`renders an empty list correctly 1`] = `
               </td>
               <td
                 aria-sort={null}
-                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-mu6r09-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-jvmadm-MuiTableCell-root"
                 role="cell"
               >
                 <div
-                  className="css-1prhjm6"
+                  className="MuiBox-root css-70qvj9"
                 >
                   <div
-                    className="css-u8cmsa"
+                    className="css-1prhjm6"
                   >
-                    <span
-                      className="css-697v50"
-                      data-loading={true}
-                      style={
-                        {
-                          "WebkitLineClamp": 1,
-                          "lineClamp": 1,
+                    <div
+                      className="css-u8cmsa"
+                    >
+                      <span
+                        className="css-697v50"
+                        data-loading={true}
+                        style={
+                          {
+                            "WebkitLineClamp": 1,
+                            "lineClamp": 1,
+                          }
                         }
-                      }
-                    >
-                      Tag type name
-                    </span>
-                    <span
-                      className="css-1121jr7"
-                      data-loading={true}
-                    >
-                      Tag type description when loading
-                    </span>
+                      >
+                        Tag type name
+                      </span>
+                      <span
+                        className="css-1121jr7"
+                        data-loading={true}
+                      >
+                        Tag type description when loading
+                      </span>
+                    </div>
                   </div>
                 </div>
               </td>
               <td
                 aria-sort={null}
-                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-mu6r09-MuiTableCell-root"
+                className="MuiTableCell-root MuiTableCell-body MuiTableCell-sizeMedium css-jvmadm-MuiTableCell-root"
                 role="cell"
               >
                 <div

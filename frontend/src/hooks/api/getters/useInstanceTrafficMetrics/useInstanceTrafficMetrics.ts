@@ -1,36 +1,43 @@
 import useSWR from 'swr';
 import { useMemo } from 'react';
 import { formatApiPath } from 'utils/formatPath';
-import handleErrorResponses from '../httpErrorResponseHandler';
-import type { TrafficUsageDataSegmentedSchema } from 'openapi';
+import handleErrorResponses from '../httpErrorResponseHandler.js';
+import type { TrafficUsageDataSegmentedCombinedSchema } from 'openapi';
+import { cleanTrafficData } from 'utils/traffic-calculations';
 
-export interface IInstanceTrafficMetricsResponse {
-    usage: TrafficUsageDataSegmentedSchema;
-
+export type InstanceTrafficMetricsResponse = {
     refetch: () => void;
+    result:
+        | { state: 'success'; data: TrafficUsageDataSegmentedCombinedSchema }
+        | { state: 'error'; error: Error }
+        | { state: 'loading' };
+};
 
-    loading: boolean;
+export const useTrafficSearch = (
+    grouping: 'monthly' | 'daily',
+    {
+        from,
+        to,
+    }: {
+        from: string;
+        to: string;
+    },
+): InstanceTrafficMetricsResponse => {
+    const apiPath = `api/admin/metrics/traffic?grouping=${grouping}&from=${from}&to=${to}`;
 
-    error?: Error;
-}
+    const { data, error, mutate } = useSWR(formatApiPath(apiPath), fetcher);
 
-export const useInstanceTrafficMetrics = (
-    period: string,
-): IInstanceTrafficMetricsResponse => {
-    const { data, error, mutate } = useSWR(
-        formatApiPath(`api/admin/metrics/traffic/${period}`),
-        fetcher,
-    );
-
-    return useMemo(
-        () => ({
-            usage: data,
-            loading: !error && !data,
+    return useMemo(() => {
+        const result = data
+            ? { state: 'success' as const, data: cleanTrafficData(data) }
+            : error
+              ? { state: 'error' as const, error }
+              : { state: 'loading' as const };
+        return {
             refetch: () => mutate(),
-            error,
-        }),
-        [data, error, mutate],
-    );
+            result,
+        };
+    }, [data, error, mutate]);
 };
 
 const fetcher = (path: string) => {

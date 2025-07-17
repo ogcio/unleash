@@ -1,7 +1,7 @@
 import type { FromSchema } from 'json-schema-to-ts';
-import { tagSchema } from './tag-schema';
-import { IEventTypes } from '../../types';
-import { variantSchema } from './variant-schema';
+import { tagSchema } from './tag-schema.js';
+import { IEventTypes } from '../../events/index.js';
+import { variantSchema } from './variant-schema.js';
 
 const eventDataSchema = {
     type: 'object',
@@ -95,14 +95,31 @@ export const eventSchema = {
         label: {
             type: 'string',
             nullable: true,
-            description:
-                '**[Experimental]** The concise, human-readable name of the event.',
+            description: 'The concise, human-readable name of the event.',
         },
         summary: {
             type: 'string',
             nullable: true,
+            description: 'A markdown-formatted summary of the event.',
+        },
+        ip: {
+            type: 'string',
+            nullable: true,
             description:
-                '**[Experimental]** A markdown-formatted summary of the event.',
+                'The IP address of the user that created the event. Only available in Enterprise.',
+            example: '192.168.1.1',
+        },
+        groupType: {
+            type: 'string',
+            description:
+                'The type of transaction group this event belongs to, if applicable.',
+            example: 'change-request',
+        },
+        groupId: {
+            type: 'string',
+            description:
+                'The unique identifier for the transaction group this event belongs to, if applicable.',
+            example: '01HQVX5K8P9EXAMPLE123456',
         },
     },
     components: {

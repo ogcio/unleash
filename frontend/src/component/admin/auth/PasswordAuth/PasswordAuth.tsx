@@ -11,7 +11,7 @@ import { formatUnknownError } from 'utils/formatUnknownError';
 import { useAdminCount } from 'hooks/api/getters/useAdminCount/useAdminCount';
 import { Link } from 'react-router-dom';
 import { useApiTokens } from 'hooks/api/getters/useApiTokens/useApiTokens';
-import { PasswordAuthDialog } from './PasswordAuthDialog';
+import { PasswordAuthDialog } from './PasswordAuthDialog.tsx';
 
 export const PasswordAuth = () => {
     const { setToastData, setToastApiError } = useToast();
@@ -50,8 +50,7 @@ export const PasswordAuth = () => {
             await updateSettings(settings);
             refetch();
             setToastData({
-                title: 'Successfully saved',
-                text: 'Password authentication settings stored.',
+                text: 'Password authentication settings stored',
                 autoHideDuration: 4000,
                 type: 'success',
                 show: true,

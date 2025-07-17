@@ -43,7 +43,7 @@ import useProjectApi from 'hooks/api/actions/useProjectApi/useProjectApi';
 import useToast from 'hooks/useToast';
 import { Dialogue } from 'component/common/Dialogue/Dialogue';
 import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
-import { ProjectGroupView } from '../ProjectGroupView/ProjectGroupView';
+import { ProjectGroupView } from '../ProjectGroupView/ProjectGroupView.tsx';
 import { useRequiredPathParam } from 'hooks/useRequiredPathParam';
 import type { IUser } from 'interfaces/user';
 import type { IGroup } from 'interfaces/group';
@@ -173,7 +173,7 @@ export const ProjectAccessTable: VFC = () => {
                     row: { original: IProjectAccess };
                     value: string;
                 }) => <RoleCell value={value} roles={row.entity.roles} />,
-                maxWidth: 125,
+                maxWidth: 175,
                 filterName: 'role',
             },
             {
@@ -232,12 +232,8 @@ export const ProjectAccessTable: VFC = () => {
                                     ? 'group'
                                     : 'user'
                             }/${row.entity.id}`}
-                            disabled={access?.rows.length === 1}
                             tooltipProps={{
-                                title:
-                                    access?.rows.length === 1
-                                        ? 'Cannot edit access. A project must have at least one owner'
-                                        : 'Edit access',
+                                title: 'Edit access',
                             }}
                         >
                             <Edit />
@@ -253,12 +249,8 @@ export const ProjectAccessTable: VFC = () => {
                                 setSelectedRow(row);
                                 setRemoveOpen(true);
                             }}
-                            disabled={access?.rows.length === 1}
                             tooltipProps={{
-                                title:
-                                    access?.rows.length === 1
-                                        ? 'Cannot remove access. A project must have at least one owner'
-                                        : 'Remove access',
+                                title: 'Remove access',
                             }}
                         >
                             <Delete />
@@ -382,14 +374,14 @@ export const ProjectAccessTable: VFC = () => {
             refetchProjectAccess();
             setToastData({
                 type: 'success',
-                title: `${
+                text: `${
                     name || `The ${entityType}`
                 } has been removed from project`,
             });
         } catch (err: any) {
             setToastData({
                 type: 'error',
-                title:
+                text:
                     err.message ||
                     `Server problems when removing ${entityType}.`,
             });
@@ -402,7 +394,7 @@ export const ProjectAccessTable: VFC = () => {
             header={
                 <PageHeader
                     secondary
-                    title={`Access (${
+                    title={`User access (${
                         rows.length < data.length
                             ? `${rows.length} of ${data.length}`
                             : data.length

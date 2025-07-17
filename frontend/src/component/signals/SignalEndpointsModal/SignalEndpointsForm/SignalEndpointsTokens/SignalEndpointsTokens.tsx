@@ -25,8 +25,8 @@ import {
     useFlexLayout,
 } from 'react-table';
 import { sortTypes } from 'utils/sortTypes';
-import { SignalEndpointsTokensCreateDialog } from './SignalEndpointsTokensCreateDialog';
-import { SignalEndpointsTokensDialog } from './SignalEndpointsTokensDialog';
+import { SignalEndpointsTokensCreateDialog } from './SignalEndpointsTokensCreateDialog.tsx';
+import { SignalEndpointsTokensDialog } from './SignalEndpointsTokensDialog.tsx';
 import { useConditionallyHiddenColumns } from 'hooks/useConditionallyHiddenColumns';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 import { Dialogue } from 'component/common/Dialogue/Dialogue';
@@ -115,7 +115,7 @@ export const SignalEndpointsTokens = ({
             setNewToken(token);
             setTokenOpen(true);
             setToastData({
-                title: 'Token created successfully',
+                text: 'Token created',
                 type: 'success',
             });
         } catch (error: unknown) {
@@ -134,7 +134,7 @@ export const SignalEndpointsTokens = ({
                 refetchTokens();
                 setDeleteOpen(false);
                 setToastData({
-                    title: 'Token deleted successfully',
+                    text: 'Token deleted',
                     type: 'success',
                 });
             } catch (error: unknown) {

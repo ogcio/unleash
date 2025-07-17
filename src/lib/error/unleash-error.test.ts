@@ -1,19 +1,18 @@
 import owasp from 'owasp-password-strength-test';
 import type { ErrorObject } from 'ajv';
-import AuthenticationRequired from '../types/authentication-required';
-import type { ApiErrorSchema } from './unleash-error';
+import AuthenticationRequired from '../types/authentication-required.js';
+import type { ApiErrorSchema } from './unleash-error.js';
 import BadDataError, {
     fromOpenApiValidationError,
     fromOpenApiValidationErrors,
-} from './bad-data-error';
-import PermissionError from './permission-error';
-import OwaspValidationError from './owasp-validation-error';
-import IncompatibleProjectError from './incompatible-project-error';
-import PasswordUndefinedError from './password-undefined';
-import ProjectWithoutOwnerError from './project-without-owner-error';
-import NotFoundError from './notfound-error';
-import { validateString } from '../util/validators/constraint-types';
-import { fromLegacyError } from './from-legacy-error';
+} from './bad-data-error.js';
+import PermissionError from './permission-error.js';
+import OwaspValidationError from './owasp-validation-error.js';
+import IncompatibleProjectError from './incompatible-project-error.js';
+import PasswordUndefinedError from './password-undefined.js';
+import NotFoundError from './notfound-error.js';
+import { validateString } from '../util/validators/constraint-types.js';
+import { fromLegacyError } from './from-legacy-error.js';
 
 describe('v5 deprecation: backwards compatibility', () => {
     it(`Adds details to error types that don't specify it`, () => {
@@ -660,20 +659,6 @@ describe('Error serialization special cases', () => {
 
     it('PasswordUndefinedError: adds `validationErrors: []` to the `details` list', () => {
         const error = new PasswordUndefinedError();
-        const json = error.toJSON();
-
-        expect(json).toMatchObject({
-            details: [
-                {
-                    validationErrors: [],
-                    message: json.message,
-                },
-            ],
-        });
-    });
-
-    it('ProjectWithoutOwnerError: adds `validationErrors: []` to the `details` list', () => {
-        const error = new ProjectWithoutOwnerError();
         const json = error.toJSON();
 
         expect(json).toMatchObject({

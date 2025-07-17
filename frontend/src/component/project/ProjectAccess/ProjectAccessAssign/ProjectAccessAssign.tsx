@@ -1,7 +1,6 @@
 import type React from 'react';
 import { type FormEvent, useState } from 'react';
 import {
-    Autocomplete,
     Button,
     capitalize,
     Checkbox,
@@ -37,9 +36,10 @@ import {
 import { caseInsensitiveSearch } from 'utils/search';
 import type { IServiceAccount } from 'interfaces/service-account';
 import { MultipleRoleSelect } from 'component/common/MultipleRoleSelect/MultipleRoleSelect';
-import type { IUserProjectRole } from '../../../../interfaces/userProjectRoles';
+import type { IUserProjectRole } from '../../../../interfaces/userProjectRoles.ts';
 import { useCheckProjectPermissions } from 'hooks/useHasAccess';
 import { ADMIN } from 'component/providers/AccessProvider/permissions';
+import AutocompleteVirtual from 'component/common/AutocompleteVirtual/AutcompleteVirtual';
 
 const StyledForm = styled('form')(() => ({
     display: 'flex',
@@ -233,7 +233,7 @@ export const ProjectAccessAssign = ({
             refetchProjectAccess();
             navigate(GO_BACK);
             setToastData({
-                title: `${selectedOptions.length} ${
+                text: `${selectedOptions.length} ${
                     selectedOptions.length === 1 ? 'access' : 'accesses'
                 } ${!edit ? 'assigned' : 'edited'} successfully`,
                 type: 'success',
@@ -339,6 +339,7 @@ export const ProjectAccessAssign = ({
             userRoles.some((userrole) => role.id === userrole.id),
         );
     }
+
     return (
         <SidebarModal
             open
@@ -350,7 +351,7 @@ export const ProjectAccessAssign = ({
                 modal
                 title={`${!edit ? 'Assign' : 'Edit'} ${entityType} access`}
                 description='Custom project roles allow you to fine-tune access rights and permissions within your projects.'
-                documentationLink='https://docs.getunleash.io/how-to/how-to-create-and-assign-custom-project-roles'
+                documentationLink='https://docs.getunleash.io/reference/rbac#create-and-assign-a-custom-project-role'
                 documentationLinkLabel='Project access documentation'
                 formatApiCode={formatApiCode}
             >
@@ -362,7 +363,7 @@ export const ProjectAccessAssign = ({
                             Select the {entityType}
                         </StyledInputDescription>
                         <StyledAutocompleteWrapper>
-                            <Autocomplete
+                            <AutocompleteVirtual
                                 data-testid={PA_USERS_GROUPS_ID}
                                 size='small'
                                 multiple

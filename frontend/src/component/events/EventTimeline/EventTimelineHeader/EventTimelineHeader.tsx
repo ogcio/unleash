@@ -1,18 +1,10 @@
-import {
-    IconButton,
-    MenuItem,
-    styled,
-    TextField,
-    Tooltip,
-} from '@mui/material';
+import { MenuItem, styled, TextField } from '@mui/material';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 import { useEnvironments } from 'hooks/api/getters/useEnvironments/useEnvironments';
 import { useEffect, useMemo } from 'react';
-import { timeSpanOptions } from '../EventTimelineProvider';
-import CloseIcon from '@mui/icons-material/Close';
-import { useEventTimelineContext } from '../EventTimelineContext';
+import { timeSpanOptions } from '../EventTimelineProvider.tsx';
+import { useEventTimelineContext } from '../EventTimelineContext.tsx';
 import { usePlausibleTracker } from 'hooks/usePlausibleTracker';
-import { EventTimelineHeaderTip } from './EventTimelineHeaderTip';
 import { HelpIcon } from 'component/common/HelpIcon/HelpIcon';
 
 const StyledCol = styled('div')(({ theme }) => ({
@@ -65,6 +57,54 @@ export const EventTimelineHeader = ({
         }
     }, [activeEnvironments]);
 
+    const EnvironmentFilter = () => (
+        <ConditionallyRender
+            condition={Boolean(environment) && environments.length > 0}
+            show={() => (
+                <StyledFilter
+                    select
+                    size='small'
+                    variant='outlined'
+                    value={environment!.name}
+                    onChange={(e) =>
+                        setEnvironment(
+                            environments.find(
+                                ({ name }) => name === e.target.value,
+                            ) || environments[0],
+                        )
+                    }
+                >
+                    {environments.map(({ name }) => (
+                        <MenuItem key={name} value={name}>
+                            {name}
+                        </MenuItem>
+                    ))}
+                </StyledFilter>
+            )}
+        />
+    );
+
+    const TimeSpanFilter = () => (
+        <StyledFilter
+            select
+            size='small'
+            variant='outlined'
+            value={timeSpan.key}
+            onChange={(e) =>
+                setTimeSpan(
+                    timeSpanOptions.find(({ key }) => key === e.target.value) ||
+                        timeSpanOptions[0],
+                )
+            }
+        >
+            {timeSpanOptions.map(({ key, label }) => (
+                <MenuItem key={key} value={key}>
+                    {label}
+                </MenuItem>
+            ))}
+        </StyledFilter>
+    );
+
     return (
         <>
             <StyledCol>
@@ -73,68 +113,10 @@ export const EventTimelineHeader = ({
                     {totalEvents === 1 ? '' : 's'}
                     <HelpIcon tooltip='These are key events per environment across all your projects. For more details, visit the event log.' />
                 </StyledTimelineEventsCount>
-                <StyledFilter
-                    select
-                    size='small'
-                    variant='outlined'
-                    value={timeSpan.key}
-                    onChange={(e) =>
-                        setTimeSpan(
-                            timeSpanOptions.find(
-                                ({ key }) => key === e.target.value,
-                            ) || timeSpanOptions[0],
-                        )
-                    }
-                >
-                    {timeSpanOptions.map(({ key, label }) => (
-                        <MenuItem key={key} value={key}>
-                            {label}
-                        </MenuItem>
-                    ))}
-                </StyledFilter>
             </StyledCol>
-            <EventTimelineHeaderTip />
             <StyledCol>
-                <ConditionallyRender
-                    condition={Boolean(environment)}
-                    show={() => (
-                        <StyledFilter
-                            select
-                            size='small'
-                            variant='outlined'
-                            value={environment!.name}
-                            onChange={(e) =>
-                                setEnvironment(
-                                    environments.find(
-                                        ({ name }) => name === e.target.value,
-                                    ) || environments[0],
-                                )
-                            }
-                        >
-                            {environments.map(({ name }) => (
-                                <MenuItem key={name} value={name}>
-                                    {name}
-                                </MenuItem>
-                            ))}
-                        </StyledFilter>
-                    )}
-                />
-                <Tooltip title='Hide event timeline' arrow>
-                    <IconButton
-                        aria-label='close'
-                        size='small'
-                        onClick={() => {
-                            trackEvent('event-timeline', {
-                                props: {
-                                    eventType: 'close',
-                                },
-                            });
-                            setOpen(false);
-                        }}
-                    >
-                        <CloseIcon />
-                    </IconButton>
-                </Tooltip>
+                <TimeSpanFilter />
+                <EnvironmentFilter />
             </StyledCol>
         </>
     );

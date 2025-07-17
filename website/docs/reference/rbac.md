@@ -1,6 +1,6 @@
 ---
 id: rbac
-title: Role-based Access control
+title: Role-based access control
 ---
 
 :::note Availability
@@ -9,41 +9,28 @@ title: Role-based Access control
 
 :::
 
-## Core principles {#core-principles}
+Unleash implements role-based access control on two levels:
 
-Unleash has two levels in its hierarchy of resources:
-
-1. **Root resources** - Everything that lives across the entire Unleash instance. Examples of this include:
-    - activation strategies
-    - context field definitions
-    - integration configurations
-    - applications
-    - users
-2. **Project resources** - Resources which are only available under a project. Today this is only “feature flags” (but
-   we expect more resources to live under a project in the future). A feature flag will belong to only one single
-   project. In Unleash-Open source there exists only a single project, the “default” project, while Unleash Enterprise
-   supports multiple projects.
+1. **Root level** - affects resources shared across the entire Unleash instance, for example activation strategies, users, integrations.
+2. **Project level** - affects resources specific to a [project](./projects), such as feature flags, change requests, or API tokens.
 
 ![RBAC overview](/img/rbac.png)
 
 ## Predefined roles
 
-Unleash comes with a set of built-in predefined roles that you can use. The _root roles_ are available to all Unleash
-users, while the _project-based roles_ are only available to Pro and Enterprise users. The below table lists the roles,
-what they do, and what plans they are available in. Additionally, Enterprise users can create their
+Unleash comes with a set of predefined roles. Root roles are available to all Unleash
+users, while the Project roles are only available to [Pro](/availability#plans) and [Enterprise](https://www.getunleash.io/pricing) users. The following table lists the roles, what they do, and what plans they are available in. Additionally, [Enterprise](https://www.getunleash.io/pricing) users can create their
 own [custom root roles](#custom-root-roles) and [custom project roles](#custom-project-roles).
-
-When you add a new user, you can assign them one of the root roles listed below.
 
 | Role       | Scope   | Description                                                                                                                                                                                                                                                                                                                                                         | Availability       |
 |------------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------|
 | **Admin**  | Root    | Users with the root admin role have superuser access to Unleash and can perform any operation within the Unleash platform.                                                                                                                                                                                                                                          | All versions       |
-| **Editor** | Root    | Users with the root editor role have access to most features in Unleash, but can not manage users and roles in the root scope. Editors will be added as project owners when creating projects and get superuser rights within the context of these projects. Users with the editor role will also get access to most permissions on the default project by default. | All versions       |
+| **Editor** | Root    | Users with the root editor role have access to most features in Unleash, but they cannot manage users and roles in the root scope. Editors will be added as project owners when creating projects and get superuser rights within the context of these projects. Users with the editor role will also get access to most permissions on the default project by default. | All versions       |
 | **Viewer** | Root    | Users with the root viewer role can only read root resources in Unleash. Viewers can be added to specific projects as project members. Users with the viewer role may not view API tokens.                                                                                                                                                                          | All versions       |
-| **Owner**  | Project | Users with the project owner role have full control over the project, and can add and manage other users within the project context, manage feature flags within the project, and control advanced project features like archiving and deleting the project.                                                                                                      | Pro and Enterprise |
-| **Member** | Project | Users with the project member role are allowed to view, create, and update feature flags within a project, but have limited permissions in regards to managing the project's user access and can not archive or delete the project.                                                                                                                               | Pro and Enterprise |
+| **Owner**  | Project | Users with the project owner role have full control over the project, and can add and manage other users within the project context, manage feature flags within the project, and control advanced project features like archiving and deleting the project.                                                                                                      | [Pro](/availability#plans) and [Enterprise](https://www.getunleash.io/pricing) |
+| **Member** | Project | Users with the project member role are allowed to view, create, and update feature flags within a project, but have limited permissions in regards to managing the project's user access and can not archive or delete the project.                                                                                                                               | [Pro](/availability#plans) and [Enterprise](https://www.getunleash.io/pricing) |
 
-## Custom Root Roles
+## Custom root roles
 
 :::note Availability
 
@@ -52,9 +39,8 @@ When you add a new user, you can assign them one of the root roles listed below.
 :::
 
 Custom root roles let you define your own root roles with a specific set of root permissions. The roles can then be
-assigned to entities (users, service accounts and groups) at the root level. This allows you to control access to
-resources in a more precise, fine-grained way. For a step-by-step walkthrough of how to create and assign custom root
-roles, refer to [_how to create and assign custom root roles_](../how-to/how-to-create-and-assign-custom-root-roles.md).
+assigned to entities (users, service accounts, and groups) at the root level. This allows you to control access to
+resources in a more precise, fine-grained way.
 
 Each custom root role consists of:
 
@@ -62,81 +48,136 @@ Each custom root role consists of:
 - a **role description** (required)
 - a set of **root permissions** (required)
 
+### Create and assign a custom root role
+
+To create a custom root role in the Admin UI, do the following:
+
+1. In **Admin settings > User config > Root roles**, click **New root role**.
+2. Give the role a name and description and select all permissions you want to assign to the role.
+3. Click **Add role** to save.
+
+Once you have the role set up, you can assign it a user:
+
+1. In **Admin settings > User config > Users**, select the user you want to assign the role to.
+2. Click **Edit user**.
+3. For **Role**, select the root role you want the user to have.
+4. Click **Save**.
+
 ### Root permissions
 
 You can assign the following root permissions:
-
-#### Integration permissions
-
-| Permission Name     | Description                        |
-|---------------------|------------------------------------|
-| Create integrations | Lets the user create integrations. |
-| Update integrations | Lets the user update integrations. |
-| Delete integrations | Lets the user delete integrations. |
 
 #### API token permissions
 
 | Permission Name            | Description                               |
 |----------------------------|-------------------------------------------|
-| Read frontend API tokens   | Lets the user read frontend API tokens.   |
-| Create frontend API tokens | Lets the user create frontend API tokens. |
-| Update frontend API tokens | Lets the user update frontend API tokens. |
-| Delete frontend API tokens | Lets the user delete frontend API tokens. |
-| Read client API tokens     | Lets the user read client API tokens.     |
-| Create client API tokens   | Lets the user create client API tokens.   |
-| Update client API tokens   | Lets the user update client API tokens.   |
-| Delete client API tokens   | Lets the user delete client API tokens.   |
+| Read frontend API tokens   | View [frontend API tokens](./api-tokens-and-client-keys#frontend-tokens).   |
+| Create frontend API tokens | Create frontend API tokens. |
+| Update frontend API tokens | Update frontend API tokens. |
+| Delete frontend API tokens | Delete frontend API tokens. |
+| Read client API tokens     | View [client API tokens](./api-tokens-and-client-keys#client-tokens).     |
+| Create client API tokens   | Create client API tokens.   |
+| Update client API tokens   | Update client API tokens.   |
+| Delete client API tokens   | Delete client API tokens.   |
 
 #### Application permissions
 
 | Permission Name     | Description                        |
 |---------------------|------------------------------------|
-| Update applications | Lets the user update applications. |
+| Update applications | Update [applications](./applications). |
+
+#### Authentication permissions
+
+:::note Availability
+
+**Plan**: [Enterprise](https://www.getunleash.io/pricing) | **Version**: `6.9+`
+
+:::
+| Permission Name     | Description                        |
+|---------------------|------------------------------------|
+| Change authentication settings | Update authentication settings, such as for [single sign-on (SSO)](./sso). |
 
 #### Context field permissions
 
 | Permission Name       | Description                          |
 |-----------------------|--------------------------------------|
-| Create context fields | Lets the user create context fields. |
-| Update context fields | Lets the user update context fields. |
-| Delete context fields | Lets the user delete context fields. |
+| Create context fields | Create [context fields](./unleash-context#custom-context-fields). |
+| Update context fields | Update context fields. |
+| Delete context fields | Delete context fields. |
+
+#### Instance maintenance permissions
+
+:::note Availability
+
+**Plan**: [Enterprise](https://www.getunleash.io/pricing) | **Version**: `6.9+`
+
+:::
+
+| Permission Name     | Description                        |
+|---------------------|------------------------------------|
+| Change instance banners | Change instance [banners](./banners). |
+| Change maintenance mode state | Change [maintenance mode](./maintenance-mode) state. |
+| Update CORS settings | Update [CORS settings](./front-end-api#configure-cross-origin-resource-sharing-cors). |
+| Read instance logs and login history | Read instance logs and [login history](./login-history). |
+
+#### Integration permissions
+
+| Permission Name     | Description                        |
+|---------------------|------------------------------------|
+| Create integrations | Create [integrations](./integrations). |
+| Update integrations | Update integrations. |
+| Delete integrations | Delete integrations. |
 
 #### Project permissions
 
 | Permission Name | Description                    |
 |-----------------|--------------------------------|
-| Create projects | Lets the user create projects. |
+| Create projects | Create [projects](./projects). |
+
+#### Release template permissions
+
+:::note Availability
+
+**Plan**: [Enterprise](https://www.getunleash.io/pricing) | **Version**: `6.8+ in BETA`
+
+:::
+
+| Permission Name | Description               |
+|-----------------|---------------------------|
+| Create release plan template      | Create [release template](./release-templates). |
+| Update release plan template      | Update [release template](./release-templates). |
+| Delete release plan template      | Delete [release template](./release-templates). |
 
 #### Role permissions
 
 | Permission Name | Description               |
 |-----------------|---------------------------|
-| Read roles      | Lets the user read roles. |
+| Read roles      | View [roles](./rbac). |
 
 #### Segment permissions
 
 | Permission Name | Description                    |
 |-----------------|--------------------------------|
-| Create segments | Lets the user create segments. |
-| Edit segments   | Lets the user edit segments.   |
-| Delete segments | Lets the user delete segments. |
+| Create segments | Create [segments](./segments). |
+| Edit segments   | Edit segments.   |
+| Delete segments | Delete segments. |
 
 #### Strategy permissions
 
 | Permission Name   | Description                      |
 |-------------------|----------------------------------|
-| Create strategies | Lets the user create strategies. |
-| Update strategies | Lets the user update strategies. |
-| Delete strategies | Lets the user delete strategies. |
+| Create strategies | Create [strategies](./activation-strategies). |
+| Update strategies | Update strategies. |
+| Delete strategies | Delete strategies. |
 
 #### Tag type permissions
 
 | Permission Name  | Description                     |
 |------------------|---------------------------------|
-| Update tag types | Lets the user update tag types. |
-| Delete tag types | Lets the user delete tag types. |
+| Update tag types | Update [tag types](./feature-toggles#tags). |
+| Delete tag types | Delete tag types. |
 
-## Custom Project Roles
+## Custom project roles
 
 :::note Availability
 
@@ -146,55 +187,84 @@ You can assign the following root permissions:
 
 Custom project roles let you define your own project roles with a specific set of project permissions down to the
 environment level. The roles can then be assigned to users in specific projects. All users have viewer access to all
-projects and resources, but must be assigned a project role to be allowed to edit a project's resources. For a
-step-by-step walkthrough of how to create and assign custom project roles, see [_how to create and assign custom project
-roles_](../how-to/how-to-create-and-assign-custom-project-roles).
+projects and resources but must be assigned a project role to be allowed to edit a project's resources.
 
 Each custom project role consists of:
 
 - a **name** (required)
 - a **role description** (required)
-- a set of **project and / or environment permissions** (required)
+- a set of **project and environment permissions** (required)
+
+### Create and assign a custom project role
+
+To create a custom project role in the Admin UI, do the following:
+
+1. In **Admin settings > User config > Project roles**, click **New project role**.
+2. Give the role a name and description and select all permissions you want to assign to the role.
+3. Click **Add role** to save.
+
+Once you have the role set up, you can assign it to individual users inside a project:
+
+1. In **Settings > User access**, click **Edit**.
+2. For **Role**, select the custom project roles you want to apply.
+3. Click **Save**.
 
 ### Project permissions
 
-You can assign the following project permissions. The permissions will be valid across all of the project's
-environments.
+You can assign the following project permissions. These permissions are valid across all of the [project](./projects)'s environments.
 
-| Permission                                    | Description                                                                                                                                                                                                                                       |
+#### API tokens
+| Permission Name | Description |
+| --- | --- |
+| Read API token | View [API tokens](./api-tokens-and-client-keys) for a specific project. |
+| Create API token | Create API tokens for a specific project. |
+| Delete API token | Delete API tokens for a specific project. |
+
+#### Change requests
+| Permission Name | Description |
+| --- | --- |
+| Read change request                      | View [change request](./change-requests) configuration (included in _Update the project_).                                                                                                                                                         |
+| Write change request                      | Edit change request configuration (included in _Update the project_).                                                                                                                                                      |  
+
+
+#### Features and strategies
+| Permission Name | Description | 
+| --- | --- |
+| Create feature flags | Create [feature flags](./feature-toggles) within the project and create feature flag variants. This permission alone does not give access to assigning strategies to a flags. Use the _create activation strategies_ environment permission, if needed. |
+| Update feature flags | Update feature flag descriptions, mark flags as stale, add, update, and remove flag tags, and update flag variants within the project.                                                                          |
+| Update feature flag dependency | Update feature flag dependencies within the project. |
+| Delete feature flags | Archive feature flags within the project.                                                                                                                                                                                         |
+| Change feature flag project            | Move flags to other projects they have access to.                                                                                                                                                                                 |
+| Create/edit variants                      | Create and edit [variants](./strategy-variants) within the project. (Deprecated with v4.21. Use environment-specific permissions for working with variants.)                                                                                    |
+| Create/edit project segment | Create and edit [segments](./segments) within the project. |
+
+#### Projects
+| Permission Name                                   | Description                                                                                                                                                                                                                                       |
 |-----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **update the project**                        | Lets the user update project settings, such as enabling/disabling environments, add users, etc.                                                                                                                                                   |
-| **user access read**                          | Read access to Project User Access (included in "update the project" permission)                                                                                                                                                                  |
-| **user access write**                         | Write access to Project User Access (included in "update the project" permission)                                                                                                                                                                 
-| **default strategy read**                     | Read access to default strategy configuration (included in "update the project" permission)                                                                                                                                                       |
-| **default strategy write**                    | Write access to default strategy configuration (included in "update the project" permission)                                                                                                                                                      |                    
-| **change request read**                       | Read access to change request configuration (included in "update the project" permission)                                                                                                                                                         |                                                                                                                                                                                                                                              
-| **change request write**                      | Write access to change request configuration (included in "update the project" permission)                                                                                                                                                        |                      
-| **settings read**                             | Read access to other project settings (included in "update the project" permission) |                                                                                                                                                              |                             
-| **settings write** | Write access to other project settings (included in "update the project" permission)                            
-| **delete the project**                        | Lets the user delete the project.                                                                                                                                                                                                                 |
-| **create feature flags within the project** | Lets the user create feature flags within the project and create variants for said flag. Note that they **cannot assign strategies** to flags without having the _create activation strategy_ permission for the corresponding environment. |
-| **update feature flags within the project** | Lets the user update feature flag descriptions; mark flags as stale / not stale; add, update, and remove flag tags; and update flag variants within the project.                                                                          |
-| **delete feature flags within the project** | Lets the user archive feature flags within the project.                                                                                                                                                                                         |
-| **change feature flag project**             | Lets the user move flags to other projects they have access to.                                                                                                                                                                                 |
-| **create/edit variants**                      | Lets the user create and edit variants within the project. (Deprecated with v4.21 in favor of environment-specific permissions for working with variants[^1].)                                                                                    |
-
+| Update project                        | Edit all aspects of a [project](./projects), such as enabling or disabling environment or adding new users. |
+| User access read                          | View to user access configuration (included in _Update project_).                                                                                                                                                                  |
+| User access write                         | Edit user access configuration (included in _Update project_).                                                                                                                                                                
+| Default strategy read                     | View the default strategy configuration (included in _Update project_).                                                                                                                                                       |
+| Default strategy write                    | Edit the default strategy configuration (included in _Update project_).                                                                                                                                                      |                           
+| Read settings                             | View other project settings (included in _Update project_). |                                                                                                                                                              |                             
+| Write settings | Edit other project settings (included in _Update project_).                            
+| Delete the project                        | Delete the project.                                                                                                                                                                                                                 |
 ### Environment permissions
 
 You can assign the following permissions on a per-environment level within the project:
 
-| Permission                       | Description                                                                                                                                                                                                                                                                                                                                           |
+| Permission Name                       | Description                                                                                                                                                                                                                                                                                                                                           |
 |----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **create activation strategies** | Lets the user assign feature flag activation strategies within the environment.                                                                                                                                                                                                                                                                       |
-| **update activation strategies** | Lets the user update feature flag activation strategies within the environment.                                                                                                                                                                                                                                                                       |
-| **delete activation strategies** | Lets the user delete feature flag activation strategies within the environment.                                                                                                                                                                                                                                                                       |
-| **enable/disable flags**         | Lets the user enable and disable flags within the environment.                                                                                                                                                                                                                                                                                        |
-| **update variants**              | Lets the user create, edit and remove variants within the environment.                                                                                                                                                                                                                                                                                |
-| **approve a change request**     | Lets the user approve [change requests](./change-requests) in the environment.                                                                                                                                                                                                                                                                       |
-| **apply a change request**       | Lets the user apply change requests in the environment.                                                                                                                                                                                                                                                                                               |
-| **skip change requests**         | Lets the user ignore change request requirements. This applies **only when using the API** directly; when using the admin UI, users with this permission will still need to go through the normal change request flow. You can find more details in the section on [circumventing change requests](./change-requests#circumventing-change-requests). |
+| Create activation strategies | Assign feature flag [activation strategies](./activation-strategies) within the environment.                                                                                                                                                                                                                                                                       |
+| Update activation strategies | Update feature flag activation strategies within the environment.                                                                                                                                                                                                                                                                       |
+| Delete activation strategies | Delete feature flag activation strategies within the environment.                                                                                                                                                                                                                                                                       |
+| Enable/disable flags         | Enable and disable flags within the environment.                                                                                                                                                                                                                                                                                        |
+| Update variants              | Create, edit, and remove variants within the environment.                                                                                                                                                                                                                                                                                |
+| Approve a change request     | Approve [change requests](./change-requests) in the environment.                                                                                                                                                                                                                                                                       |
+| Apply a change request       | Apply change requests in the environment.                                                                                                                                                                                                                                                                                               |
+| Skip change requests         | Skip the change request process for a project and environment where change requests are enabled.  |
 
-## Multiple Project Roles
+## Multiple project roles
 
 :::note Availability
 
@@ -212,7 +282,20 @@ group needs to wear multiple hats. For example, a team member could serve as bot
 tester. By combining roles, you simplify the access management process, eliminating the need to create a new, custom
 role that encapsulates the needed permissions.
 
-## User Groups
+## View a user's roles and permissions
+
+:::note Availability
+
+**Version**: `6.9+`
+
+:::
+
+The access overview page helps administrators see exactly what a user can do in Unleash and which roles grant those permissions. You can explore permissions at the root level or for specific environments and projects.
+
+To view a user’s permissions, go to **Admin settings > User config > Users**. Select a user and click **Access overview**.
+
+
+## User groups
 
 :::note Availability
 
@@ -220,31 +303,26 @@ role that encapsulates the needed permissions.
 
 :::
 
-User groups allow you to assign roles to a group of users within a project, rather than to a user directly. This allows
-you to manage your user permissions more easily when there's lots of users in the system. For a guide on how to create
-and manage user groups see [_how to create and manage user groups_](../how-to/how-to-create-and-manage-user-groups.md).
+User groups allow you to manage user permissions efficiently by assigning roles to a collection of users instead of individually. This is particularly useful for projects with many users.
 
-A user group consists of the following:
+You can create and manage user groups in the Admin UI at **Admin settings > User config > Groups**.
 
-- a **name** (required)
-- a **description** (optional)
-- a **list of users** (required)
-- a list of SSO groups to sync from (optional)
-- a root role associated with the group (optional; available in v5.1+)
+When creating a user group, you can define the following:
 
-Groups do nothing on their own. They must either be given a root role directly or a role on a project to assign
-permissions.
+- **Name**: A unique identifier for the group.
+- **Description**: A brief explanation of the group's purpose.
+- **Users**: A list of users who are members of this group.
+- **SSO groups** to sync from: A list of single sign-on (SSO) groups to synchronize members from.
+- **Root role**: A role assigned to the group at the root level. (Available in v5.1+)
 
-Groups that do not have a root role need to be assigned a role on a project to be useful. You can assign both predefined
-roles and custom project roles to groups.
+Groups themselves do not grant permissions. To be functional, a group must either:
+- Be assigned a root role. Members of this group will inherit the root role's permissions globally.
+- Be assigned a role on a specific project. This grants the group's members the specified permissions within that project. You can assign both predefined and custom project roles to groups.
 
-Any user that is a member of a group with a root role will inherit that root role's permissions on the root level.
+A user can belong to multiple groups, and each group a user belongs to can have a different role assigned to it on a specific project.
+If a user gains permissions for a project through multiple groups, they will inherit the most permissive set of permissions from all their assigned group roles for that project.
 
-While a user can only have one role in a given project, a user may belong to multiple groups, and each of those groups
-may be given a role on a project. In the case where a given user is given permissions through more than one group, the
-user will inherit most permissive permissions of all their groups in that project.
-
-## User Group SSO Integration
+## Set up group SSO syncing
 
 :::note Availability
 
@@ -252,23 +330,17 @@ user will inherit most permissive permissions of all their groups in that projec
 
 :::
 
-User groups also support integration with your Single Sign-On (SSO) provider. This allows you to automatically assign
-users to groups when they log in through SSO. Check out [_how to set up group SSO
-sync_](../how-to/how-to-set-up-group-sso-sync.md) for a step-by-step walkthrough.
+You can integrate user groups with your single sign-on (SSO) provider to automatically manage user assignments.
+Note that this just-in-time process updates groups only when a user logs in, which differs from a full provisioning system like [SCIM](/how-to/how-to-setup-provisioning-with-okta) that syncs all user information proactively.
 
-Users that have been added to a group through your SSO provider will be automatically removed next time they log in if
-they've been removed from the SSO group. Users that have been manually added to the group will not be affected.
+When a user logs in through SSO, they are automatically added to or removed from a user group based on their SSO group membership. Manually added users are not affected by the SSO sync.
 
-To enable group sync, you'll need to set two fields in your SSO provider configuration options:
+To enable group syncing, you configure two settings in your SSO provider configuration:
 
-- **enable group syncing**:
+- **Enable group syncing**: Turns the feature on.
+- **Group field JSON path**: A JSON path expression that points to the field in your SSO token response that contains the user's groups.
 
-  Turns on group syncing. This is disabled by default.
-
-- **group field JSON path**
-
-  A JSON path that should point to the groups field in your token response. This should match the exact field returned
-  by the provider. For example, if your token looks like this:
+For example, if your token response looks like this, you would set the Group field JSON path to `groups`:
 
   ```json
   {
@@ -287,15 +359,29 @@ To enable group sync, you'll need to set two fields in your SSO provider configu
     "nonce": "0394852-3190485-2490358"
   }
   ```
-  You need to set the "Group Field JSON path" to "groups".
+
+After you enable syncing, you must link the SSO group names to the corresponding user group.
 
 Once you've enabled group syncing and set an appropriate path, you'll need to add the SSO group names to the Unleash
 group. This can be done by navigating to the Unleash group you want to enable sync for and adding the SSO group names to
 the "SSO group ID/name" property.
 
+### Configure SSO group sync
+
+You must be an Admin in Unleash to perform these steps.
+
+1. Go to **Admin settings > Single sign-on**. Select your integration and click **Enable Group Syncing**.
+2. in **Group Field JSON Path**, enter the JSON path for the groups field in your token response.
+3. Click **Save**.
+4. Go to **User config > Groups** and select the user group you want to sync and click **Edit**.
+5. Add the exact SSO group names or IDs you want to link to the group.
+6. Click **Save**.
+
+The next time a user who belongs to one of the linked SSO groups logs in, they are automatically added to the user group. If they have been removed from the SSO group, their access will be revoked on their next login.
+
 [^1]: The project-level permission is still required for the [**create/overwrite variants
-** (PUT)](/docs/reference/api/unleash/overwrite-feature-variants.api.mdx) and [**update variants
-** (PATCH)](/docs/reference/api/unleash/patch-feature-variants.api.mdx) API endpoints, but it is not used for anything
+** (PUT)](/reference/api/unleash/overwrite-feature-variants) and [**update variants
+** (PATCH)](/reference/api/unleash/patch-feature-variants) API endpoints, but it is not used for anything
 within the admin UI. The API endpoints have been superseded by the [**create/overwrite environment variants
-** (PUT)](/docs/reference/api/unleash/overwrite-feature-variants-on-environments.api.mdx) and [**update environment
-variants** (PATCH)](/docs/reference/api/unleash/patch-environments-feature-variants.api.mdx) endpoints, respectively.
+** (PUT)](/reference/api/unleash/overwrite-feature-variants-on-environments) and [**update environment
+variants** (PATCH)](/reference/api/unleash/patch-environments-feature-variants) endpoints, respectively.

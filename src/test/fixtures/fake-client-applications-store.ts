@@ -3,9 +3,9 @@ import type {
     IClientApplications,
     IClientApplicationsSearchParams,
     IClientApplicationsStore,
-} from '../../lib/types/stores/client-applications-store';
-import NotFoundError from '../../lib/error/notfound-error';
-import type { IApplicationOverview } from '../../lib/features/metrics/instance/models';
+} from '../../lib/types/stores/client-applications-store.js';
+import NotFoundError from '../../lib/error/notfound-error.js';
+import type { IApplicationOverview } from '../../lib/features/metrics/instance/models.js';
 
 export default class FakeClientApplicationsStore
     implements IClientApplicationsStore
@@ -75,11 +75,15 @@ export default class FakeClientApplicationsStore
     }
 
     async upsert(details: Partial<IClientApplication>): Promise<void> {
-        await this.delete(details.appName);
+        await this.delete(details.appName!!);
         return this.bulkUpsert([details]);
     }
 
     getApplicationOverview(appName: string): Promise<IApplicationOverview> {
         throw new Error('Method not implemented.');
+    }
+
+    async removeInactiveApplications(): Promise<number> {
+        return 0;
     }
 }

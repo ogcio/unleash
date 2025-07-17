@@ -7,8 +7,8 @@ import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
 import useToast from 'hooks/useToast';
 import { useNavigate } from 'react-router-dom';
 import { ADMIN } from 'component/providers/AccessProvider/permissions';
-import EnvironmentForm from '../EnvironmentForm/EnvironmentForm';
-import useEnvironmentForm from '../hooks/useEnvironmentForm';
+import EnvironmentForm from '../EnvironmentForm/EnvironmentForm.tsx';
+import useEnvironmentForm from '../hooks/useEnvironmentForm.ts';
 import { formatUnknownError } from 'utils/formatUnknownError';
 import { useRequiredPathParam } from 'hooks/useRequiredPathParam';
 import { GO_BACK } from 'constants/navigate';
@@ -21,14 +21,27 @@ const EditEnvironment = () => {
     const { updateEnvironment } = useEnvironmentApi();
 
     const navigate = useNavigate();
-    const { name, type, setName, setType, errors, clearErrors } =
-        useEnvironmentForm(environment.name, environment.type);
+    const {
+        name,
+        type,
+        setName,
+        setType,
+        requiredApprovals,
+        setRequiredApprovals,
+        errors,
+        clearErrors,
+    } = useEnvironmentForm(
+        environment.name,
+        environment.type,
+        environment.requiredApprovals,
+    );
     const { refetch } = usePermissions();
 
     const editPayload = () => {
         return {
             type,
             sortOrder: environment.sortOrder,
+            requiredApprovals,
         };
     };
 
@@ -49,7 +62,7 @@ const EditEnvironment = () => {
             navigate('/environments');
             setToastData({
                 type: 'success',
-                title: 'Successfully updated environment.',
+                text: 'Successfully updated environment.',
             });
         } catch (error: unknown) {
             setToastApiError(formatUnknownError(error));
@@ -84,6 +97,8 @@ const EditEnvironment = () => {
                 type={type}
                 setName={setName}
                 setType={setType}
+                requiredApprovals={requiredApprovals}
+                setRequiredApprovals={setRequiredApprovals}
                 mode='Edit'
                 errors={errors}
                 clearErrors={clearErrors}

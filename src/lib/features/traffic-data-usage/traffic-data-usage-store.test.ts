@@ -1,6 +1,17 @@
-import dbInit, { type ITestDb } from '../../../test/e2e/helpers/database-init';
-import getLogger from '../../../test/fixtures/no-logger';
-import type { ITrafficDataUsageStore, IUnleashStores } from '../../types';
+import {
+    differenceInCalendarMonths,
+    endOfMonth,
+    startOfMonth,
+    subMonths,
+} from 'date-fns';
+import dbInit, {
+    type ITestDb,
+} from '../../../test/e2e/helpers/database-init.js';
+import getLogger from '../../../test/fixtures/no-logger.js';
+import type {
+    ITrafficDataUsageStore,
+    IUnleashStores,
+} from '../../types/index.js';
 
 let stores: IUnleashStores;
 let db: ITestDb;
@@ -20,6 +31,10 @@ afterAll(async () => {
     await db.destroy();
 });
 
+beforeEach(async () => {
+    await trafficDataUsageStore.deleteAll();
+});
+
 test('upsert stores new entries', async () => {
     const data = {
         day: new Date(),
@@ -34,7 +49,7 @@ test('upsert stores new entries', async () => {
         statusCodeSeries: data.statusCodeSeries,
     });
     expect(data2).toBeDefined();
-    expect(data2.count).toBe(1);
+    expect(data2!.count).toBe(1);
 });
 
 test('upsert upserts', async () => {
@@ -58,11 +73,10 @@ test('upsert upserts', async () => {
         statusCodeSeries: data.statusCodeSeries,
     });
     expect(data2).toBeDefined();
-    expect(data2.count).toBe(4);
+    expect(data2!.count).toBe(4);
 });
 
 test('getAll returns all', async () => {
-    await trafficDataUsageStore.deleteAll();
     const data1 = {
         day: new Date(),
         trafficGroup: 'default3',
@@ -83,7 +97,6 @@ test('getAll returns all', async () => {
 });
 
 test('delete deletes the specified item', async () => {
-    await trafficDataUsageStore.deleteAll();
     const data1 = {
         day: new Date(),
         trafficGroup: 'default3',
@@ -110,7 +123,6 @@ test('delete deletes the specified item', async () => {
 });
 
 test('can query for specific items', async () => {
-    await trafficDataUsageStore.deleteAll();
     const data1 = {
         day: new Date(),
         trafficGroup: 'default3',
@@ -154,7 +166,6 @@ test('can query for specific items', async () => {
 });
 
 test('can query for data from specific periods', async () => {
-    await trafficDataUsageStore.deleteAll();
     const data1 = {
         day: new Date(2024, 2, 12),
         trafficGroup: 'default-period-query',
@@ -194,4 +205,63 @@ test('can query for data from specific periods', async () => {
     expect(traffic_period_usage_older).toBeDefined();
     expect(traffic_period_usage_older.length).toBe(1);
     expect(traffic_period_usage_older[0].count).toBe(12);
+});
+
+test('can query for monthly aggregation of data for a specified range', async () => {
+    const now = new Date();
+
+    const expectedValues: { groupA: number; groupB: number }[] = [];
+
+    // fill in with data for the last 13 months
+    for (let i = 0; i <= 12; i++) {
+        const then = subMonths(now, i);
+        let monthAggregateA = 0;
+        let monthAggregateB = 0;
+        for (let day = 1; day <= 5; day++) {
+            const dayValue = i + day;
+            const dayValueB = dayValue * 2;
+            monthAggregateA += dayValue;
+            monthAggregateB += dayValueB;
+            const dataA = {
+                day: new Date(then.getFullYear(), then.getMonth(), day),
+                trafficGroup: 'groupA',
+                statusCodeSeries: 200,
+                count: dayValue,
+            };
+            await trafficDataUsageStore.upsert(dataA);
+            const dataB = {
+                day: new Date(then.getFullYear(), then.getMonth(), day),
+                trafficGroup: 'groupB',
+                statusCodeSeries: 200,
+                count: dayValueB,
+            };
+            await trafficDataUsageStore.upsert(dataB);
+        }
+        expectedValues.push({
+            groupA: monthAggregateA,
+            groupB: monthAggregateB,
+        });
+    }
+
+    for (const monthsBack of [3, 6, 12]) {
+        const to = endOfMonth(now);
+        const from = subMonths(startOfMonth(now), monthsBack);
+        const result =
+            await trafficDataUsageStore.getMonthlyTrafficDataUsageForPeriod(
+                from,
+                to,
+            );
+
+        // should have the current month and the preceding n months (one entry per group)
+        expect(result.length).toBe((monthsBack + 1) * 2);
+
+        for (const entry of result) {
+            const index = differenceInCalendarMonths(
+                now,
+                new Date(entry.month),
+            );
+            const expectedCount = expectedValues[index];
+            expect(entry.count).toBe(expectedCount[entry.trafficGroup]);
+        }
+    }
 });

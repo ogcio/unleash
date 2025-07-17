@@ -1,47 +1,47 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import type {
     IAuditUser,
+    IFlagResolver,
     IUnleashConfig,
-    IUnleashServices,
-    IUnleashStores,
-} from '../../types';
-import type { Logger } from '../../logger';
+    IUser,
+} from '../../types/index.js';
+import type { Logger } from '../../logger.js';
 import type {
     ClientMetricsSchema,
     FrontendApiFeatureSchema,
-} from '../../openapi';
-import type ApiUser from '../../types/api-user';
-import type { IApiUser } from '../../types/api-user';
+} from '../../openapi/index.js';
+import ApiUser from '../../types/api-user.js';
+import type { IApiUser } from '../../types/api-user.js';
 import {
     type Context,
     InMemStorageProvider,
     Unleash,
     UnleashEvents,
 } from 'unleash-client';
-import { ApiTokenType } from '../../types/models/api-token';
+import { ApiTokenType } from '../../types/model.js';
 import {
     type FrontendSettings,
     frontendSettingsKey,
-} from '../../types/settings/frontend-settings';
-import { validateOrigins } from '../../util';
-import { BadDataError, InvalidTokenError } from '../../error';
-import { FRONTEND_API_REPOSITORY_CREATED } from '../../metric-events';
-import { FrontendApiRepository } from './frontend-api-repository';
-import type { GlobalFrontendApiCache } from './global-frontend-api-cache';
+} from '../../types/settings/frontend-settings.js';
+import { validateOrigins } from '../../util/index.js';
+import { BadDataError, InvalidTokenError } from '../../error/index.js';
+import { FRONTEND_API_REPOSITORY_CREATED } from '../../metric-events.js';
+import { FrontendApiRepository } from './frontend-api-repository.js';
+import type { GlobalFrontendApiCache } from './global-frontend-api-cache.js';
+import type { IUnleashServices } from '../../services/index.js';
 
 export type Config = Pick<
     IUnleashConfig,
-    'getLogger' | 'frontendApi' | 'frontendApiOrigins' | 'eventBus'
+    | 'getLogger'
+    | 'frontendApi'
+    | 'frontendApiOrigins'
+    | 'eventBus'
+    | 'flagResolver'
 >;
-
-export type Stores = Pick<IUnleashStores, 'segmentReadModel'>;
 
 export type Services = Pick<
     IUnleashServices,
-    | 'featureToggleServiceV2'
-    | 'clientMetricsServiceV2'
-    | 'settingService'
-    | 'configurationRevisionService'
+    'clientMetricsServiceV2' | 'settingService' | 'clientInstanceService'
 >;
 
 export class FrontendApiService {
@@ -49,9 +49,9 @@ export class FrontendApiService {
 
     private readonly logger: Logger;
 
-    private readonly stores: Stores;
-
     private readonly services: Services;
+
+    private flagResolver: IFlagResolver;
 
     private readonly globalFrontendApiCache: GlobalFrontendApiCache;
 
@@ -63,18 +63,17 @@ export class FrontendApiService {
     private readonly clients: Map<ApiUser['secret'], Promise<Unleash>> =
         new Map();
 
-    private cachedFrontendSettings?: FrontendSettings;
+    private cachedFrontendSettings: FrontendSettings;
 
     constructor(
         config: Config,
-        stores: Stores,
         services: Services,
         globalFrontendApiCache: GlobalFrontendApiCache,
     ) {
         this.config = config;
         this.logger = config.getLogger('services/frontend-api-service.ts');
-        this.stores = stores;
         this.services = services;
+        this.flagResolver = config.flagResolver;
         this.globalFrontendApiCache = globalFrontendApiCache;
     }
 
@@ -107,10 +106,18 @@ export class FrontendApiService {
         return resultDefinitions;
     }
 
+    private resolveProject(user: IUser | IApiUser) {
+        if (user instanceof ApiUser) {
+            return user.projects;
+        }
+        return ['default'];
+    }
+
     async registerFrontendApiMetrics(
         token: IApiUser,
         metrics: ClientMetricsSchema,
         ip: string,
+        sdkVersion?: string | string[],
     ): Promise<void> {
         FrontendApiService.assertExpectedTokenType(token);
 
@@ -127,6 +134,18 @@ export class FrontendApiService {
             },
             ip,
         );
+
+        if (metrics.instanceId && typeof sdkVersion === 'string') {
+            const client = {
+                appName: metrics.appName,
+                instanceId: metrics.instanceId,
+                sdkVersion: sdkVersion,
+                sdkType: 'frontend' as const,
+                environment: environment,
+                projects: this.resolveProject(token),
+            };
+            this.services.clientInstanceService.registerFrontendClient(client);
+        }
     }
 
     private async clientForFrontendApiToken(token: IApiUser): Promise<Unleash> {
@@ -192,17 +211,18 @@ export class FrontendApiService {
         }
     }
 
-    async setFrontendSettings(
-        value: FrontendSettings,
+    async setFrontendCorsSettings(
+        value: FrontendSettings['frontendApiOrigins'],
         auditUser: IAuditUser,
     ): Promise<void> {
-        const error = validateOrigins(value.frontendApiOrigins);
+        const error = validateOrigins(value);
         if (error) {
             throw new BadDataError(error);
         }
+        const settings = (await this.getFrontendSettings(false)) || {};
         await this.services.settingService.insert(
             frontendSettingsKey,
-            value,
+            { ...settings, frontendApiOrigins: value },
             auditUser,
             false,
         );
@@ -211,9 +231,12 @@ export class FrontendApiService {
     async fetchFrontendSettings(): Promise<FrontendSettings> {
         try {
             this.cachedFrontendSettings =
-                await this.services.settingService.get(frontendSettingsKey, {
-                    frontendApiOrigins: this.config.frontendApiOrigins,
-                });
+                await this.services.settingService.getWithDefault(
+                    frontendSettingsKey,
+                    {
+                        frontendApiOrigins: this.config.frontendApiOrigins,
+                    },
+                );
         } catch (error) {
             this.logger.debug('Unable to fetch frontend settings', error);
         }

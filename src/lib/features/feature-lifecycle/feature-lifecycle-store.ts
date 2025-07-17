@@ -4,9 +4,9 @@ import type {
     FeatureLifecycleView,
     FeatureLifecycleProjectItem,
     NewStage,
-} from './feature-lifecycle-store-type';
-import type { Db } from '../../db/db';
-import type { StageName } from '../../types';
+} from './feature-lifecycle-store-type.js';
+import type { Db } from '../../db/db.js';
+import type { StageName } from '../../types/index.js';
 
 type DBType = {
     stage: StageName;
@@ -34,6 +34,14 @@ export class FeatureLifecycleStore implements IFeatureLifecycleStore {
             FROM features
                 LEFT JOIN feature_lifecycles ON features.name = feature_lifecycles.feature
             WHERE feature_lifecycles.feature IS NULL
+        `);
+        await this.db.raw(`
+            INSERT INTO feature_lifecycles (feature, stage, created_at)
+            SELECT features.name, 'archived', features.archived_at
+            FROM features
+                LEFT JOIN feature_lifecycles ON features.name = feature_lifecycles.feature AND feature_lifecycles.stage = 'archived'
+            WHERE features.archived_at IS NOT NULL
+              AND feature_lifecycles.feature IS NULL
         `);
     }
 

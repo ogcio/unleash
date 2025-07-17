@@ -14,16 +14,16 @@ import { useConditionallyHiddenColumns } from 'hooks/useConditionallyHiddenColum
 import { useSignalEndpoints } from 'hooks/api/getters/useSignalEndpoints/useSignalEndpoints';
 import { useSignalEndpointsApi } from 'hooks/api/actions/useSignalEndpointsApi/useSignalEndpointsApi';
 import type { ISignalEndpoint } from 'interfaces/signal';
-import { SignalEndpointsActionsCell } from './SignalEndpointsActionsCell';
-import { SignalEndpointsDeleteDialog } from './SignalEndpointsDeleteDialog';
+import { SignalEndpointsActionsCell } from './SignalEndpointsActionsCell.tsx';
+import { SignalEndpointsDeleteDialog } from './SignalEndpointsDeleteDialog.tsx';
 import { ToggleCell } from 'component/common/Table/cells/ToggleCell/ToggleCell';
 import copy from 'copy-to-clipboard';
 import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
-import { SignalEndpointsTokensCell } from './SignalEndpointsTokensCell';
-import { SignalEndpointsModal } from '../SignalEndpointsModal/SignalEndpointsModal';
-import { SignalEndpointsTokensDialog } from '../SignalEndpointsModal/SignalEndpointsForm/SignalEndpointsTokens/SignalEndpointsTokensDialog';
+import { SignalEndpointsTokensCell } from './SignalEndpointsTokensCell.tsx';
+import { SignalEndpointsModal } from '../SignalEndpointsModal/SignalEndpointsModal.tsx';
+import { SignalEndpointsTokensDialog } from '../SignalEndpointsModal/SignalEndpointsForm/SignalEndpointsTokens/SignalEndpointsTokensDialog.tsx';
 import { LinkCell } from 'component/common/Table/cells/LinkCell/LinkCell';
-import { SignalEndpointsSignalsModal } from '../SignalEndpointsSignals/SignalEndpointsSignalsModal';
+import { SignalEndpointsSignalsModal } from '../SignalEndpointsSignals/SignalEndpointsSignalsModal.tsx';
 import { PageContent } from 'component/common/PageContent/PageContent';
 import { PageHeader } from 'component/common/PageHeader/PageHeader';
 import { PermissionGuard } from 'component/common/PermissionGuard/PermissionGuard';
@@ -68,7 +68,7 @@ export const SignalEndpointsTable = () => {
         try {
             await toggleSignalEndpoint(id, enabled);
             setToastData({
-                title: `"${name}" has been ${enabled ? 'enabled' : 'disabled'}`,
+                text: `"${name}" ${enabled ? 'enabled' : 'disabled'}`,
                 type: 'success',
             });
             refetch();
@@ -81,7 +81,7 @@ export const SignalEndpointsTable = () => {
         try {
             await removeSignalEndpoint(id);
             setToastData({
-                title: `"${name}" has been deleted`,
+                text: `"${name}" deleted`,
                 type: 'success',
             });
             refetch();
@@ -181,7 +181,7 @@ export const SignalEndpointsTable = () => {
                             );
                             setToastData({
                                 type: 'success',
-                                title: 'Copied to clipboard',
+                                text: 'Copied to clipboard',
                             });
                         }}
                         onOpenSignals={() => {

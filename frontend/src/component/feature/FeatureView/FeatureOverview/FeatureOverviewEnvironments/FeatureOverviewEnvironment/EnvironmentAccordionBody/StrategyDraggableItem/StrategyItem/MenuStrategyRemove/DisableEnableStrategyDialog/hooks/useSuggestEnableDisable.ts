@@ -2,7 +2,7 @@ import { useChangeRequestApi } from 'hooks/api/actions/useChangeRequestApi/useCh
 import { usePendingChangeRequests } from 'hooks/api/getters/usePendingChangeRequests/usePendingChangeRequests';
 import useToast from 'hooks/useToast';
 import { formatUnknownError } from 'utils/formatUnknownError';
-import type { IDisableEnableStrategyProps } from '../IDisableEnableStrategyProps';
+import type { IDisableEnableStrategyProps } from '../IDisableEnableStrategyProps.jsx';
 
 export const useSuggestEnableDisable = ({
     projectId,
@@ -25,7 +25,7 @@ export const useSuggestEnableDisable = ({
                 },
             });
             setToastData({
-                title: 'Changes added to the draft!',
+                text: 'Changes added to draft',
                 type: 'success',
             });
             await refetchChangeRequests();

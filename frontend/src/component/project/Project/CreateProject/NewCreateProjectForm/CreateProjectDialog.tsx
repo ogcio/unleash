@@ -9,9 +9,9 @@ import FormTemplate from 'component/common/FormTemplate/FormTemplate';
 import { CREATE_PROJECT } from 'component/providers/AccessProvider/permissions';
 import useProjectForm, {
     DEFAULT_PROJECT_STICKINESS,
-} from '../../hooks/useProjectForm';
+} from '../../hooks/useProjectForm.ts';
 import { usePlausibleTracker } from 'hooks/usePlausibleTracker';
-import { type ReactNode, useState, type FormEvent } from 'react';
+import { type ReactNode, useState, type FormEvent, useEffect } from 'react';
 import { useAuthUser } from 'hooks/api/getters/useAuth/useAuthUser';
 import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
 import { useNavigate } from 'react-router-dom';
@@ -24,10 +24,9 @@ import { MultiSelectConfigButton } from 'component/common/DialogFormTemplate/Con
 import { SingleSelectConfigButton } from 'component/common/DialogFormTemplate/ConfigButtons/SingleSelectConfigButton';
 import { useEnvironments } from 'hooks/api/getters/useEnvironments/useEnvironments';
 import { useStickinessOptions } from 'hooks/useStickinessOptions';
-import { ChangeRequestTableConfigButton } from './ConfigButtons/ChangeRequestTableConfigButton';
+import { ChangeRequestTableConfigButton } from './ConfigButtons/ChangeRequestTableConfigButton.tsx';
 import { StyledDefinitionList } from './CreateProjectDialog.styles';
 import { ProjectIcon } from 'component/common/ProjectIcon/ProjectIcon';
-import { useUiFlag } from '../../../../../hooks/useUiFlag';
 
 interface ICreateProjectDialogProps {
     open: boolean;
@@ -119,7 +118,6 @@ export const CreateProjectDialog = ({
     const { setToastData, setToastApiError } = useToast();
     const navigate = useNavigate();
     const { trackEvent } = usePlausibleTracker();
-    const onboardingUIEnabled = useUiFlag('onboardingUI');
     const {
         projectName,
         projectDesc,
@@ -180,9 +178,7 @@ export const CreateProjectDialog = ({
                 refetchUser();
                 navigate(`/projects/${createdProject.id}`);
                 setToastData({
-                    title: 'Project created',
-                    text: 'Now you can add flags to this project',
-                    confetti: true,
+                    text: 'Project created',
                     type: 'success',
                 });
 
@@ -192,11 +188,9 @@ export const CreateProjectDialog = ({
                 trackEvent('project-mode', {
                     props: { mode: projectMode, action: 'added' },
                 });
-                if (onboardingUIEnabled) {
-                    trackEvent('onboarding', {
-                        props: { eventType: 'onboarding-started' },
-                    });
-                }
+                trackEvent('onboarding', {
+                    props: { eventType: 'onboarding-started' },
+                });
             } catch (error: unknown) {
                 setToastApiError(formatUnknownError(error));
             }
@@ -231,7 +225,23 @@ export const CreateProjectDialog = ({
             : activeEnvironments.filter((env) =>
                   projectEnvironments.has(env.name),
               )
-    ).map(({ name, type }) => ({ name, type }));
+    ).map(({ name, type, requiredApprovals }) => ({
+        name,
+        type,
+        requiredApprovals,
+        configurable: !Number.isInteger(requiredApprovals),
+    }));
+
+    useEffect(() => {
+        availableChangeRequestEnvironments.forEach((environment) => {
+            if (Number.isInteger(environment.requiredApprovals)) {
+                updateProjectChangeRequestConfig.enableChangeRequests(
+                    environment.name,
+                    Number(environment.requiredApprovals),
+                );
+            }
+        });
+    }, [JSON.stringify(availableChangeRequestEnvironments)]);
 
     return (
         <StyledDialog open={open} onClose={onClose}>

@@ -1,9 +1,9 @@
 import type { FromSchema } from 'json-schema-to-ts';
-import { constraintSchema } from './constraint-schema';
-import { parametersSchema } from './parameters-schema';
-import { featureStrategySchema } from './feature-strategy-schema';
-import { variantSchema } from './variant-schema';
-import { strategyVariantSchema } from './strategy-variant-schema';
+import { constraintSchema } from './constraint-schema.js';
+import { parametersSchema } from './parameters-schema.js';
+import { featureStrategySchema } from './feature-strategy-schema.js';
+import { variantSchema } from './variant-schema.js';
+import { strategyVariantSchema } from './strategy-variant-schema.js';
 
 export const featureEnvironmentSchema = {
     $id: '#/components/schemas/featureEnvironmentSchema',
@@ -62,6 +62,32 @@ export const featureEnvironmentSchema = {
                 $ref: '#/components/schemas/variantSchema',
             },
             description: 'A list of variants for the feature environment',
+        },
+        changeRequestIds: {
+            type: 'array',
+            items: {
+                type: 'number',
+            },
+            description:
+                'Experimental. A list of change request identifiers for actionable change requests that are not Cancelled, Rejected or Approved.',
+        },
+        milestoneName: {
+            type: 'string',
+            example: 'Phase One',
+            description:
+                'Experimental: The name of the currently active release plan milestone',
+        },
+        milestoneOrder: {
+            type: 'number',
+            example: 0,
+            description:
+                'Experimental: The zero-indexed order of currently active milestone in the list of all release plan milestones',
+        },
+        totalMilestones: {
+            type: 'number',
+            example: 0,
+            description:
+                'Experimental: The total number of milestones in the feature environment release plan',
         },
         lastSeenAt: {
             type: 'string',

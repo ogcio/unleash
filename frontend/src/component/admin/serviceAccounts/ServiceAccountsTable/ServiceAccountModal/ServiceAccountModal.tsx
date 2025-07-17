@@ -30,7 +30,7 @@ import {
 } from 'component/user/Profile/PersonalAPITokensTab/CreatePersonalAPIToken/PersonalAPITokenForm/PersonalAPITokenForm';
 import { useServiceAccountTokensApi } from 'hooks/api/actions/useServiceAccountTokensApi/useServiceAccountTokensApi';
 import type { INewPersonalAPIToken } from 'interfaces/personalAPIToken';
-import { ServiceAccountTokens } from './ServiceAccountTokens/ServiceAccountTokens';
+import { ServiceAccountTokens } from './ServiceAccountTokens/ServiceAccountTokens.tsx';
 import type { IServiceAccount } from 'interfaces/service-account';
 import { RoleSelect } from 'component/common/RoleSelect/RoleSelect';
 import type { IRole } from 'interfaces/role';
@@ -196,7 +196,7 @@ export const ServiceAccountModal = ({
                 }
             }
             setToastData({
-                title: `Service account ${
+                text: `Service account ${
                     editing ? 'updated' : 'added'
                 } successfully`,
                 type: 'success',
@@ -271,7 +271,7 @@ export const ServiceAccountModal = ({
                 modal
                 title={editing ? 'Edit service account' : 'New service account'}
                 description='A service account is a special type of account that can only be used to authenticate with the Unleash API. Service accounts can be used to automate tasks.'
-                documentationLink='https://docs.getunleash.io'
+                documentationLink='https://docs.getunleash.io/reference/service-accounts'
                 documentationLinkLabel='Service accounts documentation'
                 formatApiCode={formatApiCode}
             >

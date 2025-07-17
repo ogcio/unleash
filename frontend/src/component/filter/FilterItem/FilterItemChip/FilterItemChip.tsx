@@ -3,7 +3,7 @@ import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
 import Close from '@mui/icons-material/Close';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 import { Chip, IconButton, styled } from '@mui/material';
-import { FilterItemOperator } from './FilterItemOperator/FilterItemOperator';
+import { FilterItemOperator } from './FilterItemOperator/FilterItemOperator.tsx';
 import { FILTER_ITEM } from 'utils/testIds';
 import { usePlausibleTracker } from 'hooks/usePlausibleTracker';
 
@@ -24,6 +24,11 @@ const StyledChip = styled(
               backgroundColor: theme.palette.secondary.light,
           }
         : {}),
+
+    ':focus-visible': {
+        outline: `1px solid ${theme.palette.primary.main}`,
+        borderColor: theme.palette.primary.main,
+    },
 }));
 
 const StyledLabel = styled('div')(({ theme }) => ({
@@ -31,6 +36,7 @@ const StyledLabel = styled('div')(({ theme }) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     fontWeight: theme.typography.fontWeightBold,
+    minHeight: theme.spacing(3.5),
 }));
 
 const StyledOptions = styled('button')(({ theme }) => ({

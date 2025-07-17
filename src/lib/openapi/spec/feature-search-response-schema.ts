@@ -1,12 +1,12 @@
 import type { FromSchema } from 'json-schema-to-ts';
-import { variantSchema } from './variant-schema';
-import { constraintSchema } from './constraint-schema';
-import { overrideSchema } from './override-schema';
-import { parametersSchema } from './parameters-schema';
-import { featureStrategySchema } from './feature-strategy-schema';
-import { tagSchema } from './tag-schema';
-import { strategyVariantSchema } from './strategy-variant-schema';
-import { featureSearchEnvironmentSchema } from './feature-search-environment-schema';
+import { variantSchema } from './variant-schema.js';
+import { constraintSchema } from './constraint-schema.js';
+import { overrideSchema } from './override-schema.js';
+import { parametersSchema } from './parameters-schema.js';
+import { featureStrategySchema } from './feature-strategy-schema.js';
+import { tagSchema } from './tag-schema.js';
+import { strategyVariantSchema } from './strategy-variant-schema.js';
+import { featureSearchEnvironmentSchema } from './feature-search-environment-schema.js';
 
 export const featureSearchResponseSchema = {
     $id: '#/components/schemas/featureSearchResponseSchema',
@@ -25,6 +25,7 @@ export const featureSearchResponseSchema = {
         'createdBy',
         'environments',
         'segments',
+        'archivedAt',
     ],
     description: 'A feature flag definition',
     properties: {
@@ -53,11 +54,6 @@ export const featureSearchResponseSchema = {
             example: 'parent',
             description:
                 "The type of dependency. 'parent' means that the feature is a parent feature, 'child' means that the feature is a child feature.",
-        },
-        archived: {
-            type: 'boolean',
-            example: true,
-            description: '`true` if the feature is archived',
         },
         project: {
             type: 'string',

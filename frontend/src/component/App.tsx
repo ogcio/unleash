@@ -1,5 +1,5 @@
 import { Suspense, useEffect } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 import { FeedbackNPS } from 'component/feedback/FeedbackNPS/FeedbackNPS';
 import { LayoutPicker } from 'component/layout/LayoutPicker/LayoutPicker';
@@ -14,13 +14,16 @@ import { useAuthUser } from 'hooks/api/getters/useAuth/useAuthUser';
 import { SplashPageRedirect } from 'component/splash/SplashPageRedirect/SplashPageRedirect';
 import useUiConfig from 'hooks/api/getters/useUiConfig/useUiConfig';
 
-import MaintenanceBanner from './maintenance/MaintenanceBanner';
+import MaintenanceBanner from './maintenance/MaintenanceBanner.tsx';
 import { styled } from '@mui/material';
-import { InitialRedirect } from './InitialRedirect';
-import { InternalBanners } from './banners/internalBanners/InternalBanners';
-import { ExternalBanners } from './banners/externalBanners/ExternalBanners';
-import { LicenseBanner } from './banners/internalBanners/LicenseBanner';
-import { Demo } from './demo/Demo';
+import { InitialRedirect, useLastViewedPage } from './InitialRedirect.tsx';
+import { InternalBanners } from './banners/internalBanners/InternalBanners.tsx';
+import { ExternalBanners } from './banners/externalBanners/ExternalBanners.tsx';
+import { LicenseBanner } from './banners/internalBanners/LicenseBanner.tsx';
+import { Demo } from './demo/Demo.tsx';
+import { LoginRedirect } from './common/LoginRedirect/LoginRedirect.tsx';
+import { SecurityBanner } from './banners/internalBanners/SecurityBanner.tsx';
+import { MonthsOldVersionBanner } from './banners/internalBanners/MonthsOldVersionBanner.tsx';
 
 const StyledContainer = styled('div')(() => ({
     '& ul': {
@@ -31,7 +34,6 @@ const StyledContainer = styled('div')(() => ({
 export const App = () => {
     const { authDetails } = useAuthDetails();
     const { refetch: refetchUiConfig } = useUiConfig();
-
     const { user } = useAuthUser();
     const hasFetchedAuth = Boolean(authDetails || user);
 
@@ -46,6 +48,11 @@ export const App = () => {
             refetchUiConfig();
         }
     }, [authDetails, user]);
+
+    const isLoggedIn = Boolean(user?.id);
+
+    const location = useLocation();
+    useLastViewedPage(location);
 
     return (
         <SWRProvider>
@@ -63,6 +70,8 @@ export const App = () => {
                                     show={<MaintenanceBanner />}
                                 />
                                 <LicenseBanner />
+                                <SecurityBanner />
+                                <MonthsOldVersionBanner />
                                 <ExternalBanners />
                                 <InternalBanners />
                                 <StyledContainer>
@@ -92,7 +101,13 @@ export const App = () => {
                                         />
                                         <Route
                                             path='*'
-                                            element={<NotFound />}
+                                            element={
+                                                isLoggedIn ? (
+                                                    <NotFound />
+                                                ) : (
+                                                    <LoginRedirect />
+                                                )
+                                            }
                                         />
                                     </Routes>
 

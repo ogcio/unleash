@@ -10,9 +10,10 @@ import type React from 'react';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import IndeterminateCheckBoxIcon from '@mui/icons-material/IndeterminateCheckBox';
-import type { ITag, ITagType } from 'interfaces/tags';
+import type { ITagType } from 'interfaces/tags';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 import Add from '@mui/icons-material/Add';
+import type { TagSchema } from 'openapi';
 
 export type TagOption = {
     title: string;
@@ -21,7 +22,7 @@ export type TagOption = {
 
 interface ITagsInputProps {
     options: TagOption[];
-    existingTags: ITag[];
+    existingTags: TagSchema[];
     tagType: ITagType;
     selectedOptions: TagOption[];
     indeterminateOptions?: TagOption[];
@@ -52,7 +53,10 @@ export const TagsInput = ({
     };
 
     const renderOption = (
-        props: JSX.IntrinsicAttributes &
+        {
+            key,
+            ...props
+        }: JSX.IntrinsicAttributes &
             React.ClassAttributes<HTMLLIElement> &
             React.LiHTMLAttributes<HTMLLIElement>,
         option: TagOption,
@@ -64,7 +68,7 @@ export const TagsInput = ({
                     indeterminateOption.title === option.title,
             ) ?? false;
         return (
-            <li {...props}>
+            <li key={key} {...props}>
                 <ConditionallyRender
                     condition={Boolean(option.inputValue)}
                     show={<Add sx={{ mr: (theme) => theme.spacing(0.5) }} />}

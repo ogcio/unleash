@@ -15,13 +15,13 @@ import type {
     IFeatureVariant,
 } from 'interfaces/featureToggle';
 import { useMemo, useState } from 'react';
-import { EnvironmentVariantsModal } from './EnvironmentVariantsModal/EnvironmentVariantsModal';
-import { EnvironmentVariantsCard } from './EnvironmentVariantsCard/EnvironmentVariantsCard';
+import { EnvironmentVariantsModal } from './EnvironmentVariantsModal/EnvironmentVariantsModal.tsx';
+import { EnvironmentVariantsCard } from './EnvironmentVariantsCard/EnvironmentVariantsCard.tsx';
 import useFeatureApi from 'hooks/api/actions/useFeatureApi/useFeatureApi';
 import { formatUnknownError } from 'utils/formatUnknownError';
 import useToast from 'hooks/useToast';
-import { EnvironmentVariantsCopyFrom } from './EnvironmentVariantsCopyFrom/EnvironmentVariantsCopyFrom';
-import { PushVariantsButton } from './PushVariantsButton/PushVariantsButton';
+import { EnvironmentVariantsCopyFrom } from './EnvironmentVariantsCopyFrom/EnvironmentVariantsCopyFrom.tsx';
+import { PushVariantsButton } from './PushVariantsButton/PushVariantsButton.tsx';
 import { useChangeRequestApi } from 'hooks/api/actions/useChangeRequestApi/useChangeRequestApi';
 import { useChangeRequestsEnabled } from 'hooks/useChangeRequestsEnabled';
 import { usePendingChangeRequests } from 'hooks/api/getters/usePendingChangeRequests/usePendingChangeRequests';
@@ -117,7 +117,7 @@ export const FeatureEnvironmentVariants = () => {
             if (error) {
                 setToastData({
                     type: 'error',
-                    title: error,
+                    text: error,
                 });
                 return;
             }
@@ -183,7 +183,7 @@ export const FeatureEnvironmentVariants = () => {
                 pushTitle && draftTitle ? '. ' : ''
             }${draftTitle}`;
             setToastData({
-                title,
+                text: title,
                 type: 'success',
             });
         } catch (error: unknown) {
@@ -202,7 +202,7 @@ export const FeatureEnvironmentVariants = () => {
                 await updateVariants(selectedEnvironment, updatedVariants);
                 setModalOpen(false);
                 setToastData({
-                    title: selectedEnvironment.crEnabled
+                    text: selectedEnvironment.crEnabled
                         ? `Variant changes added to draft`
                         : 'Variants updated successfully',
                     type: 'success',
@@ -221,7 +221,7 @@ export const FeatureEnvironmentVariants = () => {
             const variants = fromEnvironment.variants ?? [];
             await updateVariants(toEnvironment, variants);
             setToastData({
-                title: toEnvironment.crEnabled
+                text: toEnvironment.crEnabled
                     ? 'Variants copy added to draft'
                     : 'Variants copied successfully',
                 type: 'success',

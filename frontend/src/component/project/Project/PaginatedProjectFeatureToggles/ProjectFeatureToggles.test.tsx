@@ -1,6 +1,6 @@
 import { render } from 'utils/testRenderer';
 import { Route, Routes } from 'react-router-dom';
-import { ProjectFeatureToggles } from './ProjectFeatureToggles';
+import { ProjectFeatureToggles } from './ProjectFeatureToggles.tsx';
 import { testServerRoute, testServerSetup } from 'utils/testServer';
 import { fireEvent, screen } from '@testing-library/react';
 import { BATCH_SELECTED_COUNT } from 'utils/testIds';
@@ -28,7 +28,6 @@ const setupApi = () => {
     testServerRoute(server, '/api/admin/ui-config', {
         flags: {
             flagCreator: true,
-            onboardingUI: true,
         },
     });
     testServerRoute(server, '/api/admin/tags', {
@@ -39,6 +38,33 @@ const setupApi = () => {
         { id: 2, name: 'AuthorB' },
     ]);
 };
+
+test('filters by flag type', async () => {
+    setupApi();
+
+    render(
+        <Routes>
+            <Route
+                path={'/projects/:projectId'}
+                element={
+                    <ProjectFeatureToggles
+                        environments={['development', 'production']}
+                    />
+                }
+            />
+        </Routes>,
+        {
+            route: '/projects/default',
+        },
+    );
+    await screen.findByText('featureA');
+    const [icon] = await screen.findAllByTestId('feature-type-icon');
+
+    fireEvent.click(icon);
+
+    await screen.findByText('Flag type');
+    await screen.findByText('Operational');
+});
 
 test('selects project features', async () => {
     setupApi();
@@ -82,8 +108,7 @@ test('selects project features', async () => {
     expect(screen.queryByTestId(BATCH_SELECTED_COUNT)).not.toBeInTheDocument();
 });
 
-// TODO: stopped working after react v18 upgrade
-test.skip('filters by tag', async () => {
+test('filters by tag', async () => {
     setupApi();
     render(
         <Routes>
@@ -108,7 +133,7 @@ test.skip('filters by tag', async () => {
     expect(await screen.findAllByText('backend:sdk')).toHaveLength(2);
 });
 
-test('filters by flag type', async () => {
+test('filters by flag author', async () => {
     setupApi();
     render(
         <Routes>
@@ -125,34 +150,7 @@ test('filters by flag type', async () => {
             route: '/projects/default',
         },
     );
-    await screen.findByText('featureA');
-    const [icon] = await screen.findAllByTestId('feature-type-icon');
-
-    fireEvent.click(icon);
-
-    await screen.findByText('Flag type');
-    await screen.findByText('Operational');
-});
-
-// TODO: stopped working after react v18 upgrade
-test.skip('filters by flag author', async () => {
-    setupApi();
-    render(
-        <Routes>
-            <Route
-                path={'/projects/:projectId'}
-                element={
-                    <ProjectFeatureToggles
-                        environments={['development', 'production']}
-                    />
-                }
-            />
-        </Routes>,
-        {
-            route: '/projects/default',
-        },
-    );
-    const addFilter = await screen.findByText('Add Filter');
+    const addFilter = await screen.findByText('Filter');
     fireEvent.click(addFilter);
 
     const createdBy = await screen.findByText('Created by');

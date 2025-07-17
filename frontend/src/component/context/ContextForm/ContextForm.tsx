@@ -14,7 +14,7 @@ import Add from '@mui/icons-material/Add';
 import type { ILegalValue } from 'interfaces/context';
 import { ContextFormChip } from 'component/context/ContectFormChip/ContextFormChip';
 import { ContextFormChipList } from 'component/context/ContectFormChip/ContextFormChipList';
-import { ContextFieldUsage } from '../ContextFieldUsage/ContextFieldUsage';
+import { ContextFieldUsage } from '../ContextFieldUsage/ContextFieldUsage.tsx';
 
 interface IContextForm {
     contextName: string;
@@ -69,11 +69,11 @@ const StyledSwitchContainer = styled('div')({
     marginLeft: '-9px',
 });
 
-const StyledButtonContainer = styled('div')({
-    marginTop: 'auto',
+const StyledButtonContainer = styled('div')(({ theme }) => ({
+    marginTop: theme.spacing(3),
     display: 'flex',
     justifyContent: 'flex-end',
-});
+}));
 
 const StyledCancelButton = styled(Button)(({ theme }) => ({
     marginLeft: theme.spacing(3),

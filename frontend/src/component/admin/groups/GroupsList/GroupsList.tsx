@@ -6,18 +6,25 @@ import { PageContent } from 'component/common/PageContent/PageContent';
 import { PageHeader } from 'component/common/PageHeader/PageHeader';
 import { ConditionallyRender } from 'component/common/ConditionallyRender/ConditionallyRender';
 import { Search } from 'component/common/Search/Search';
-import { Grid, useMediaQuery } from '@mui/material';
+import { styled, useMediaQuery } from '@mui/material';
 import theme from 'themes/theme';
 import { SearchHighlightProvider } from 'component/common/Table/SearchHighlightContext/SearchHighlightContext';
 import { TablePlaceholder } from 'component/common/Table';
-import { GroupCard } from './GroupCard/GroupCard';
-import { GroupEmpty } from './GroupEmpty/GroupEmpty';
+import { GroupCard } from './GroupCard/GroupCard.tsx';
+import { GroupEmpty } from './GroupEmpty/GroupEmpty.tsx';
 import ResponsiveButton from 'component/common/ResponsiveButton/ResponsiveButton';
 import { ADMIN } from 'component/providers/AccessProvider/permissions';
 import Add from '@mui/icons-material/Add';
 import { NAVIGATE_TO_CREATE_GROUP } from 'utils/testIds';
-import { EditGroupUsers } from '../Group/EditGroupUsers/EditGroupUsers';
-import { RemoveGroup } from '../RemoveGroup/RemoveGroup';
+import { EditGroupUsers } from '../Group/EditGroupUsers/EditGroupUsers.tsx';
+import { RemoveGroup } from '../RemoveGroup/RemoveGroup.tsx';
+
+const StyledGridContainer = styled('div')(({ theme }) => ({
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+    gap: theme.spacing(2),
+    gridAutoRows: '1fr',
+}));
 
 type PageQueryType = Partial<Record<'search', string>>;
 
@@ -131,17 +138,16 @@ export const GroupsList: VFC = () => {
             }
         >
             <SearchHighlightProvider value={searchValue}>
-                <Grid container spacing={2}>
+                <StyledGridContainer>
                     {data.map((group) => (
-                        <Grid key={group.id} item xs={12} md={6}>
-                            <GroupCard
-                                group={group}
-                                onEditUsers={onEditUsers}
-                                onRemoveGroup={onRemoveGroup}
-                            />
-                        </Grid>
+                        <GroupCard
+                            key={group.id}
+                            group={group}
+                            onEditUsers={onEditUsers}
+                            onRemoveGroup={onRemoveGroup}
+                        />
                     ))}
-                </Grid>
+                </StyledGridContainer>
             </SearchHighlightProvider>
             <ConditionallyRender
                 condition={!loading && data.length === 0}

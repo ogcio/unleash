@@ -1,4 +1,4 @@
-import { type ParentValue, REMOVE_DEPENDENCY_OPTION } from './constants';
+import { type ParentValue, REMOVE_DEPENDENCY_OPTION } from './constants.js';
 import { usePlausibleTracker } from 'hooks/usePlausibleTracker';
 import { useChangeRequestApi } from 'hooks/api/actions/useChangeRequestApi/useChangeRequestApi';
 import { usePendingChangeRequests } from 'hooks/api/getters/usePendingChangeRequests/usePendingChangeRequests';
@@ -7,7 +7,7 @@ import { useFeature } from 'hooks/api/getters/useFeature/useFeature';
 import { useHighestPermissionChangeRequestEnvironment } from 'hooks/useHighestPermissionChangeRequestEnvironment';
 import { useChangeRequestsEnabled } from 'hooks/useChangeRequestsEnabled';
 import { useDependentFeaturesApi } from 'hooks/api/actions/useDependentFeaturesApi/useDependentFeaturesApi';
-import { formatUnknownError } from '../../../utils/formatUnknownError';
+import { formatUnknownError } from '../../../utils/formatUnknownError.js';
 
 export const useManageDependency = (
     project: string,
@@ -63,12 +63,8 @@ export const useManageDependency = (
         }
         void refetchChangeRequests();
         setToastData({
-            text:
-                actionType === 'addDependency'
-                    ? `${featureId} will depend on ${parent}`
-                    : `${featureId} dependency will be removed`,
             type: 'success',
-            title: 'Change added to a draft',
+            text: 'Change added to draft',
         });
     };
 
@@ -95,7 +91,7 @@ export const useManageDependency = (
                         eventType: 'dependency removed',
                     },
                 });
-                setToastData({ title: 'Dependency removed', type: 'success' });
+                setToastData({ text: 'Dependency removed', type: 'success' });
             } else {
                 await addDependency(featureId, {
                     feature: parent,
@@ -110,7 +106,7 @@ export const useManageDependency = (
                         eventType: 'dependency added',
                     },
                 });
-                setToastData({ title: 'Dependency added', type: 'success' });
+                setToastData({ text: 'Dependency added', type: 'success' });
             }
         } catch (error) {
             setToastApiError(formatUnknownError(error));

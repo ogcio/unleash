@@ -7,12 +7,11 @@ exports[`renders correctly with empty version 1`] = `
       title="API details"
     >
       <h2
-        class="css-gtu1fw"
+        class="css-wc53hr"
       >
         Unleash
          
         test
-         
          
       </h2>
       <br />
@@ -39,14 +38,13 @@ exports[`renders correctly with ui-config 1`] = `
       title="API details"
     >
       <h2
-        class="css-gtu1fw"
+        class="css-wc53hr"
       >
         Unleash
          
         test
          
         1.1.0
-         
       </h2>
       <br />
       <small>
@@ -72,13 +70,12 @@ exports[`renders correctly with versionInfo 1`] = `
       title="API details"
     >
       <h2
-        class="css-gtu1fw"
+        class="css-wc53hr"
       >
         Unleash
          
          
         1.2.3
-         
       </h2>
       <small>
         Upgrade available - Latest Enterprise release: 1.2.4
@@ -109,13 +106,12 @@ exports[`renders correctly without uiConfig 1`] = `
       title="API details"
     >
       <h2
-        class="css-gtu1fw"
+        class="css-wc53hr"
       >
         Unleash
          
          
         1.1.0
-         
       </h2>
       <br />
       <small />

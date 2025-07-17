@@ -1,17 +1,17 @@
-import type { ISegmentStore } from './segment-store-type';
+import type { ISegmentStore } from './segment-store-type.js';
 import type {
     IConstraint,
     IFeatureStrategySegment,
     ISegment,
-} from '../../types/model';
-import type { Logger, LogProvider } from '../../logger';
+} from '../../types/model.js';
+import type { Logger, LogProvider } from '../../logger.js';
 import type EventEmitter from 'events';
-import NotFoundError from '../../error/notfound-error';
-import type { PartialSome } from '../../types/partial';
-import type { IAuditUser } from '../../types/user';
-import type { Db } from '../../db/db';
-import type { IFlagResolver } from '../../types';
-import { isDefined } from '../../util';
+import NotFoundError from '../../error/notfound-error.js';
+import type { PartialSome } from '../../types/partial.js';
+import type { IAuditUser } from '../../types/user.js';
+import type { Db } from '../../db/db.js';
+import type { IFlagResolver } from '../../types/index.js';
+import { isDefined } from '../../util/index.js';
 
 const T = {
     segments: 'segments',
@@ -368,6 +368,15 @@ export default class SegmentStore implements ISegmentStore {
             .where({ name });
 
         return Boolean(rows[0]);
+    }
+
+    async getProjectSegmentCount(projectId: string): Promise<number> {
+        const result = await this.db.raw(
+            `SELECT COUNT(*) FROM ${T.segments} WHERE segment_project_id = ?`,
+            [projectId],
+        );
+
+        return Number(result.rows[0].count);
     }
 
     prefixColumns(): string[] {

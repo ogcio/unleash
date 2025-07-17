@@ -37,7 +37,10 @@ export const useInstanceStatus = (): IUseInstanceStatusOutput => {
         instanceStatus: data,
         refetchInstanceStatus: refetch,
         refresh,
-        isBilling: billingPlans.includes(data?.plan ?? InstancePlan.UNKNOWN),
+        isBilling:
+            uiConfig.billing === 'pay-as-you-go' ||
+            uiConfig.billing === 'enterprise-consumption' ||
+            billingPlans.includes(data?.plan ?? InstancePlan.UNKNOWN),
         loading,
         error,
     };

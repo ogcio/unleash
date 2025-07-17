@@ -1,6 +1,6 @@
-import type { CreateFeatureSchemaType } from 'openapi';
-import type { IFeatureStrategy } from './strategy';
-import type { ITag } from './tags';
+import type { CreateFeatureSchemaType, FeatureSchema } from 'openapi';
+import type { IFeatureStrategy } from './strategy.js';
+import type { ITag } from './tags.js';
 
 /**
  * @deprecated use FeatureSchema from openapi
@@ -34,7 +34,7 @@ export type ILastSeenEnvironments = Pick<
 >;
 
 export type Lifecycle = {
-    stage: 'initial' | 'pre-live' | 'live' | 'completed' | 'archived';
+    stage: Required<FeatureSchema>['lifecycle']['stage'];
     status?: string;
     enteredStageAt: string;
 };
@@ -48,6 +48,8 @@ export type Collaborator = {
 export type CollaboratorData = {
     users: Collaborator[];
 };
+
+export type FeatureLink = { url: string; title: string | null; id: string };
 
 /**
  * @deprecated use FeatureSchema from openapi
@@ -76,6 +78,7 @@ export interface IFeatureToggle {
         imageUrl: string;
     };
     collaborators?: CollaboratorData;
+    links?: FeatureLink[];
 }
 
 export interface IDependency {
@@ -99,6 +102,9 @@ export interface IFeatureEnvironmentWithCrEnabled extends IFeatureEnvironment {
     crEnabled?: boolean;
 }
 
+/**
+ * @deprecated use `StrategyVariantSchema` from openapi
+ */
 export interface IFeatureVariant {
     name: string;
     stickiness: string;
@@ -114,7 +120,7 @@ export interface IOverride {
 }
 
 export interface IPayload {
-    type: string;
+    type: 'string' | 'number' | 'json' | 'csv';
     value: string;
 }
 

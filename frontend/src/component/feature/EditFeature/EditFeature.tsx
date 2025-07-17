@@ -1,7 +1,7 @@
 import FormTemplate from 'component/common/FormTemplate/FormTemplate';
 import { useNavigate } from 'react-router-dom';
-import EditFeatureForm from '../FeatureForm/EditFeatureForm';
-import useFeatureForm from '../hooks/useFeatureForm';
+import EditFeatureForm from '../FeatureForm/EditFeatureForm.tsx';
+import useFeatureForm from '../hooks/useFeatureForm.ts';
 import * as jsonpatch from 'fast-json-patch';
 import { UpdateButton } from 'component/common/UpdateButton/UpdateButton';
 import { UPDATE_FEATURE } from 'component/providers/AccessProvider/permissions';
@@ -32,13 +32,13 @@ const EditFeature = () => {
         impressionData,
         setImpressionData,
         clearErrors,
-    } = useFeatureForm(
-        feature?.name,
-        feature?.type,
-        feature?.project,
-        feature?.description,
-        feature?.impressionData,
-    );
+    } = useFeatureForm({
+        name: feature?.name,
+        type: feature?.type,
+        project: feature?.project,
+        description: feature?.description,
+        impressionData: feature?.impressionData,
+    });
 
     const createPatch = () => {
         const comparison = { ...feature, type, description, impressionData };
@@ -54,7 +54,7 @@ const EditFeature = () => {
             await patchFeatureFlag(project, featureId, patch);
             navigate(`/projects/${project}/features/${name}`);
             setToastData({
-                title: 'Flag updated successfully',
+                text: 'Flag updated',
                 type: 'success',
             });
         } catch (error: unknown) {

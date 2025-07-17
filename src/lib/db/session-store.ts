@@ -1,9 +1,9 @@
 import type EventEmitter from 'events';
-import type { Logger, LogProvider } from '../logger';
-import NotFoundError from '../error/notfound-error';
-import type { ISession, ISessionStore } from '../types/stores/session-store';
+import type { Logger, LogProvider } from '../logger.js';
+import NotFoundError from '../error/notfound-error.js';
+import type { ISession, ISessionStore } from '../types/stores/session-store.js';
 import { addDays } from 'date-fns';
-import type { Db } from './db';
+import type { Db } from './db.js';
 
 const TABLE = 'unleash_session';
 
@@ -43,9 +43,7 @@ export default class SessionStore implements ISessionStore {
         if (rows && rows.length > 0) {
             return rows.map(this.rowToSession);
         }
-        throw new NotFoundError(
-            `Could not find sessions for user with id ${userId}`,
-        );
+        return [];
     }
 
     async get(sid: string): Promise<ISession> {
@@ -110,6 +108,27 @@ export default class SessionStore implements ISessionStore {
             expired: row.expired,
         };
     }
-}
 
-module.exports = SessionStore;
+    async getSessionsCount(): Promise<{ userId: number; count: number }[]> {
+        const rows = await this.db(TABLE)
+            .select(this.db.raw("sess->'user'->>'id' AS user_id"))
+            .count('* as count')
+            .groupBy('user_id');
+
+        return rows.map((row) => ({
+            userId: Number(row.user_id),
+            count: Number(row.count),
+        }));
+    }
+
+    async getMaxSessionsCount(): Promise<number> {
+        const result = await this.db(TABLE)
+            .select(this.db.raw("sess->'user'->>'id' AS user_id"))
+            .count('* as count')
+            .groupBy('user_id')
+            .orderBy('count', 'desc')
+            .first();
+
+        return result ? Number(result.count) : 0;
+    }
+}

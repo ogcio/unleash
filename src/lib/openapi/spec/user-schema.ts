@@ -1,5 +1,5 @@
 import type { FromSchema } from 'json-schema-to-ts';
-import { AccountTypes } from '../../types';
+import { AccountTypes } from '../../events/index.js';
 
 export const userSchema = {
     $id: '#/components/schemas/userSchema',
@@ -12,13 +12,6 @@ export const userSchema = {
             description: 'The user id',
             type: 'integer',
             example: 123,
-        },
-        isAPI: {
-            description:
-                'Deprecated in v5. Used internally to know which operations the user should be allowed to perform',
-            type: 'boolean',
-            example: true,
-            deprecated: true,
         },
         name: {
             description: 'Name of the user',
@@ -98,6 +91,18 @@ export const userSchema = {
             type: 'string',
             nullable: true,
             example: '01HTMEXAMPLESCIMID7SWWGHN6',
+        },
+        activeSessions: {
+            description: 'Count of active browser sessions for this user',
+            type: 'integer',
+            nullable: true,
+            example: 2,
+        },
+        deletedSessions: {
+            description:
+                'Experimental. The number of deleted browser sessions after last login',
+            type: 'number',
+            example: 1,
         },
     },
     components: {},

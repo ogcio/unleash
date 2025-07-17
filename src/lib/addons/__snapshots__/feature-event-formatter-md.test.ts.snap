@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`Should format specialised text for events when IPs changed 1`] = `
 {
@@ -19,7 +19,7 @@ exports[`Should format specialised text for events when a scheduled change reque
 exports[`Should format specialised text for events when change request is scheduled 1`] = `
 {
   "label": "Change request scheduled",
-  "text": "*user@company.com* scheduled change request *[#1](unleashUrl/projects/my-other-project/change-requests/1)* for feature flag *[new-feature](unleashUrl/projects/my-other-project/features/new-feature)* in the *production* environment in project *[my-other-project](unleashUrl/projects/my-other-project)* to be applied at  in project *my-other-project*",
+  "text": "*user@company.com* scheduled change request *[#1](unleashUrl/projects/my-other-project/change-requests/1)* for feature flag *[new-feature](unleashUrl/projects/my-other-project/features/new-feature)* in the *production* environment in project *[my-other-project](unleashUrl/projects/my-other-project)* to be applied at 2024-06-01T10:03:11.549Z.",
   "url": "unleashUrl/projects/my-other-project/change-requests/1",
 }
 `;
@@ -184,6 +184,14 @@ exports[`Should format specialised text for events when no specific text for str
 }
 `;
 
+exports[`Should format specialised text for events when project archived 1`] = `
+{
+  "label": "Project archived",
+  "text": "*user@company.com* archived project *my-other-project*",
+  "url": "unleashUrl/projects-archive",
+}
+`;
+
 exports[`Should format specialised text for events when rollout percentage changed 1`] = `
 {
   "label": "Flag strategy updated",
@@ -195,7 +203,7 @@ exports[`Should format specialised text for events when rollout percentage chang
 exports[`Should format specialised text for events when scheduled change request fails  1`] = `
 {
   "label": "Scheduled change request failed",
-  "text": "*Failed* to apply the scheduled change request *[#1](unleashUrl/projects/my-other-project/change-requests/1)* for feature flag *[new-feature](unleashUrl/projects/my-other-project/features/new-feature)* in the *production* environment in project *[my-other-project](unleashUrl/projects/my-other-project)* by *user@company.com* in project *my-other-project*.",
+  "text": "*Failed* to apply the scheduled change request *[#1](unleashUrl/projects/my-other-project/change-requests/1)* for feature flag *[new-feature](unleashUrl/projects/my-other-project/features/new-feature)* in the *production* environment in project *[my-other-project](unleashUrl/projects/my-other-project)* by *user@company.com*.",
   "url": "unleashUrl/projects/my-other-project/change-requests/1",
 }
 `;
@@ -203,7 +211,7 @@ exports[`Should format specialised text for events when scheduled change request
 exports[`Should format specialised text for events when scheduled change request succeeds  1`] = `
 {
   "label": "Scheduled change request applied successfully",
-  "text": "*Successfully* applied the scheduled change request *[#1](unleashUrl/projects/my-other-project/change-requests/1)* for feature flag *[new-feature](unleashUrl/projects/my-other-project/features/new-feature)* in the *production* environment in project *[my-other-project](unleashUrl/projects/my-other-project)* by *user@company.com* in project *my-other-project*.",
+  "text": "*Successfully* applied the scheduled change request *[#1](unleashUrl/projects/my-other-project/change-requests/1)* for feature flag *[new-feature](unleashUrl/projects/my-other-project/features/new-feature)* in the *production* environment in project *[my-other-project](unleashUrl/projects/my-other-project)* by *user@company.com*.",
   "url": "unleashUrl/projects/my-other-project/change-requests/1",
 }
 `;
@@ -228,14 +236,6 @@ exports[`Should format specialised text for events when strategy removed 1`] = `
 {
   "label": "Flag strategy removed",
   "text": "*user@company.com* removed strategy *default* from *[new-feature](unleashUrl/projects/my-other-project/features/new-feature)* for the *production* environment in project *[my-other-project](unleashUrl/projects/my-other-project)*",
-  "url": "unleashUrl/projects/my-other-project/features/new-feature",
-}
-`;
-
-exports[`Should format specialised text for events when userIds changed 1`] = `
-{
-  "label": "Flag strategy updated",
-  "text": "*user@company.com* updated *[new-feature](unleashUrl/projects/my-other-project/features/new-feature)* in project *[my-other-project](unleashUrl/projects/my-other-project)* by updating strategy *userWithId* in *production* userIds from empty set of userIds to [a,b]; constraints from empty set of constraints to [appName is one of (x,y)]",
   "url": "unleashUrl/projects/my-other-project/features/new-feature",
 }
 `;

@@ -1,8 +1,10 @@
-import dbInit, { type ITestDb } from '../../../test/e2e/helpers/database-init';
-import getLogger from '../../../test/fixtures/no-logger';
-import { createChangeRequestAccessReadModel } from './createChangeRequestAccessReadModel';
-import { createTestConfig } from '../../../test/config/test-config';
-import type { IChangeRequestAccessReadModel } from './change-request-access-read-model';
+import dbInit, {
+    type ITestDb,
+} from '../../../test/e2e/helpers/database-init.js';
+import getLogger from '../../../test/fixtures/no-logger.js';
+import { createChangeRequestAccessReadModel } from './createChangeRequestAccessReadModel.js';
+import { createTestConfig } from '../../../test/config/test-config.js';
+import type { IChangeRequestAccessReadModel } from './change-request-access-read-model.js';
 
 let db: ITestDb;
 
@@ -31,7 +33,7 @@ test(`Should indicate change request enabled status`, async () => {
     // change request enabled in enabled environment
     await db.rawDatabase('change_request_settings').insert({
         project: 'default',
-        environment: 'default',
+        environment: 'development',
         required_approvals: 1,
     });
     const enabledStatus =
@@ -41,7 +43,7 @@ test(`Should indicate change request enabled status`, async () => {
     // change request enabled in disabled environment
     await db.stores.projectStore.deleteEnvironmentForProject(
         'default',
-        'default',
+        'development',
     );
     const disabledStatus =
         await readModel.isChangeRequestsEnabledForProject('default');

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import useToast from 'hooks/useToast';
 import { formatUnknownError } from 'utils/formatUnknownError';
-import useAPI from '../useApi/useApi';
+import useAPI from '../useApi/useApi.js';
 import { usePlausibleTracker } from 'hooks/usePlausibleTracker';
 
 export const useFavoriteProjectsApi = () => {
@@ -24,7 +24,7 @@ export const useFavoriteProjectsApi = () => {
                 await makeLightRequest(req.caller, req.id);
 
                 setToastData({
-                    title: 'Project added to favorites',
+                    text: 'Project added to favorites',
                     type: 'success',
                 });
                 trackEvent('favorite', {
@@ -52,7 +52,7 @@ export const useFavoriteProjectsApi = () => {
                 await makeLightRequest(req.caller, req.id);
 
                 setToastData({
-                    title: 'Project removed from favorites',
+                    text: 'Project removed from favorites',
                     type: 'success',
                 });
                 trackEvent('favorite', {
