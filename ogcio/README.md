@@ -51,6 +51,8 @@ The OGCIO Unleash server provides:
 - Node.js 20+ (for local development)
 - PostgreSQL (managed via Docker)
 
+Important! Make sure that Host Networking is enabled in Docker: go to Docker Network Resources Settings and Enable Host Networking
+
 ### Quick Start with Docker Compose
 
 1. **Clone the repository** and navigate to the project root
