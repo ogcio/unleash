@@ -14,3 +14,5 @@
 /src/website/.yarn/releases/yarn-4.9.2.cjs:generic-api-key:583
 /src/website/docs/quickstart.mdx:generic-api-key:118
 /src/website/docs/quickstart.mdx:generic-api-key:124
+/src/.env.sample:generic-api-key:11
+/src/ogcio/.env.sample:generic-api-key:11
