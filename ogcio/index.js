@@ -1,3 +1,4 @@
+const fs = require("node:fs");
 const unleash = require("unleash-server");
 const oidcAuthHook = require("./ogcio/oidc-auth-hook.js");
 
