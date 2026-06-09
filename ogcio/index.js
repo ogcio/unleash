@@ -15,7 +15,7 @@ const {
 const ssl = POSTGRES_SSL
     ? {
           rejectUnauthorized: false,
-          ca: fs.readFileSync("ogcio/global-bundle.pem"),
+          ca: fs.readFileSync("ogcio/global-bundle.pem").toString(),
       }
     : false;
 
