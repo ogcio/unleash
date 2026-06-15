@@ -23,22 +23,26 @@ services:
     ports:
       - "4242:4242"
     network_mode: "host"
+    container_name: unleash-web
     environment:
       # This points Unleash to its backing database (defined in the `db` section below)
-      POSTGRES_USER: "postgres"
-      POSTGRES_DB_NAME: "db"
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-unleash}
+      POSTGRES_HOST: ${POSTGRES_HOST:-db}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5234}
+      POSTGRES_DB_NAME: ${POSTGRES_DB_NAME:-db}
       # Disable SSL for database connections. @chriswk: why do we do this?
-      DATABASE_SSL: "false"
+      DATABASE_SSL: ${DATABASE_SSL:-false}
       # Changing log levels:
-      LOG_LEVEL: "warn"
-      INIT_FRONTEND_API_TOKENS: "default:development.unleash-insecure-frontend-api-token"
+      LOG_LEVEL: ${LOG_LEVEL:-warn}
+      INIT_FRONTEND_API_TOKENS: ${INIT_FRONTEND_API_TOKENS:-default:development.unleash-insecure-frontend-api-token}
       # The default API token is insecure and should not be used in production.
-      INIT_CLIENT_API_TOKENS: "default:development.unleash-insecure-api-token"
+      INIT_CLIENT_API_TOKENS: ${INIT_CLIENT_API_TOKENS:-default:development.unleash-insecure-api-token}
       # OGCIO
-      AUTH_APP_ID: "43geanp0dwznxw412mxme"
-      AUTH_APP_SECRET: "unleash_app_local_secret"
-      AUTH_HOST: "http://localhost:3301"
-      NODE_ENV: "production"
+      AUTH_APP_ID: ${AUTH_APP_ID:-43geanp0dwznxw412mxme}
+      AUTH_APP_SECRET: ${AUTH_APP_SECRET:-unleash_app_local_secret}
+      AUTH_HOST: ${AUTH_HOST:-http://localhost:3301}
+      NODE_ENV: ${NODE_ENV:-production}
     depends_on:
       db:
         condition: service_healthy
@@ -50,15 +54,20 @@ services:
       start_period: 15s
   db:
     expose:
-      - "5432:5432"
-    network_mode: "host"
+      - "5234:5432"
+    ports:
+      - "5234:5432"
+    #network_mode: "host"
     image: postgres:15
+    container_name: unleash-db
     environment:
       # create a database called `db`
-      POSTGRES_DB: "db"
+      POSTGRES_DB: ${POSTGRES_DB_NAME:-db}
       # OGCIO
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: unleash
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-unleash}
+    volumes:
+      - db:/var/lib/postgresql/data      
     healthcheck:
       test:
         [
@@ -72,3 +81,7 @@ services:
       timeout: 1m
       retries: 5
       start_period: 10s
+
+volumes:
+  db:
+    driver: local

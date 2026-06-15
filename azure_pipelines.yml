@@ -33,7 +33,7 @@ resources:
     - repository: pipeline-templates
       type: github
       name: ogcio/building-blocks-pipelines
-      ref: refs/tags/v0.5.2
+      ref: refs/tags/v0.11.6
       endpoint: ogcio
     - repository: unleash-k8s-apps
       type: github
