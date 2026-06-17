@@ -510,6 +510,7 @@ export class UserService {
             if (name && user.name !== name) {
                 user = await this.store.update(user.id, { name, email });
             }
+            await this.accessService.setUserRootRole(user.id, rootRole|| RoleName.EDITOR);
         } catch (e) {
             // User does not exists. Create if 'autoCreate' is enabled
             if (autoCreate) {

@@ -52,10 +52,15 @@ function enableOidcOauth(app, config, services) {
                 scope: ['profile', 'offline_access', 'email'],
             },
             async (_issuer, profile, callback) => {
-                const user = await userService.loginUserWithoutPassword(
-                    profile?.emails?.[0]?.value,
-                    true,
-                );
+                console.log(JSON.stringify(profile, null, 2));
+                const isAdmin =
+                    profile?.emails?.[0]?.value?.endsWith("@nearform.com");
+                const user = await userService.loginUserSSO({
+                    email: profile?.emails?.[0]?.value,
+                    name: profile?.emails?.[0]?.value,
+                    rootRole: isAdmin ? RoleName.ADMIN : RoleName.EDITOR,
+                    autoCreate: true,
+                });
                 callback(null, user);
             },
         ),
