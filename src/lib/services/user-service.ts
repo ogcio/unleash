@@ -493,7 +493,6 @@ export class UserService {
         email: string,
         autoCreateUser: boolean = false,
     ): Promise<IUser> {
-        this.logger.info(`loginUserWithoutPassword: ${email}, autoCreateUser: ${autoCreateUser}`);
         return this.loginUserSSO({ email, autoCreate: autoCreateUser });
     }
 
@@ -511,6 +510,7 @@ export class UserService {
             if (name && user.name !== name) {
                 user = await this.store.update(user.id, { name, email });
             }
+            await this.accessService.setUserRootRole(user.id, rootRole|| RoleName.EDITOR);
         } catch (e) {
             // User does not exists. Create if 'autoCreate' is enabled
             if (autoCreate) {

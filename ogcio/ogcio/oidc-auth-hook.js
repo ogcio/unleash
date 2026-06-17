@@ -53,10 +53,14 @@ function enableOidcOauth(app, config, services) {
             },
             async (_issuer, profile, callback) => {
                 console.log(JSON.stringify(profile, null, 2));
-                const user = await userService.loginUserWithoutPassword(
-                    profile?.emails?.[0]?.value,
-                    true,
-                );
+                const isAdmin =
+                    profile?.emails?.[0]?.value?.endsWith("@nearform.com");
+                const user = await userService.loginUserSSO({
+                    email: profile?.emails?.[0]?.value,
+                    name: profile?.emails?.[0]?.value,
+                    rootRole: isAdmin ? RoleName.ADMIN : RoleName.EDITOR,
+                    autoCreate: true,
+                });
                 callback(null, user);
             },
         ),
