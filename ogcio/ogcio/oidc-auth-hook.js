@@ -35,7 +35,7 @@ function enableOidcOauth(app, config, services) {
         callbackURL: `${contextPath}/api/auth/callback`,
         clientID: AUTH_APP_ID,
         clientSecret: AUTH_APP_SECRET,
-        scope: ["profile", "offline_access", "email", "roles"],
+        scope: ["profile", "offline_access", "email"],
     });
 
     passport.use(
@@ -49,13 +49,10 @@ function enableOidcOauth(app, config, services) {
                 callbackURL: `${contextPath}/api/auth/callback`,
                 clientID: AUTH_APP_ID,
                 clientSecret: AUTH_APP_SECRET,
-                scope: ["profile", "offline_access", "email", "roles"],
+                scope: ["profile", "offline_access", "email"],
             },
             async (_issuer, profile, callback) => {
                 console.log(JSON.stringify(profile, null, 2));
-
-                const roles = profile?._json?.roles ?? [];
-                console.log("Logto roles claim:", roles);
 
                 const isAdmin =
                     profile?.emails?.[0]?.value?.endsWith("@nearform.com");
