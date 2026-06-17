@@ -493,6 +493,7 @@ export class UserService {
         email: string,
         autoCreateUser: boolean = false,
     ): Promise<IUser> {
+        this.logger.info(`loginUserWithoutPassword: ${email}, autoCreateUser: ${autoCreateUser}`);
         return this.loginUserSSO({ email, autoCreate: autoCreateUser });
     }
 

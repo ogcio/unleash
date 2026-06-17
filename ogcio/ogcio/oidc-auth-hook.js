@@ -52,6 +52,7 @@ function enableOidcOauth(app, config, services) {
                 scope: ['profile', 'offline_access', 'email'],
             },
             async (_issuer, profile, callback) => {
+                console.log(JSON.stringify(profile, null, 2));
                 const user = await userService.loginUserWithoutPassword(
                     profile?.emails?.[0]?.value,
                     true,
