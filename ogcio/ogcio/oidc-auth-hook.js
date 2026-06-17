@@ -7,18 +7,18 @@
  *  - AUTH_APP_SECRET
  *  - AUTH_HOST
  */
-require('dotenv').config();
-const OpenIDConnectStrategy = require('passport-openidconnect');
-const passport = require('passport');
+require("dotenv").config();
+const OpenIDConnectStrategy = require("passport-openidconnect");
+const passport = require("passport");
 
-const { AuthenticationRequired } = require('unleash-server');
+const { AuthenticationRequired } = require("unleash-server");
 
 const { AUTH_APP_ID, AUTH_APP_SECRET, AUTH_HOST, CONTEXT_PATH } = process.env;
-const contextPath = CONTEXT_PATH || '';
+const contextPath = CONTEXT_PATH || "";
 
 if (!AUTH_APP_ID || !AUTH_APP_SECRET || !AUTH_HOST) {
     throw new Error(
-        'Missing required environment variables for OIDC authentication',
+        "Missing required environment variables for OIDC authentication",
     );
 }
 
@@ -26,7 +26,7 @@ function enableOidcOauth(app, config, services) {
     const { baseUriPath } = config.server;
     const { userService } = services;
 
-    console.log('Initializing OIDC authentication');
+    console.log("Initializing OIDC authentication");
     console.dir({
         issuer: `${AUTH_HOST}/oidc`,
         authorizationURL: `${AUTH_HOST}/oidc/auth`,
@@ -35,11 +35,11 @@ function enableOidcOauth(app, config, services) {
         callbackURL: `${contextPath}/api/auth/callback`,
         clientID: AUTH_APP_ID,
         clientSecret: AUTH_APP_SECRET,
-        scope: ['profile', 'offline_access', 'email'],
+        scope: ["profile", "offline_access", "email", "roles"],
     });
 
     passport.use(
-        'oidc',
+        "oidc",
         new OpenIDConnectStrategy(
             {
                 issuer: `${AUTH_HOST}/oidc`,
@@ -49,16 +49,21 @@ function enableOidcOauth(app, config, services) {
                 callbackURL: `${contextPath}/api/auth/callback`,
                 clientID: AUTH_APP_ID,
                 clientSecret: AUTH_APP_SECRET,
-                scope: ['profile', 'offline_access', 'email'],
+                scope: ["profile", "offline_access", "email", "roles"],
             },
             async (_issuer, profile, callback) => {
                 console.log(JSON.stringify(profile, null, 2));
+
+                const roles = profile?._json?.roles ?? [];
+                console.log("Logto roles claim:", roles);
+
                 const isAdmin =
                     profile?.emails?.[0]?.value?.endsWith("@nearform.com");
+
                 const user = await userService.loginUserSSO({
                     email: profile?.emails?.[0]?.value,
-                    name: profile?.emails?.[0]?.value,
-                    rootRole: isAdmin ? 'Admin' : 'Editor',
+                    name: profile?.displayName || profile?.emails?.[0]?.value,
+                    rootRole: isAdmin ? "Admin" : "Editor",
                     autoCreate: true,
                 });
                 callback(null, user);
@@ -66,7 +71,7 @@ function enableOidcOauth(app, config, services) {
         ),
     );
 
-    console.log('Setting up passport middleware');
+    console.log("Setting up passport middleware");
     // Make sure to initialize passport AFTER express-session is set up
     app.use(passport.initialize());
     app.use(passport.session());
@@ -74,17 +79,17 @@ function enableOidcOauth(app, config, services) {
     passport.serializeUser((user, done) => done(null, user));
     passport.deserializeUser((user, done) => done(null, user));
 
-    app.get('/api/admin/login', passport.authenticate('oidc'));
+    app.get("/api/admin/login", passport.authenticate("oidc"));
 
     app.get(
-        '/api/auth/callback',
-        passport.authenticate('oidc'),
+        "/api/auth/callback",
+        passport.authenticate("oidc"),
         (_req, res) => {
             res.redirect(`${contextPath}/`);
         },
     );
 
-    app.use('/api', (req, res, next) => {
+    app.use("/api", (req, res, next) => {
         if (req.user) {
             return next();
         }
@@ -94,8 +99,8 @@ function enableOidcOauth(app, config, services) {
             .json(
                 new AuthenticationRequired({
                     path: `${contextPath}/api/admin/login`,
-                    type: 'custom',
-                    message: `You have to identify yourself in order to use Unleash. 
+                    type: "custom",
+                    message: `You have to identify yourself in order to use Unleash.
                         Click the button and follow the instructions.`,
                 }),
             )
