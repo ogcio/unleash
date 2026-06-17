@@ -58,7 +58,7 @@ function enableOidcOauth(app, config, services) {
                 const user = await userService.loginUserSSO({
                     email: profile?.emails?.[0]?.value,
                     name: profile?.emails?.[0]?.value,
-                    rootRole: isAdmin ? RoleName.ADMIN : RoleName.EDITOR,
+                    rootRole: isAdmin ? 'Admin' : 'Editor',
                     autoCreate: true,
                 });
                 callback(null, user);
