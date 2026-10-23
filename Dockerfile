@@ -6,6 +6,8 @@ WORKDIR /unleash
 
 COPY . /unleash
 
+RUN apk update && apk add --no-cache ca-certificates ca-certificates-bundle
+
 RUN corepack enable
 
 RUN yarn install --immutable  && yarn prepare:backend && yarn local:package
@@ -20,8 +22,9 @@ RUN yarn workspaces focus -A --production
 FROM node:$NODE_VERSION
 
 ENV NODE_ENV=production
-
 ENV TZ=UTC
+
+RUN apk update && apk add --no-cache ca-certificates ca-certificates-bundle
 
 WORKDIR /unleash
 
