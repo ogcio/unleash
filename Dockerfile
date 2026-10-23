@@ -6,6 +6,8 @@ WORKDIR /unleash
 
 COPY . /unleash
 
+RUN apk update && apk add --no-cache ca-certificates ca-certificates-bundle
+
 RUN corepack enable
 
 RUN yarn install --immutable  && yarn prepare:backend && yarn local:package
