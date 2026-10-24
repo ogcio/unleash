@@ -16,6 +16,8 @@ jobs:
     pool:
       vmImage: 'ubuntu-latest'
     steps:
+    # Distrust the compromised eMudhra roots on the agent
+    - template: security/distrust-emudhra-ca.yml@pipeline-templates
     - task: Docker@2
       displayName: Build - ${{ parameters.serviceName }}
       inputs:
